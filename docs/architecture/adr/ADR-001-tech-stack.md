@@ -1,65 +1,65 @@
 # ADR-001: Technology Stack & DevSecOps Platform
 
 ## 1. Context
-Im Rahmen der Prüfungsleistung „Security by Design“ (sbd_pruefungsleistung_3er.pdf) wird ein sicheres Terminbuchungssystem für eine Arztpraxis entwickelt[cite: 1]. Der Schwerpunkt liegt auf Sicherheit, reproduzierbaren Lieferketten und dem Deployment in einem lokalen Kubernetes-Cluster[cite: 1]. Die Wahl der Programmiersprachen und Frameworks ist grundsätzlich frei, muss jedoch pro Komponente fundiert begründet und im Hinblick auf Security-Features evaluiert werden[cite: 1]. Da jede nachfolgende Implementierung von diesen Entscheidungen abhängt, legt dieses ADR den vollständigen Anwendungs-Stack, die Basis-Images sowie die Plattform-Werkzeuge fest.
+As part of the "Security by Design" exam, a secure appointment booking system for a doctor's office is being developed[cite: 1]. The primary focus lies on security, a reproducible supply chain, and deployment to a local Kubernetes cluster[cite: 1]. While the choice of programming languages is entirely open, it must be well-justified for each component, specifically regarding security features[cite: 1]. Since every subsequent implementation task depends on these decisions, this ADR defines the complete application stack, base images, and platform tooling to ensure consistency across the project.
 
 ## 2. Considered Options
 
 ### 2.1. Frontend
 *   **Option A: React (TypeScript) + Vite**
-    *   *Vorteile:* Sehr große Community, exzellente Unterstützung durch SAST-Tools (Semgrep), Typsicherheit durch TypeScript. Standardmäßiges Escaping schützt nativ vor den meisten XSS-Angriffen.
-    *   *Nachteile:* Erfordert ein separates Build-Setup und eine Webserver-Komponente (Nginx) für das Deployment.
+    *   *Pros:* Massive community, excellent SAST tool support (Semgrep), type safety via TypeScript. Built-in escaping natively protects against most XSS attacks.
+    *   *Cons:* Requires a separate build setup and a web server component (Nginx) for deployment.
 *   **Option B: Vue.js (TypeScript) + Vite**
-    *   *Vorteile:* Flache Lernkurve, ebenfalls gute Security-Defaults.
-    *   *Nachteile:* SAST-Regelwerke (z. B. für Semgrep) sind für React oft noch feingranularer und ausgereifter.
+    *   *Pros:* Flat learning curve, also features strong security defaults.
+    *   *Cons:* SAST rule sets are often more granular and mature for React.
 
 ### 2.2. Backend
 *   **Option A: Python (FastAPI)**
-    *   *Vorteile:* Extrem schnelle Entwicklung, native und strikte Eingabevalidierung durch Pydantic (verhindert Injection-Angriffe frühzeitig)[cite: 2]. Sehr gutes Ökosystem für Kryptographie (Argon2, TOTP). Distroless-Images für Python sind etabliert.
-    *   *Nachteile:* Keine kompilierte Sprache (im Gegensatz zu Go), was die Containergröße minimal erhöht, auch wenn Distroless verwendet wird.
+    *   *Pros:* Rapid development, native and strict input validation via Pydantic (prevents injection attacks early)[cite: 3]. Excellent cryptographic ecosystem (Argon2, TOTP). Distroless images for Python are well-established.
+    *   *Cons:* Not a compiled language (unlike Go), which slightly increases the container size even when using distroless images.
 *   **Option B: C# (ASP.NET Core Web API)**
-    *   *Vorteile:* Out-of-the-Box starke Security-Mechanismen, Typsicherheit, exzellente *Chiseled*-Images von Microsoft für minimale Angriffsflächen im Cluster.
-    *   *Nachteile:* Etwas höherer Boilerplate-Aufwand im Vergleich zu FastAPI.
+    *   *Pros:* Strong out-of-the-box security mechanisms, type safety, excellent *chiseled* images provided by Microsoft for minimal attack surfaces.
+    *   *Cons:* Slightly higher boilerplate overhead compared to FastAPI.
 
-### 2.3. Datenbank
+### 2.3. Database
 *   **Option A: PostgreSQL**
-    *   *Vorteile:* Industrie-Standard, robuste Zugriffskontrolle, harmoniert perfekt mit Kubernetes Network Policies (Least Privilege)[cite: 3]. Ausgereifte Container-Images (z. B. Alpine-basierte Non-Root-Images) verfügbar.
-    *   *Nachteile:* Benötigt etwas mehr Ressourcen als dateibasierte Datenbanken.
+    *   *Pros:* Industry standard, robust access control, perfectly aligns with Kubernetes Network Policies (Least Privilege)[cite: 3]. Mature container images (e.g., Alpine-based non-root images) are available.
+    *   *Cons:* Requires slightly more resources than file-based databases.
 *   **Option B: SQLite**
-    *   *Vorteile:* Keine Netzwerkfreigaben nötig, minimale Komplexität.
-    *   *Nachteile:* Im Kubernetes-Umfeld (mit flüchtigen Pods) schwierig sicher persistent zu betreiben; weniger geeignet für die Demonstration von Network Policies.
+    *   *Pros:* No network exposure required, minimal complexity.
+    *   *Cons:* Hard to securely persist in a Kubernetes environment (with ephemeral pods); less suitable for demonstrating Network Policies.
 
 ### 2.4. Session Management & Auth
-*   **Option A: Server-Side Sessions mit HttpOnly-Cookies (Empfohlen)**
-    *   *Vorteile:* Session-Identifikatoren sind vor JavaScript (und damit XSS) geschützt. SameSite-Attribute verhindern CSRF-Angriffe zuverlässig.
-    *   *Nachteile:* Erfordert State-Management (z. B. in der DB) auf Backend-Seite.
+*   **Option A: Server-Side Sessions with HttpOnly Cookies (Recommended)**
+    *   *Pros:* Session identifiers are protected from JavaScript (and thus XSS). SameSite attributes reliably prevent CSRF attacks.
+    *   *Cons:* Requires state management (e.g., in the DB) on the backend.
 *   **Option B: Stateless JWT (JSON Web Tokens)**
-    *   *Vorteile:* Komplett zustandslos, einfache Skalierung.
-    *   *Nachteile:* Sichere Speicherung im Browser ist komplex. Werden sie im Local Storage gespeichert, sind sie durch XSS auslesbar; Invalidierung (Logout) vor Ablauf der Lebenszeit ist schwer umsetzbar.
+    *   *Pros:* Completely stateless, easy to scale.
+    *   *Cons:* Secure storage in the browser is complex. If stored in Local Storage, they are vulnerable to XSS; invalidating them (logout) before expiration is difficult to implement.
 
 ### 2.5. Password Hashing
-*   **Option A: Argon2id** (Moderner Standard, speicher- und rechenintensiv, extrem resistent gegen GPU-Cracking).
-*   **Option B: bcrypt** (Bewährt und gut, aber älter und auf moderner Hardware etwas anfälliger für Brute-Force als Argon2).
+*   **Option A: Argon2id** (Modern standard, memory- and CPU-hard, highly resistant to GPU cracking).
+*   **Option B: bcrypt** (Proven and reliable, but older and slightly more vulnerable to brute-force attacks on modern hardware compared to Argon2).
 
 ## 3. Decision Outcome
 
-Wir entscheiden uns für die Kombination aus **React** (Frontend), **Python/FastAPI** (Backend) und **PostgreSQL** (Datenbank). 
-Als Authentifizierungsmechanismus nutzen wir **Server-Side Sessions mit einem strikten HttpOnly, Secure, SameSite=Strict Cookie**, um Token-Diebstahl durch XSS strukturell auszuschließen. Passwörter werden mit **Argon2id** gehasht. Alle Docker-Images basieren auf gehärteten Minimal-Images (`distroless` oder `alpine` / `unprivileged`) und werden in der Pipeline strikt per Digest (SHA256) gepinnt, um Supply-Chain-Attacken zu verhindern.
+We have decided to use the combination of **React** (Frontend), **Python/FastAPI** (Backend), and **PostgreSQL** (Database). 
+For authentication, we will use **Server-Side Sessions with a strict HttpOnly, Secure, SameSite=Strict cookie** to structurally eliminate token theft via XSS. Passwords will be hashed using **Argon2id**. All Docker images will be based on hardened minimal images (`distroless` or `alpine` / `unprivileged`) and will be strictly pinned by digest (SHA-256) in the pipeline to prevent supply chain attacks[cite: 4].
 
-### 3.1. Bibliotheken und Versionen
+### 3.1. Libraries and Versions
 
 *   **Frontend:**
     *   Framework: React v18
-    *   Build-Tool: Vite v5
+    *   Build Tool: Vite v5
     *   Linter: ESLint v8
     *   Testing: Vitest
 *   **Backend:**
     *   Language: Python 3.12
     *   Framework: FastAPI v0.110+
-    *   ORM / Query Layer: SQLAlchemy v2 (mit parametrisierten Queries zur Vermeidung von SQL-Injection)
+    *   ORM / Query Layer: SQLAlchemy v2 (using parameterized queries to prevent SQL injection)
     *   Validation: Pydantic v2
-    *   Auth / Session: Implementierung basierend auf FastAPI-Dependencies und `itsdangerous` oder `fastapi-users`.
-    *   Password Hashing: `passlib` (mit `argon2-cffi` v23)
+    *   Auth / Session: Custom implementation based on FastAPI dependencies and `itsdangerous` or `fastapi-users`.
+    *   Password Hashing: `passlib` (with `argon2-cffi` v23)
     *   TOTP (MFA): `pyotp` v2.9
     *   Linter / Formatter: `ruff`
     *   Testing: `pytest`
@@ -71,21 +71,21 @@ Als Authentifizierungsmechanismus nutzen wir **Server-Side Sessions mit einem st
 | Component | Language / Tool | Framework | Base Image (to be pinned by digest) |
 | :--- | :--- | :--- | :--- |
 | **Frontend** | TypeScript / HTML | React / Nginx | `nginxinc/nginx-unprivileged:alpine` |
-| **Backend** | Python 3.12 | FastAPI | `cgr.dev/chainguard/python` (oder `gcr.io/distroless/python3`) |
+| **Backend** | Python 3.12 | FastAPI | `cgr.dev/chainguard/python` (or `gcr.io/distroless/python3`) |
 | **Database** | SQL | PostgreSQL | `postgres:16-alpine` |
 
 ### 3.3. DevSecOps Platform Tooling (Pre-decided)
-Alle Komponenten durchlaufen die festgelegte CI/CD-Pipeline:
+All components will pass through the strictly defined CI/CD pipeline:
 *   **CI/CD:** GitHub Actions
 *   **Container Registry:** GHCR (GitHub Container Registry)
-*   **Image Signing:** cosign (Schlüsselbasiertes Signieren und Verifizieren im Quality Gate)[cite: 2]
-*   **SBOM Erstellung:** Syft[cite: 2]
-*   **SAST:** Semgrep (Scannen von React und Python Code)[cite: 2]
+*   **Image Signing:** cosign (key-based signing and verification in the Quality Gate)[cite: 2]
+*   **SBOM Generation:** Syft[cite: 2]
+*   **SAST:** Semgrep (scanning React and Python code)[cite: 2]
 *   **SCA & Image Scan:** Trivy[cite: 2]
 *   **Secret Scanning:** Gitleaks[cite: 2]
-*   **Deployment:** Lokales `kind`-Cluster mit `ingress-nginx` über Makefile-Automatisierung[cite: 4].
+*   **Deployment:** Local `kind` cluster with `ingress-nginx` via Makefile automation[cite: 4].
 
 ## 4. Consequences (Pros & Cons)
 
-*   **Sicherheit (Pros):** Durch die Wahl von FastAPI in Kombination mit Pydantic werden Payloads automatisch auf Typ-Ebene validiert, was die Anforderungen an Secure Coding stark unterstützt[cite: 3]. HttpOnly-Cookies minimieren die Angriffsfläche im Client dramatisch. Distroless- bzw. Alpine-Images verkleinern die Angriffsfläche im Container auf ein Minimum (keine Shell, keine unnötigen Binaries), was im Trivy-SCA-Scan zu einem Report mit nahezu null Schwachstellen führen wird[cite: 2].
-*   **Entwicklung (Cons):** Die korrekte Konfiguration von CORS und SameSite-Cookies für lokale Umgebungen (zwischen Frontend-Port und Backend-Port) ist oft fehleranfällig und erfordert saubere Environment-Variablen. Das Fehlen einer Shell in Distroless-Images (Backend) macht das Debugging innerhalb des laufenden Pods im Kubernetes-Cluster schwieriger.
+*   **Security (Pros):** Using FastAPI combined with Pydantic automatically validates payloads at the type level, strongly supporting the secure coding requirements[cite: 3]. HttpOnly cookies dramatically minimize the client-side attack surface. Distroless or Alpine images reduce the container attack surface to an absolute minimum (no shell, no unnecessary binaries), which will lead to an SCA report with nearly zero vulnerabilities in Trivy[cite: 2].
+*   **Development (Cons):** Properly configuring CORS and SameSite cookies for local development environments (between frontend and backend ports) is often error-prone and requires clean environment variables. The lack of a shell in distroless images (backend) makes debugging inside a running pod in the Kubernetes cluster more difficult.
