@@ -1,7 +1,7 @@
 # ADR-001: Technology Stack & DevSecOps Platform
 
 ## 1. Context
-As part of the "Security by Design" exam, a secure appointment booking system for a doctor's office is being developed[cite: 1]. The primary focus lies on security, a reproducible supply chain, and deployment to a local Kubernetes cluster[cite: 1]. While the choice of programming languages is entirely open, it must be well-justified for each component, specifically regarding security features[cite: 1]. Since every subsequent implementation task depends on these decisions, this ADR defines the complete application stack, base images, and platform tooling to ensure consistency across the project.
+As part of the "Security by Design" exam, a secure appointment booking system for a doctor's office is being developed. The primary focus lies on security, a reproducible supply chain, and deployment to a local Kubernetes cluster. While the choice of programming languages is entirely open, it must be well-justified for each component, specifically regarding security features. Since every subsequent implementation task depends on these decisions, this ADR defines the complete application stack, base images, and platform tooling to ensure consistency across the project.
 
 ## 2. Considered Options
 
@@ -15,7 +15,7 @@ As part of the "Security by Design" exam, a secure appointment booking system fo
 
 ### 2.2. Backend
 *   **Option A: Python (FastAPI)**
-    *   *Pros:* Rapid development, native and strict input validation via Pydantic (prevents injection attacks early)[cite: 3]. Excellent cryptographic ecosystem (Argon2, TOTP). Distroless images for Python are well-established.
+    *   *Pros:* Rapid development, native and strict input validation via Pydantic (prevents injection attacks early). Excellent cryptographic ecosystem (Argon2, TOTP). Distroless images for Python are well-established.
     *   *Cons:* Not a compiled language (unlike Go), which slightly increases the container size even when using distroless images.
 *   **Option B: C# (ASP.NET Core Web API)**
     *   *Pros:* Strong out-of-the-box security mechanisms, type safety, excellent *chiseled* images provided by Microsoft for minimal attack surfaces.
@@ -23,7 +23,7 @@ As part of the "Security by Design" exam, a secure appointment booking system fo
 
 ### 2.3. Database
 *   **Option A: PostgreSQL**
-    *   *Pros:* Industry standard, robust access control, perfectly aligns with Kubernetes Network Policies (Least Privilege)[cite: 3]. Mature container images (e.g., Alpine-based non-root images) are available.
+    *   *Pros:* Industry standard, robust access control, perfectly aligns with Kubernetes Network Policies (Least Privilege). Mature container images (e.g., Alpine-based non-root images) are available.
     *   *Cons:* Requires slightly more resources than file-based databases.
 *   **Option B: SQLite**
     *   *Pros:* No network exposure required, minimal complexity.
@@ -44,7 +44,7 @@ As part of the "Security by Design" exam, a secure appointment booking system fo
 ## 3. Decision Outcome
 
 We have decided to use the combination of **React** (Frontend), **Python/FastAPI** (Backend), and **PostgreSQL** (Database). 
-For authentication, we will use **Server-Side Sessions with a strict HttpOnly, Secure, SameSite=Strict cookie** to structurally eliminate token theft via XSS. Passwords will be hashed using **Argon2id**. All Docker images will be based on hardened minimal images (`distroless` or `alpine` / `unprivileged`) and will be strictly pinned by digest (SHA-256) in the pipeline to prevent supply chain attacks[cite: 4].
+For authentication, we will use **Server-Side Sessions with a strict HttpOnly, Secure, SameSite=Strict cookie** to structurally eliminate token theft via XSS. Passwords will be hashed using **Argon2id**. All Docker images will be based on hardened minimal images (`distroless` or `alpine` / `unprivileged`) and will be strictly pinned by digest (SHA-256) in the pipeline to prevent supply chain attacks.
 
 ### 3.1. Libraries and Versions
 
@@ -78,14 +78,14 @@ For authentication, we will use **Server-Side Sessions with a strict HttpOnly, S
 All components will pass through the strictly defined CI/CD pipeline:
 *   **CI/CD:** GitHub Actions
 *   **Container Registry:** GHCR (GitHub Container Registry)
-*   **Image Signing:** cosign (key-based signing and verification in the Quality Gate)[cite: 2]
-*   **SBOM Generation:** Syft[cite: 2]
-*   **SAST:** Semgrep (scanning React and Python code)[cite: 2]
-*   **SCA & Image Scan:** Trivy[cite: 2]
-*   **Secret Scanning:** Gitleaks[cite: 2]
-*   **Deployment:** Local `kind` cluster with `ingress-nginx` via Makefile automation[cite: 4].
+*   **Image Signing:** cosign (key-based signing and verification in the Quality Gate)
+*   **SBOM Generation:** Syft
+*   **SAST:** Semgrep (scanning React and Python code)
+*   **SCA & Image Scan:** Trivy
+*   **Secret Scanning:** Gitleaks
+*   **Deployment:** Local `kind` cluster with `ingress-nginx` via Makefile automation.
 
 ## 4. Consequences (Pros & Cons)
 
-*   **Security (Pros):** Using FastAPI combined with Pydantic automatically validates payloads at the type level, strongly supporting the secure coding requirements[cite: 3]. HttpOnly cookies dramatically minimize the client-side attack surface. Distroless or Alpine images reduce the container attack surface to an absolute minimum (no shell, no unnecessary binaries), which will lead to an SCA report with nearly zero vulnerabilities in Trivy[cite: 2].
+*   **Security (Pros):** Using FastAPI combined with Pydantic automatically validates payloads at the type level, strongly supporting the secure coding requirements. HttpOnly cookies dramatically minimize the client-side attack surface. Distroless or Alpine images reduce the container attack surface to an absolute minimum (no shell, no unnecessary binaries), which will lead to an SCA report with nearly zero vulnerabilities in Trivy.
 *   **Development (Cons):** Properly configuring CORS and SameSite cookies for local development environments (between frontend and backend ports) is often error-prone and requires clean environment variables. The lack of a shell in distroless images (backend) makes debugging inside a running pod in the Kubernetes cluster more difficult.
