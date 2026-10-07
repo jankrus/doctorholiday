@@ -62,6 +62,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | All tests / lint | `make test` / `make lint` (stubs until #11, #23, #42) |
 | Backend tests | `cd backend && pytest` |
 | Backend lint | `cd backend && ruff check . && ruff format --check .` |
+| API contract lint | `cd backend && npx @redocly/cli@2.60.0 lint openapi.yaml` |
 | Frontend tests | `cd frontend && npm ci && npm test` |
 | Frontend lint | `cd frontend && npm run lint` |
 | Cluster up / down | `make up` / `make down` |
