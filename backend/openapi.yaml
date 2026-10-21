@@ -1,0 +1,1949 @@
+openapi: 3.1.0
+info:
+  title: Doctor Holiday API
+  version: 1.0.0
+  summary: Appointment booking API for one medical practice.
+  description: |
+    API contract between the Doctor Holiday frontend and backend (issue #4).
+
+    Functional requirements, business rules (BR-xx) and the domain model are in
+    `docs/architecture/requirements.md`; roles and the permission matrix (Axx) in
+    `docs/architecture/roles-and-permissions.md`.
+
+    **Authorisation extensions** on every operation (machine-readable copy of the matrix, used by #16):
+    - `x-action`: matrix action IDs served by the operation.
+    - `x-roles`: roles allowed by RBAC. `ANONYMOUS` means no session is required.
+    - `x-own-only`: roles that may only act on their own resources (checked against the session, never the request).
+    - `x-tbac`: roles that additionally need an active time-limited grant (A19).
+    - `x-session-states`: session states in which the operation is allowed (BR-05). Absent on public operations.
+
+    Anything not listed is denied. Every response carries `X-Request-Id`; errors use the `Error` schema.
+  license:
+    name: Proprietary – exam project, all rights reserved
+    identifier: LicenseRef-Proprietary
+servers:
+  - url: /
+    description: Same origin as the frontend; ingress-nginx routes `/api` and the probes to the backend (#40)
+security:
+  - sessionCookie: []
+tags:
+  - name: auth
+    description: Registration, login, MFA and own account
+  - name: schedule
+    description: Working hours, absences and computed availability of doctors
+  - name: appointments
+    description: Bookings of available times
+  - name: users
+    description: Account and role management (admin)
+  - name: admin
+    description: Practice settings, audit log and time-limited access
+  - name: directory
+    description: Public practice data for logged-in users
+  - name: health
+    description: Kubernetes probes
+
+paths:
+  /api/v1/auth/register:
+    post:
+      tags: [auth]
+      operationId: register
+      summary: Register a patient account
+      description: |
+        Creates a `PATIENT` account. Always answers `202` without body, whether or not the e-mail
+        is already taken, so the endpoint cannot be used to enumerate accounts (BR-02).
+      x-action: [A01]
+      x-roles: [ANONYMOUS]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '202':
+          description: Registration accepted.
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/invitations/accept:
+    post:
+      tags: [auth]
+      operationId: acceptInvitation
+      summary: Accept an invitation and set a password
+      description: |
+        Creates the invited account with role and e-mail taken from the invitation (BR-14).
+        The token is single use and sent in the body, never in the URL. Does not log in.
+      x-action: [A02]
+      x-roles: [ANONYMOUS]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationAcceptRequest'
+      responses:
+        '201':
+          description: Account created. The user logs in next and must enrol MFA.
+        '400':
+          description: Token unknown, expired or already used (`INVALID_INVITATION`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      summary: Log in with e-mail and password
+      description: |
+        Checks the password and creates a session (BR-05). The session state tells the client
+        whether an MFA code (`MFA_PENDING`) or an MFA enrolment (`MFA_ENROLLMENT_REQUIRED`) is
+        still needed. The first successful login while no admin exists promotes the account
+        to `ADMIN` (BR-04). All failures return the same `401 INVALID_CREDENTIALS` (BR-03).
+      x-action: [A03]
+      x-roles: [ANONYMOUS]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Password valid; session created.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SetSessionCookie'
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionInfo'
+        '401':
+          $ref: '#/components/responses/InvalidCredentials'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/mfa/enroll:
+    post:
+      tags: [auth]
+      operationId: enrollMfa
+      summary: Start TOTP enrolment
+      description: |
+        Creates a new TOTP secret and returns it once (BR-06). MFA is enabled only after the
+        first valid code is sent to `/api/v1/auth/mfa/verify`. Calling this again before
+        confirmation replaces the unconfirmed secret.
+      x-action: [A05]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-own-only: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-session-states: [MFA_ENROLLMENT_REQUIRED, ACTIVE]
+      responses:
+        '200':
+          description: Secret created; waiting for confirmation.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaEnrollResponse'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/mfa/verify:
+    post:
+      tags: [auth]
+      operationId: verifyMfa
+      summary: Verify a TOTP or recovery code
+      description: |
+        Two uses (A04):
+        - **Login** (`MFA_PENDING`): a TOTP code or a recovery code completes the login.
+        - **Enrolment confirmation** (`MFA_ENROLLMENT_REQUIRED` or `ACTIVE` with an unconfirmed
+          secret): the first TOTP code enables MFA, and the response contains ten recovery codes,
+          exactly once (BR-07).
+
+        The session ID is rotated on success (BR-05).
+      x-action: [A04]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-own-only: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-session-states: [MFA_PENDING, MFA_ENROLLMENT_REQUIRED, ACTIVE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MfaVerifyRequest'
+      responses:
+        '200':
+          description: Code valid.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SetSessionCookie'
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MfaVerifyResponse'
+        '400':
+          description: Code invalid, expired or already used (`INVALID_MFA_CODE`).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      summary: Log out
+      description: Deletes the current server-side session and clears the cookie.
+      x-action: [A06]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-own-only: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-session-states: [MFA_PENDING, MFA_ENROLLMENT_REQUIRED, ACTIVE]
+      responses:
+        '204':
+          description: Logged out.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/ClearSessionCookie'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/me:
+    get:
+      tags: [auth]
+      operationId: getCurrentSession
+      summary: Get own account and session state
+      description: |
+        Returns the session state and, once the password step is done, the own account.
+        For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17).
+      x-action: [A22]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-own-only: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-session-states: [MFA_PENDING, MFA_ENROLLMENT_REQUIRED, ACTIVE]
+      responses:
+        '200':
+          description: Current session.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionInfo'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/password:
+    post:
+      tags: [auth]
+      operationId: changePassword
+      summary: Change own password
+      description: |
+        Requires the current password. Deletes all other sessions of the user and rotates the
+        current session ID (BR-15).
+      x-action: [A23]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-own-only: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-session-states: [ACTIVE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+      responses:
+        '204':
+          description: Password changed.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SetSessionCookie'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/auth/account/delete:
+    post:
+      tags: [auth]
+      operationId: deleteOwnAccount
+      summary: Delete own patient account
+      description: |
+        Erases the patient's personal data after re-authentication, cancels future appointments
+        and ends all sessions (BR-13). Staff accounts are deactivated by an admin instead.
+      x-action: [A24]
+      x-roles: [PATIENT]
+      x-own-only: [PATIENT]
+      x-session-states: [ACTIVE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountDeleteRequest'
+      responses:
+        '204':
+          description: Account deleted.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/ClearSessionCookie'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/availability:
+    get:
+      tags: [schedule]
+      operationId: listAvailability
+      summary: List available appointment times
+      description: |
+        Computed from working hours minus absences minus booked appointments (BR-23); nothing is
+        stored. `from` and `to` are required and span at most 31 days. Sorted ascending by start,
+        then by doctor (BR-20).
+      x-action: [A07]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/DoctorIdFilter'
+        - $ref: '#/components/parameters/RangeFrom'
+        - $ref: '#/components/parameters/RangeTo'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Page of available times.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailableTimePage'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/absences:
+    post:
+      tags: [schedule]
+      operationId: createAbsence
+      summary: Block a time range of a doctor
+      description: |
+        `DOCTOR` blocks only their own time (`doctorId` omitted or own ID); `STAFF` and `ADMIN`
+        must name an active doctor. Rejected while booked appointments fall into the range
+        (`409 ABSENCE_HAS_APPOINTMENTS`, BR-12).
+      x-action: [A14]
+      x-roles: [STAFF, DOCTOR, ADMIN]
+      x-own-only: [DOCTOR]
+      x-session-states: [ACTIVE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AbsenceCreateRequest'
+      responses:
+        '201':
+          description: Absence created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Absence'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/absences/{id}:
+    delete:
+      tags: [schedule]
+      operationId: deleteAbsence
+      summary: Remove an absence
+      description: |
+        The time becomes available again (BR-12). A `DOCTOR` gets `404` for absences of other doctors.
+      x-action: [A31]
+      x-roles: [STAFF, DOCTOR, ADMIN]
+      x-own-only: [DOCTOR]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '204':
+          description: Absence removed.
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/appointments:
+    get:
+      tags: [appointments]
+      operationId: listAppointments
+      summary: List all appointments
+      description: |
+        All appointments of the practice, sorted ascending by start. `ADMIN` needs an active
+        grant (BR-17); every access under a grant is audited.
+      x-action: [A12]
+      x-roles: [STAFF, DOCTOR, ADMIN]
+      x-tbac: [ADMIN]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/DoctorIdFilter'
+        - $ref: '#/components/parameters/StatusFilter'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Page of appointments including the patient.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentPage'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    post:
+      tags: [appointments]
+      operationId: bookAppointment
+      summary: Book an appointment
+      description: |
+        A `PATIENT` books for themselves and sends neither `patientEmail` nor `guest`. `STAFF` sends
+        exactly one: `patientEmail` of an active patient, or `guest` for a person without an account
+        (BR-09, BR-24). `startsAt` must be an available
+        time of the doctor (BR-23). The booking is atomic; booked appointments of one doctor never
+        overlap, and a patient has at most five open appointments.
+      x-action: [A08]
+      x-roles: [PATIENT, STAFF]
+      x-own-only: [PATIENT]
+      x-session-states: [ACTIVE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentCreateRequest'
+      responses:
+        '201':
+          description: Appointment booked.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/appointments/me:
+    get:
+      tags: [appointments]
+      operationId: listMyAppointments
+      summary: List own appointments
+      description: Appointments of the logged-in patient, sorted ascending by start.
+      x-action: [A11]
+      x-roles: [PATIENT]
+      x-own-only: [PATIENT]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/StatusFilter'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Page of own appointments (without `patient`).
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentPage'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/appointments/{id}/cancel:
+    post:
+      tags: [appointments]
+      operationId: cancelAppointment
+      summary: Cancel an appointment
+      description: |
+        A09 for `PATIENT` (own appointments only, until the cancellation deadline; other patients'
+        appointments return `404`). A10 for `STAFF`, `DOCTOR` and `ADMIN` (with grant), until the
+        start (BR-11). The time becomes available again.
+      x-action: [A09, A10]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-own-only: [PATIENT]
+      x-tbac: [ADMIN]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Appointment cancelled.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/appointments/{id}/reschedule:
+    post:
+      tags: [appointments]
+      operationId: rescheduleAppointment
+      summary: Move an appointment to another time
+      description: |
+        A30. Moves a booked appointment to another available time in one transaction; ID, patient
+        and reason stay the same and the old time becomes available (BR-22). `PATIENT` only for own
+        appointments (others return `404`) and until the cancellation deadline; `STAFF` and
+        `DOCTOR` until the start.
+      x-action: [A30]
+      x-roles: [PATIENT, STAFF, DOCTOR]
+      x-own-only: [PATIENT]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentRescheduleRequest'
+      responses:
+        '200':
+          description: Appointment moved.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/doctors:
+    get:
+      tags: [directory]
+      operationId: listDoctors
+      summary: List active doctors
+      description: Returns only ID and display name of active doctors, sorted by name.
+      x-action: [A27]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Page of doctors.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorPage'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/doctors/{id}/schedule:
+    get:
+      tags: [schedule]
+      operationId: getDoctorSchedule
+      summary: Get a doctor's working hours and absences
+      description: |
+        Weekly working hours and all absences that have not ended yet, sorted by start (BR-08,
+        BR-12). A `DOCTOR` may only read their own schedule; other IDs return `404`.
+      x-action: [A32]
+      x-roles: [STAFF, DOCTOR, ADMIN]
+      x-own-only: [DOCTOR]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: The doctor's schedule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorSchedule'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/doctors/{id}/working-hours:
+    put:
+      tags: [schedule]
+      operationId: setWorkingHours
+      summary: Replace a doctor's weekly working hours
+      description: |
+        Replaces the whole weekly schedule in one transaction (BR-08). Booked appointments are not
+        changed. A `DOCTOR` may only set their own hours; other IDs return `404`.
+      x-action: [A13]
+      x-roles: [STAFF, DOCTOR, ADMIN]
+      x-own-only: [DOCTOR]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkingHoursUpdate'
+      responses:
+        '200':
+          description: Working hours replaced; returns the updated schedule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorSchedule'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/users:
+    get:
+      tags: [users]
+      operationId: listUsers
+      summary: List users
+      description: All accounts except deleted ones, sorted by creation time.
+      x-action: [A15]
+      x-roles: [ADMIN]
+      x-session-states: [ACTIVE]
+      parameters:
+        - name: role
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Role'
+        - name: isActive
+          in: query
+          required: false
+          schema:
+            type: boolean
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Page of users.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPage'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/users/invitations:
+    post:
+      tags: [users]
+      operationId: inviteUser
+      summary: Invite a practice member
+      description: |
+        Creates a single-use invitation valid for 72 hours (BR-14). The token is returned exactly
+        once and must be handed over out of band.
+      x-action: [A16]
+      x-roles: [ADMIN]
+      x-session-states: [ACTIVE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationCreateRequest'
+      responses:
+        '201':
+          description: Invitation created.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationCreated'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/users/{id}/role:
+    patch:
+      tags: [users]
+      operationId: changeUserRole
+      summary: Change the role of a practice member
+      description: |
+        Only between `STAFF`, `DOCTOR` and `ADMIN`; `PATIENT` accounts are never promoted and the
+        last active admin cannot be demoted (BR-15). Deletes all sessions of the user.
+      x-action: [A17]
+      x-roles: [ADMIN]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleChangeRequest'
+      responses:
+        '200':
+          description: Role changed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/users/{id}/deactivate:
+    post:
+      tags: [users]
+      operationId: deactivateUser
+      summary: Deactivate a user
+      description: |
+        The user can no longer log in; all sessions are deleted. The last active admin cannot be
+        deactivated (BR-15).
+      x-action: [A18]
+      x-roles: [ADMIN]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: User deactivated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/users/{id}/mfa/reset:
+    post:
+      tags: [users]
+      operationId: resetUserMfa
+      summary: Reset another user's MFA
+      description: |
+        Deletes TOTP secret, recovery codes and all sessions of the user (BR-16). Not allowed for
+        the own account (`403`).
+      x-action: [A25]
+      x-roles: [ADMIN]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '204':
+          description: MFA reset.
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/admin/appointment-access:
+    post:
+      tags: [admin]
+      operationId: grantAppointmentAccess
+      summary: Unlock access to appointment data for 30 minutes
+      description: Creates a time-limited grant for the calling admin (BR-17).
+      x-action: [A19]
+      x-roles: [ADMIN]
+      x-session-states: [ACTIVE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentAccessRequest'
+      responses:
+        '201':
+          description: Grant active.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentAccessGrant'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/settings:
+    get:
+      tags: [directory]
+      operationId: getSettings
+      summary: Get practice settings
+      x-action: [A26]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-session-states: [ACTIVE]
+      responses:
+        '200':
+          description: Current settings.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PracticeSettings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags: [admin]
+      operationId: updateSettings
+      summary: Update practice settings
+      description: Replaces the single settings record (BR-18).
+      x-action: [A20]
+      x-roles: [ADMIN]
+      x-session-states: [ACTIVE]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PracticeSettingsUpdate'
+      responses:
+        '200':
+          description: Settings updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PracticeSettings'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/audit-events:
+    get:
+      tags: [admin]
+      operationId: listAuditEvents
+      summary: List audit events
+      description: Sorted descending by timestamp (BR-19, BR-20).
+      x-action: [A21]
+      x-roles: [ADMIN]
+      x-session-states: [ACTIVE]
+      parameters:
+        - name: action
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/AuditAction'
+        - name: actorId
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/Uuid'
+        - name: outcome
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/AuditOutcome'
+        - $ref: '#/components/parameters/From'
+        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Page of audit events.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventPage'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /healthz:
+    get:
+      tags: [health]
+      operationId: liveness
+      summary: Liveness probe
+      description: Answers as long as the process serves requests. Does not touch the database (BR-21).
+      x-action: [A28]
+      x-roles: [ANONYMOUS, PATIENT, STAFF, DOCTOR, ADMIN]
+      security: []
+      responses:
+        '200':
+          description: Process alive.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Liveness'
+
+  /readyz:
+    get:
+      tags: [health]
+      operationId: readiness
+      summary: Readiness probe
+      description: Checks the database connection. Returns no error details (BR-21).
+      x-action: [A29]
+      x-roles: [ANONYMOUS, PATIENT, STAFF, DOCTOR, ADMIN]
+      security: []
+      responses:
+        '200':
+          description: Ready to serve traffic.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
+        '503':
+          description: Database unreachable.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Readiness'
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-dh_session
+      description: |
+        Opaque random session token (server-side session, ADR-001). Set with
+        `HttpOnly; Secure; SameSite=Strict; Path=/` and never readable by JavaScript.
+
+  headers:
+    SetSessionCookie:
+      description: '`__Host-dh_session=<token>; HttpOnly; Secure; SameSite=Strict; Path=/`'
+      schema:
+        type: string
+        maxLength: 256
+    ClearSessionCookie:
+      description: '`__Host-dh_session=; Max-Age=0; HttpOnly; Secure; SameSite=Strict; Path=/`'
+      schema:
+        type: string
+        maxLength: 256
+    NoStore:
+      description: Response must not be cached.
+      schema:
+        type: string
+        const: no-store
+    RetryAfter:
+      description: Seconds until the next attempt is allowed.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 86400
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    DoctorIdFilter:
+      name: doctorId
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/Uuid'
+    StatusFilter:
+      name: status
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/AppointmentStatus'
+    From:
+      name: from
+      in: query
+      required: false
+      description: Inclusive lower bound (UTC).
+      schema:
+        $ref: '#/components/schemas/Timestamp'
+    To:
+      name: to
+      in: query
+      required: false
+      description: Exclusive upper bound (UTC).
+      schema:
+        $ref: '#/components/schemas/Timestamp'
+    RangeFrom:
+      name: from
+      in: query
+      required: true
+      description: Inclusive lower bound (UTC); at most 31 days before `to`.
+      schema:
+        $ref: '#/components/schemas/Timestamp'
+    RangeTo:
+      name: to
+      in: query
+      required: true
+      description: Exclusive upper bound (UTC).
+      schema:
+        $ref: '#/components/schemas/Timestamp'
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 10000
+        default: 0
+
+  responses:
+    ValidationError:
+      description: Request does not match the schema (`VALIDATION_ERROR`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: VALIDATION_ERROR
+              message: The request is invalid.
+              requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
+    InvalidCredentials:
+      description: Login failed; deliberately the same for every cause (`INVALID_CREDENTIALS`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: INVALID_CREDENTIALS
+              message: E-mail or password is incorrect.
+              requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
+    Unauthenticated:
+      description: No valid session (`UNAUTHENTICATED`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: UNAUTHENTICATED
+              message: Please log in.
+              requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
+    Forbidden:
+      description: |
+        Role, session state or grant does not allow the action (`FORBIDDEN`, `MFA_REQUIRED`,
+        `ACCESS_GRANT_REQUIRED`, `REAUTHENTICATION_FAILED`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: FORBIDDEN
+              message: You are not allowed to do this.
+              requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
+    NotFound:
+      description: Resource does not exist or belongs to someone else (`NOT_FOUND`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: NOT_FOUND
+              message: Not found.
+              requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
+    Conflict:
+      description: A business rule prevents the action; see the BR codes in `requirements.md`.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: TIME_ALREADY_BOOKED
+              message: This time is no longer available.
+              requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
+    RateLimited:
+      description: Too many attempts (`RATE_LIMITED`).
+      headers:
+        Retry-After:
+          $ref: '#/components/headers/RetryAfter'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: RATE_LIMITED
+              message: Too many attempts. Please try again later.
+              requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
+    InternalError:
+      description: Unexpected error; details only in the server log (`INTERNAL_ERROR`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: INTERNAL_ERROR
+              message: Something went wrong.
+              requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
+
+  schemas:
+    # ---------- Primitives ----------
+    Uuid:
+      type: string
+      format: uuid
+      minLength: 36
+      maxLength: 36
+    Timestamp:
+      type: string
+      format: date-time
+      maxLength: 35
+      description: RFC 3339 timestamp; the server returns UTC with `Z`.
+    Email:
+      type: string
+      format: email
+      minLength: 3
+      maxLength: 254
+    NewPassword:
+      type: string
+      minLength: 12
+      maxLength: 128
+      description: BR-01. Not trimmed; any Unicode characters allowed.
+    Password:
+      type: string
+      minLength: 1
+      maxLength: 128
+    DisplayName:
+      type: string
+      minLength: 1
+      maxLength: 100
+      pattern: '^[^\x00-\x1F\x7F<>]+$'
+      description: Shown in the UI; control characters and angle brackets are rejected.
+    GuestContact:
+      type: object
+      additionalProperties: false
+      required: [name, phone]
+      properties:
+        name:
+          $ref: '#/components/schemas/DisplayName'
+        phone:
+          type: string
+          maxLength: 16
+          pattern: '^\+[1-9][0-9]{6,14}$'
+          description: E.164 phone number.
+    TotpCode:
+      type: string
+      pattern: '^[0-9]{6}$'
+      minLength: 6
+      maxLength: 6
+    RecoveryCodeValue:
+      type: string
+      pattern: '^[a-z2-7]{5}-[a-z2-7]{5}$'
+      minLength: 11
+      maxLength: 11
+    InvitationToken:
+      type: string
+      pattern: '^[A-Za-z0-9_-]{43}$'
+      minLength: 43
+      maxLength: 43
+      description: 32 random bytes, base64url without padding.
+
+    # ---------- Enums ----------
+    Role:
+      type: string
+      enum: [PATIENT, STAFF, DOCTOR, ADMIN]
+    PracticeRole:
+      type: string
+      enum: [STAFF, DOCTOR, ADMIN]
+      description: Roles that can be invited or assigned by an admin.
+    Weekday:
+      type: integer
+      minimum: 1
+      maximum: 7
+      description: ISO weekday, 1 = Monday … 7 = Sunday.
+    LocalTime:
+      type: string
+      maxLength: 5
+      pattern: '^([01][0-9]|2[0-3]):[0-5][05]$'
+      description: Local time `HH:MM` in the practice time zone, on full 5 minutes (BR-08).
+    SessionState:
+      type: string
+      enum: [MFA_PENDING, MFA_ENROLLMENT_REQUIRED, ACTIVE]
+    AppointmentStatus:
+      type: string
+      enum: [BOOKED, CANCELLED]
+    AppointmentReason:
+      type: string
+      enum: [CHECKUP, FOLLOW_UP, VACCINATION, PRESCRIPTION, CONSULTATION, BLOOD_TEST, BLOOD_TEST_FASTING, OTHER]
+      description: BR-10. Category only; no free text.
+    BookingParty:
+      type: string
+      enum: [PATIENT, PRACTICE]
+      description: Whether the patient or a practice member performed the action.
+    AccessPurpose:
+      type: string
+      enum: [SUPPORT_REQUEST, INCIDENT_RESPONSE, DATA_SUBJECT_REQUEST, AUDIT]
+    AuditAction:
+      type: string
+      enum:
+        - USER_REGISTERED
+        - INVITATION_CREATED
+        - INVITATION_ACCEPTED
+        - LOGIN
+        - LOGOUT
+        - MFA_ENROLLED
+        - MFA_VERIFIED
+        - MFA_RECOVERY_CODE_USED
+        - MFA_RESET
+        - ADMIN_BOOTSTRAPPED
+        - PASSWORD_CHANGED
+        - ACCOUNT_DELETED
+        - ROLE_CHANGED
+        - USER_DEACTIVATED
+        - WORKING_HOURS_CHANGED
+        - ABSENCE_CREATED
+        - ABSENCE_DELETED
+        - APPOINTMENT_BOOKED
+        - APPOINTMENT_RESCHEDULED
+        - APPOINTMENT_CANCELLED
+        - APPOINTMENT_ACCESS_GRANTED
+        - APPOINTMENT_DATA_ACCESSED
+        - SETTINGS_UPDATED
+        - ACCESS_DENIED
+    AuditOutcome:
+      type: string
+      enum: [SUCCESS, FAILURE, DENIED]
+    ErrorCode:
+      type: string
+      enum:
+        - VALIDATION_ERROR
+        - UNAUTHENTICATED
+        - INVALID_CREDENTIALS
+        - MFA_REQUIRED
+        - FORBIDDEN
+        - ACCESS_GRANT_REQUIRED
+        - REAUTHENTICATION_FAILED
+        - INVALID_MFA_CODE
+        - INVALID_INVITATION
+        - NOT_FOUND
+        - CONFLICT
+        - MFA_ALREADY_ENABLED
+        - MFA_NOT_ENABLED
+        - WORKING_HOURS_OVERLAP
+        - TIME_NOT_AVAILABLE
+        - TIME_ALREADY_BOOKED
+        - ABSENCE_HAS_APPOINTMENTS
+        - APPOINTMENT_LIMIT_REACHED
+        - APPOINTMENT_NOT_CANCELLABLE
+        - APPOINTMENT_NOT_RESCHEDULABLE
+        - CANCELLATION_DEADLINE_PASSED
+        - LAST_ADMIN
+        - ROLE_CHANGE_NOT_ALLOWED
+        - ACCESS_GRANT_ACTIVE
+        - PAYLOAD_TOO_LARGE
+        - RATE_LIMITED
+        - INTERNAL_ERROR
+        - SERVICE_UNAVAILABLE
+
+    # ---------- Error ----------
+    Error:
+      type: object
+      additionalProperties: false
+      required: [error]
+      properties:
+        error:
+          type: object
+          additionalProperties: false
+          required: [code, message, requestId]
+          properties:
+            code:
+              $ref: '#/components/schemas/ErrorCode'
+            message:
+              type: string
+              maxLength: 200
+              description: Short generic text; never contains internals.
+            requestId:
+              $ref: '#/components/schemas/Uuid'
+
+    # ---------- Requests ----------
+    RegisterRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          $ref: '#/components/schemas/NewPassword'
+        displayName:
+          $ref: '#/components/schemas/DisplayName'
+    InvitationAcceptRequest:
+      type: object
+      additionalProperties: false
+      required: [token, password]
+      properties:
+        token:
+          $ref: '#/components/schemas/InvitationToken'
+        password:
+          $ref: '#/components/schemas/NewPassword'
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [email, password]
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        password:
+          $ref: '#/components/schemas/Password'
+    MfaVerifyRequest:
+      oneOf:
+        - type: object
+          title: TotpVerification
+          additionalProperties: false
+          required: [code]
+          properties:
+            code:
+              $ref: '#/components/schemas/TotpCode'
+        - type: object
+          title: RecoveryCodeVerification
+          description: Only during login (`MFA_PENDING`).
+          additionalProperties: false
+          required: [recoveryCode]
+          properties:
+            recoveryCode:
+              $ref: '#/components/schemas/RecoveryCodeValue'
+    PasswordChangeRequest:
+      type: object
+      additionalProperties: false
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          $ref: '#/components/schemas/Password'
+        newPassword:
+          $ref: '#/components/schemas/NewPassword'
+    AccountDeleteRequest:
+      type: object
+      additionalProperties: false
+      required: [password]
+      properties:
+        password:
+          $ref: '#/components/schemas/Password'
+    WorkingHoursEntry:
+      type: object
+      additionalProperties: false
+      required: [weekday, startTime, endTime]
+      properties:
+        weekday:
+          $ref: '#/components/schemas/Weekday'
+        startTime:
+          $ref: '#/components/schemas/LocalTime'
+        endTime:
+          $ref: '#/components/schemas/LocalTime'
+    WorkingHoursUpdate:
+      type: object
+      additionalProperties: false
+      required: [entries]
+      properties:
+        entries:
+          description: The complete weekly schedule; an empty list removes all working hours.
+          type: array
+          maxItems: 35
+          items:
+            $ref: '#/components/schemas/WorkingHoursEntry'
+    AbsenceCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [startsAt, endsAt]
+      properties:
+        startsAt:
+          $ref: '#/components/schemas/Timestamp'
+        endsAt:
+          $ref: '#/components/schemas/Timestamp'
+        doctorId:
+          $ref: '#/components/schemas/Uuid'
+    AppointmentCreateRequest:
+      type: object
+      description: '`patientEmail` and `guest` are mutually exclusive; sending both returns `422` (BR-09).'
+      additionalProperties: false
+      required: [doctorId, startsAt, reason]
+      properties:
+        doctorId:
+          $ref: '#/components/schemas/Uuid'
+        startsAt:
+          $ref: '#/components/schemas/Timestamp'
+        reason:
+          $ref: '#/components/schemas/AppointmentReason'
+        patientEmail:
+          description: '`STAFF` only: the patient to book for.'
+          $ref: '#/components/schemas/Email'
+        guest:
+          description: '`STAFF` only: a guest without an account (BR-24).'
+          $ref: '#/components/schemas/GuestContact'
+    AppointmentRescheduleRequest:
+      type: object
+      additionalProperties: false
+      required: [startsAt]
+      properties:
+        startsAt:
+          description: The new start; must be an available time (BR-23).
+          $ref: '#/components/schemas/Timestamp'
+        doctorId:
+          description: The new doctor; omitted means the same doctor.
+          $ref: '#/components/schemas/Uuid'
+    InvitationCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [email, role, displayName]
+      properties:
+        email:
+          $ref: '#/components/schemas/Email'
+        role:
+          $ref: '#/components/schemas/PracticeRole'
+        displayName:
+          $ref: '#/components/schemas/DisplayName'
+    RoleChangeRequest:
+      type: object
+      additionalProperties: false
+      required: [role]
+      properties:
+        role:
+          $ref: '#/components/schemas/PracticeRole'
+    AppointmentAccessRequest:
+      type: object
+      additionalProperties: false
+      required: [purpose]
+      properties:
+        purpose:
+          $ref: '#/components/schemas/AccessPurpose'
+    PracticeSettingsUpdate:
+      type: object
+      additionalProperties: false
+      required: [practiceName, cancellationDeadlineHours, appointmentMinutes]
+      properties:
+        practiceName:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: '^[^\x00-\x1F\x7F<>]+$'
+        cancellationDeadlineHours:
+          type: integer
+          minimum: 0
+          maximum: 168
+        appointmentMinutes:
+          type: integer
+          minimum: 5
+          maximum: 240
+
+    # ---------- Responses ----------
+    CurrentUser:
+      type: object
+      required: [id, email, role, mfaEnabled]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        email:
+          $ref: '#/components/schemas/Email'
+        displayName:
+          $ref: '#/components/schemas/DisplayName'
+        role:
+          $ref: '#/components/schemas/Role'
+        mfaEnabled:
+          type: boolean
+    SessionInfo:
+      type: object
+      required: [state]
+      properties:
+        state:
+          $ref: '#/components/schemas/SessionState'
+        user:
+          description: Absent in `MFA_PENDING`, so a password alone reveals nothing about the account.
+          $ref: '#/components/schemas/CurrentUser'
+        appointmentAccessUntil:
+          description: '`ADMIN` only: expiry of the active grant (BR-17); absent without grant.'
+          $ref: '#/components/schemas/Timestamp'
+    MfaEnrollResponse:
+      type: object
+      required: [secret, otpauthUri]
+      properties:
+        secret:
+          type: string
+          pattern: '^[A-Z2-7]{32}$'
+          description: Base32 TOTP secret for manual entry. Returned only here.
+        otpauthUri:
+          type: string
+          maxLength: 512
+          pattern: '^otpauth://totp/'
+          description: For rendering a QR code in the browser; never sent to third-party services.
+    MfaVerifyResponse:
+      type: object
+      required: [session]
+      properties:
+        session:
+          $ref: '#/components/schemas/SessionInfo'
+        recoveryCodes:
+          description: Only on enrolment confirmation; returned exactly once (BR-07).
+          type: array
+          minItems: 10
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/RecoveryCodeValue'
+    DoctorRef:
+      type: object
+      required: [id, displayName]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        displayName:
+          $ref: '#/components/schemas/DisplayName'
+    PatientRef:
+      type: object
+      required: [id, email]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        email:
+          $ref: '#/components/schemas/Email'
+        displayName:
+          $ref: '#/components/schemas/DisplayName'
+    Absence:
+      type: object
+      required: [id, doctor, startsAt, endsAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        doctor:
+          $ref: '#/components/schemas/DoctorRef'
+        startsAt:
+          $ref: '#/components/schemas/Timestamp'
+        endsAt:
+          $ref: '#/components/schemas/Timestamp'
+    DoctorSchedule:
+      type: object
+      required: [doctor, workingHours, absences]
+      properties:
+        doctor:
+          $ref: '#/components/schemas/DoctorRef'
+        workingHours:
+          type: array
+          maxItems: 35
+          items:
+            $ref: '#/components/schemas/WorkingHoursEntry'
+        absences:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Absence'
+    AvailableTime:
+      type: object
+      required: [doctor, startsAt, endsAt]
+      properties:
+        doctor:
+          $ref: '#/components/schemas/DoctorRef'
+        startsAt:
+          $ref: '#/components/schemas/Timestamp'
+        endsAt:
+          $ref: '#/components/schemas/Timestamp'
+    Appointment:
+      type: object
+      required: [id, status, reason, doctor, startsAt, endsAt, bookedBy, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        status:
+          $ref: '#/components/schemas/AppointmentStatus'
+        reason:
+          $ref: '#/components/schemas/AppointmentReason'
+        doctor:
+          $ref: '#/components/schemas/DoctorRef'
+        startsAt:
+          $ref: '#/components/schemas/Timestamp'
+        endsAt:
+          $ref: '#/components/schemas/Timestamp'
+        patient:
+          description: Only for `STAFF`, `DOCTOR` and `ADMIN`; absent in the patient's own view and for guests.
+          $ref: '#/components/schemas/PatientRef'
+        guest:
+          description: Only for guest appointments (BR-24), only for `STAFF`, `DOCTOR` and `ADMIN`; absent after erasure.
+          $ref: '#/components/schemas/GuestContact'
+        bookedBy:
+          $ref: '#/components/schemas/BookingParty'
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        cancelledAt:
+          $ref: '#/components/schemas/Timestamp'
+        cancelledBy:
+          $ref: '#/components/schemas/BookingParty'
+    User:
+      type: object
+      required: [id, email, role, isActive, mfaEnabled, createdAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        email:
+          $ref: '#/components/schemas/Email'
+        displayName:
+          $ref: '#/components/schemas/DisplayName'
+        role:
+          $ref: '#/components/schemas/Role'
+        isActive:
+          type: boolean
+        mfaEnabled:
+          type: boolean
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+    InvitationCreated:
+      type: object
+      required: [id, email, role, token, expiresAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        email:
+          $ref: '#/components/schemas/Email'
+        role:
+          $ref: '#/components/schemas/PracticeRole'
+        token:
+          $ref: '#/components/schemas/InvitationToken'
+        expiresAt:
+          $ref: '#/components/schemas/Timestamp'
+    AppointmentAccessGrant:
+      type: object
+      required: [id, purpose, createdAt, expiresAt]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        purpose:
+          $ref: '#/components/schemas/AccessPurpose'
+        createdAt:
+          $ref: '#/components/schemas/Timestamp'
+        expiresAt:
+          $ref: '#/components/schemas/Timestamp'
+    PracticeSettings:
+      type: object
+      required: [practiceName, cancellationDeadlineHours, appointmentMinutes, updatedAt]
+      properties:
+        practiceName:
+          type: string
+          maxLength: 100
+        cancellationDeadlineHours:
+          type: integer
+          minimum: 0
+          maximum: 168
+        appointmentMinutes:
+          type: integer
+          minimum: 5
+          maximum: 240
+        updatedAt:
+          $ref: '#/components/schemas/Timestamp'
+    AuditEvent:
+      type: object
+      required: [id, action, timestamp, outcome]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        actorId:
+          description: Absent for anonymous requests.
+          $ref: '#/components/schemas/Uuid'
+        action:
+          $ref: '#/components/schemas/AuditAction'
+        target:
+          type: string
+          maxLength: 100
+          pattern: '^[a-z_]+:[0-9a-f-]{36}$'
+          description: '`<type>:<uuid>`, e.g. `appointment:…`; no personal data.'
+        ip:
+          type: string
+          maxLength: 45
+          description: Client IPv4 or IPv6 address.
+        timestamp:
+          $ref: '#/components/schemas/Timestamp'
+        outcome:
+          $ref: '#/components/schemas/AuditOutcome'
+    Liveness:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ok
+    Readiness:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ready, not_ready]
+
+    # ---------- Pages ----------
+    PageMeta:
+      type: object
+      required: [limit, offset, total]
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+        offset:
+          type: integer
+          minimum: 0
+          maximum: 10000
+        total:
+          type: integer
+          minimum: 0
+    AvailableTimePage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/AvailableTime'
+    AppointmentPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/Appointment'
+    DoctorPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/DoctorRef'
+    UserPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/User'
+    AuditEventPage:
+      allOf:
+        - $ref: '#/components/schemas/PageMeta'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              maxItems: 100
+              items:
+                $ref: '#/components/schemas/AuditEvent'
