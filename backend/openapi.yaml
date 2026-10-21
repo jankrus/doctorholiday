@@ -29,10 +29,10 @@ security:
 tags:
   - name: auth
     description: Registration, login, MFA and own account
-  - name: slots
-    description: Bookable time windows
+  - name: schedule
+    description: Working hours, absences and computed availability of doctors
   - name: appointments
-    description: Bookings of slots
+    description: Bookings of available times
   - name: users
     description: Account and role management (admin)
   - name: admin
@@ -189,8 +189,8 @@ paths:
 
         The session ID is rotated on success (BR-05).
       x-action: [A04]
-      x-roles: [ANONYMOUS, PATIENT, STAFF, DOCTOR, ADMIN]
-      x-own-only: [ANONYMOUS, PATIENT, STAFF, DOCTOR, ADMIN]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-own-only: [PATIENT, STAFF, DOCTOR, ADMIN]
       x-session-states: [MFA_PENDING, MFA_ENROLLMENT_REQUIRED, ACTIVE]
       requestBody:
         required: true
@@ -234,8 +234,8 @@ paths:
       summary: Log out
       description: Deletes the current server-side session and clears the cookie.
       x-action: [A06]
-      x-roles: [ANONYMOUS, PATIENT, STAFF, DOCTOR, ADMIN]
-      x-own-only: [ANONYMOUS, PATIENT, STAFF, DOCTOR, ADMIN]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-own-only: [PATIENT, STAFF, DOCTOR, ADMIN]
       x-session-states: [MFA_PENDING, MFA_ENROLLMENT_REQUIRED, ACTIVE]
       responses:
         '204':
@@ -257,8 +257,8 @@ paths:
         Returns the session state and, once the password step is done, the own account.
         For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17).
       x-action: [A22]
-      x-roles: [ANONYMOUS, PATIENT, STAFF, DOCTOR, ADMIN]
-      x-own-only: [ANONYMOUS, PATIENT, STAFF, DOCTOR, ADMIN]
+      x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
+      x-own-only: [PATIENT, STAFF, DOCTOR, ADMIN]
       x-session-states: [MFA_PENDING, MFA_ENROLLMENT_REQUIRED, ACTIVE]
       responses:
         '200':
@@ -345,35 +345,31 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/slots:
+  /api/v1/availability:
     get:
-      tags: [slots]
-      operationId: listFreeSlots
-      summary: List free future slots
-      description: Returns free slots that start in the future, sorted ascending by start (BR-20).
+      tags: [schedule]
+      operationId: listAvailability
+      summary: List available appointment times
+      description: |
+        Computed from working hours minus absences minus booked appointments (BR-23); nothing is
+        stored. `from` and `to` are required and span at most 31 days. Sorted ascending by start,
+        then by doctor (BR-20).
       x-action: [A07]
       x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
       x-session-states: [ACTIVE]
       parameters:
-        - name: free
-          in: query
-          required: true
-          description: Only free slots can be listed; the parameter keeps the contract open for later filters.
-          schema:
-            type: boolean
-            enum: [true]
         - $ref: '#/components/parameters/DoctorIdFilter'
-        - $ref: '#/components/parameters/From'
-        - $ref: '#/components/parameters/To'
+        - $ref: '#/components/parameters/RangeFrom'
+        - $ref: '#/components/parameters/RangeTo'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
       responses:
         '200':
-          description: Page of free slots.
+          description: Page of available times.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SlotPage'
+                $ref: '#/components/schemas/AvailableTimePage'
         '401':
           $ref: '#/components/responses/Unauthenticated'
         '403':
@@ -382,14 +378,17 @@ paths:
           $ref: '#/components/responses/ValidationError'
         '500':
           $ref: '#/components/responses/InternalError'
+
+  /api/v1/absences:
     post:
-      tags: [slots]
-      operationId: createSlot
-      summary: Create a slot
+      tags: [schedule]
+      operationId: createAbsence
+      summary: Block a time range of a doctor
       description: |
-        `DOCTOR` creates slots only for themselves (`doctorId` omitted or own ID); `STAFF` and
-        `ADMIN` must name an active doctor (BR-08).
-      x-action: [A13]
+        `DOCTOR` blocks only their own time (`doctorId` omitted or own ID); `STAFF` and `ADMIN`
+        must name an active doctor. Rejected while booked appointments fall into the range
+        (`409 ABSENCE_HAS_APPOINTMENTS`, BR-12).
+      x-action: [A14]
       x-roles: [STAFF, DOCTOR, ADMIN]
       x-own-only: [DOCTOR]
       x-session-states: [ACTIVE]
@@ -398,14 +397,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SlotCreateRequest'
+              $ref: '#/components/schemas/AbsenceCreateRequest'
       responses:
         '201':
-          description: Slot created.
+          description: Absence created.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Slot'
+                $ref: '#/components/schemas/Absence'
         '401':
           $ref: '#/components/responses/Unauthenticated'
         '403':
@@ -419,14 +418,14 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
-  /api/v1/slots/{id}:
+  /api/v1/absences/{id}:
     delete:
-      tags: [slots]
-      operationId: deleteSlot
-      summary: Delete a free slot
+      tags: [schedule]
+      operationId: deleteAbsence
+      summary: Remove an absence
       description: |
-        Only free slots can be deleted (BR-12). A `DOCTOR` gets `404` for slots of other doctors.
-      x-action: [A14]
+        The time becomes available again (BR-12). A `DOCTOR` gets `404` for absences of other doctors.
+      x-action: [A31]
       x-roles: [STAFF, DOCTOR, ADMIN]
       x-own-only: [DOCTOR]
       x-session-states: [ACTIVE]
@@ -434,15 +433,13 @@ paths:
         - $ref: '#/components/parameters/IdPath'
       responses:
         '204':
-          description: Slot deleted.
+          description: Absence removed.
         '401':
           $ref: '#/components/responses/Unauthenticated'
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -454,7 +451,7 @@ paths:
       operationId: listAppointments
       summary: List all appointments
       description: |
-        All appointments of the practice, sorted ascending by slot start. `ADMIN` needs an active
+        All appointments of the practice, sorted ascending by start. `ADMIN` needs an active
         grant (BR-17); every access under a grant is audited.
       x-action: [A12]
       x-roles: [STAFF, DOCTOR, ADMIN]
@@ -488,11 +485,13 @@ paths:
     post:
       tags: [appointments]
       operationId: bookAppointment
-      summary: Book a slot
+      summary: Book an appointment
       description: |
-        A `PATIENT` books for themselves and must not send `patientEmail`. `STAFF` books on behalf
-        of an active patient identified by `patientEmail` (BR-09). The booking is atomic; at most
-        one booked appointment per slot and five open appointments per patient.
+        A `PATIENT` books for themselves and sends neither `patientEmail` nor `guest`. `STAFF` sends
+        exactly one: `patientEmail` of an active patient, or `guest` for a person without an account
+        (BR-09, BR-24). `startsAt` must be an available
+        time of the doctor (BR-23). The booking is atomic; booked appointments of one doctor never
+        overlap, and a patient has at most five open appointments.
       x-action: [A08]
       x-roles: [PATIENT, STAFF]
       x-own-only: [PATIENT]
@@ -531,7 +530,7 @@ paths:
       tags: [appointments]
       operationId: listMyAppointments
       summary: List own appointments
-      description: Appointments of the logged-in patient, sorted ascending by slot start.
+      description: Appointments of the logged-in patient, sorted ascending by start.
       x-action: [A11]
       x-roles: [PATIENT]
       x-own-only: [PATIENT]
@@ -569,7 +568,7 @@ paths:
       description: |
         A09 for `PATIENT` (own appointments only, until the cancellation deadline; other patients'
         appointments return `404`). A10 for `STAFF`, `DOCTOR` and `ADMIN` (with grant), until the
-        start (BR-11). The slot becomes free again.
+        start (BR-11). The time becomes available again.
       x-action: [A09, A10]
       x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
       x-own-only: [PATIENT]
@@ -580,6 +579,51 @@ paths:
       responses:
         '200':
           description: Appointment cancelled.
+          headers:
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Appointment'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/appointments/{id}/reschedule:
+    post:
+      tags: [appointments]
+      operationId: rescheduleAppointment
+      summary: Move an appointment to another time
+      description: |
+        A30. Moves a booked appointment to another available time in one transaction; ID, patient
+        and reason stay the same and the old time becomes available (BR-22). `PATIENT` only for own
+        appointments (others return `404`) and until the cancellation deadline; `STAFF` and
+        `DOCTOR` until the start.
+      x-action: [A30]
+      x-roles: [PATIENT, STAFF, DOCTOR]
+      x-own-only: [PATIENT]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentRescheduleRequest'
+      responses:
+        '200':
+          description: Appointment moved.
           headers:
             Cache-Control:
               $ref: '#/components/headers/NoStore'
@@ -623,6 +667,78 @@ paths:
           $ref: '#/components/responses/Unauthenticated'
         '403':
           $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/doctors/{id}/schedule:
+    get:
+      tags: [schedule]
+      operationId: getDoctorSchedule
+      summary: Get a doctor's working hours and absences
+      description: |
+        Weekly working hours and all absences that have not ended yet, sorted by start (BR-08,
+        BR-12). A `DOCTOR` may only read their own schedule; other IDs return `404`.
+      x-action: [A32]
+      x-roles: [STAFF, DOCTOR, ADMIN]
+      x-own-only: [DOCTOR]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: The doctor's schedule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorSchedule'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/v1/doctors/{id}/working-hours:
+    put:
+      tags: [schedule]
+      operationId: setWorkingHours
+      summary: Replace a doctor's weekly working hours
+      description: |
+        Replaces the whole weekly schedule in one transaction (BR-08). Booked appointments are not
+        changed. A `DOCTOR` may only set their own hours; other IDs return `404`.
+      x-action: [A13]
+      x-roles: [STAFF, DOCTOR, ADMIN]
+      x-own-only: [DOCTOR]
+      x-session-states: [ACTIVE]
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkingHoursUpdate'
+      responses:
+        '200':
+          description: Working hours replaced; returns the updated schedule.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DoctorSchedule'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -1046,6 +1162,20 @@ components:
       description: Exclusive upper bound (UTC).
       schema:
         $ref: '#/components/schemas/Timestamp'
+    RangeFrom:
+      name: from
+      in: query
+      required: true
+      description: Inclusive lower bound (UTC); at most 31 days before `to`.
+      schema:
+        $ref: '#/components/schemas/Timestamp'
+    RangeTo:
+      name: to
+      in: query
+      required: true
+      description: Exclusive upper bound (UTC).
+      schema:
+        $ref: '#/components/schemas/Timestamp'
     Limit:
       name: limit
       in: query
@@ -1131,8 +1261,8 @@ components:
             $ref: '#/components/schemas/Error'
           example:
             error:
-              code: SLOT_ALREADY_BOOKED
-              message: This slot is no longer available.
+              code: TIME_ALREADY_BOOKED
+              message: This time is no longer available.
               requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
     RateLimited:
       description: Too many attempts (`RATE_LIMITED`).
@@ -1192,6 +1322,18 @@ components:
       maxLength: 100
       pattern: '^[^\x00-\x1F\x7F<>]+$'
       description: Shown in the UI; control characters and angle brackets are rejected.
+    GuestContact:
+      type: object
+      additionalProperties: false
+      required: [name, phone]
+      properties:
+        name:
+          $ref: '#/components/schemas/DisplayName'
+        phone:
+          type: string
+          maxLength: 16
+          pattern: '^\+[1-9][0-9]{6,14}$'
+          description: E.164 phone number.
     TotpCode:
       type: string
       pattern: '^[0-9]{6}$'
@@ -1217,6 +1359,16 @@ components:
       type: string
       enum: [STAFF, DOCTOR, ADMIN]
       description: Roles that can be invited or assigned by an admin.
+    Weekday:
+      type: integer
+      minimum: 1
+      maximum: 7
+      description: ISO weekday, 1 = Monday … 7 = Sunday.
+    LocalTime:
+      type: string
+      maxLength: 5
+      pattern: '^([01][0-9]|2[0-3]):[0-5][05]$'
+      description: Local time `HH:MM` in the practice time zone, on full 5 minutes (BR-08).
     SessionState:
       type: string
       enum: [MFA_PENDING, MFA_ENROLLMENT_REQUIRED, ACTIVE]
@@ -1225,7 +1377,7 @@ components:
       enum: [BOOKED, CANCELLED]
     AppointmentReason:
       type: string
-      enum: [CHECKUP, FOLLOW_UP, VACCINATION, PRESCRIPTION, CONSULTATION, OTHER]
+      enum: [CHECKUP, FOLLOW_UP, VACCINATION, PRESCRIPTION, CONSULTATION, BLOOD_TEST, BLOOD_TEST_FASTING, OTHER]
       description: BR-10. Category only; no free text.
     BookingParty:
       type: string
@@ -1251,9 +1403,11 @@ components:
         - ACCOUNT_DELETED
         - ROLE_CHANGED
         - USER_DEACTIVATED
-        - SLOT_CREATED
-        - SLOT_DELETED
+        - WORKING_HOURS_CHANGED
+        - ABSENCE_CREATED
+        - ABSENCE_DELETED
         - APPOINTMENT_BOOKED
+        - APPOINTMENT_RESCHEDULED
         - APPOINTMENT_CANCELLED
         - APPOINTMENT_ACCESS_GRANTED
         - APPOINTMENT_DATA_ACCESSED
@@ -1278,11 +1432,13 @@ components:
         - CONFLICT
         - MFA_ALREADY_ENABLED
         - MFA_NOT_ENABLED
-        - SLOT_OVERLAP
-        - SLOT_ALREADY_BOOKED
-        - SLOT_NOT_BOOKABLE
+        - WORKING_HOURS_OVERLAP
+        - TIME_NOT_AVAILABLE
+        - TIME_ALREADY_BOOKED
+        - ABSENCE_HAS_APPOINTMENTS
         - APPOINTMENT_LIMIT_REACHED
         - APPOINTMENT_NOT_CANCELLABLE
+        - APPOINTMENT_NOT_RESCHEDULABLE
         - CANCELLATION_DEADLINE_PASSED
         - LAST_ADMIN
         - ROLE_CHANGE_NOT_ALLOWED
@@ -1375,7 +1531,29 @@ components:
       properties:
         password:
           $ref: '#/components/schemas/Password'
-    SlotCreateRequest:
+    WorkingHoursEntry:
+      type: object
+      additionalProperties: false
+      required: [weekday, startTime, endTime]
+      properties:
+        weekday:
+          $ref: '#/components/schemas/Weekday'
+        startTime:
+          $ref: '#/components/schemas/LocalTime'
+        endTime:
+          $ref: '#/components/schemas/LocalTime'
+    WorkingHoursUpdate:
+      type: object
+      additionalProperties: false
+      required: [entries]
+      properties:
+        entries:
+          description: The complete weekly schedule; an empty list removes all working hours.
+          type: array
+          maxItems: 35
+          items:
+            $ref: '#/components/schemas/WorkingHoursEntry'
+    AbsenceCreateRequest:
       type: object
       additionalProperties: false
       required: [startsAt, endsAt]
@@ -1388,15 +1566,33 @@ components:
           $ref: '#/components/schemas/Uuid'
     AppointmentCreateRequest:
       type: object
+      description: '`patientEmail` and `guest` are mutually exclusive; sending both returns `422` (BR-09).'
       additionalProperties: false
-      required: [slotId, reason]
+      required: [doctorId, startsAt, reason]
       properties:
-        slotId:
+        doctorId:
           $ref: '#/components/schemas/Uuid'
+        startsAt:
+          $ref: '#/components/schemas/Timestamp'
         reason:
           $ref: '#/components/schemas/AppointmentReason'
         patientEmail:
+          description: '`STAFF` only: the patient to book for.'
           $ref: '#/components/schemas/Email'
+        guest:
+          description: '`STAFF` only: a guest without an account (BR-24).'
+          $ref: '#/components/schemas/GuestContact'
+    AppointmentRescheduleRequest:
+      type: object
+      additionalProperties: false
+      required: [startsAt]
+      properties:
+        startsAt:
+          description: The new start; must be an available time (BR-23).
+          $ref: '#/components/schemas/Timestamp'
+        doctorId:
+          description: The new doctor; omitted means the same doctor.
+          $ref: '#/components/schemas/Uuid'
     InvitationCreateRequest:
       type: object
       additionalProperties: false
@@ -1425,7 +1621,7 @@ components:
     PracticeSettingsUpdate:
       type: object
       additionalProperties: false
-      required: [practiceName, cancellationDeadlineHours, defaultSlotMinutes]
+      required: [practiceName, cancellationDeadlineHours, appointmentMinutes]
       properties:
         practiceName:
           type: string
@@ -1436,7 +1632,7 @@ components:
           type: integer
           minimum: 0
           maximum: 168
-        defaultSlotMinutes:
+        appointmentMinutes:
           type: integer
           minimum: 5
           maximum: 240
@@ -1512,21 +1708,47 @@ components:
           $ref: '#/components/schemas/Email'
         displayName:
           $ref: '#/components/schemas/DisplayName'
-    Slot:
+    Absence:
       type: object
-      required: [id, startsAt, endsAt, doctor]
+      required: [id, doctor, startsAt, endsAt]
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
+        doctor:
+          $ref: '#/components/schemas/DoctorRef'
         startsAt:
           $ref: '#/components/schemas/Timestamp'
         endsAt:
           $ref: '#/components/schemas/Timestamp'
+    DoctorSchedule:
+      type: object
+      required: [doctor, workingHours, absences]
+      properties:
         doctor:
           $ref: '#/components/schemas/DoctorRef'
+        workingHours:
+          type: array
+          maxItems: 35
+          items:
+            $ref: '#/components/schemas/WorkingHoursEntry'
+        absences:
+          type: array
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/Absence'
+    AvailableTime:
+      type: object
+      required: [doctor, startsAt, endsAt]
+      properties:
+        doctor:
+          $ref: '#/components/schemas/DoctorRef'
+        startsAt:
+          $ref: '#/components/schemas/Timestamp'
+        endsAt:
+          $ref: '#/components/schemas/Timestamp'
     Appointment:
       type: object
-      required: [id, status, reason, slot, bookedBy, createdAt]
+      required: [id, status, reason, doctor, startsAt, endsAt, bookedBy, createdAt]
       properties:
         id:
           $ref: '#/components/schemas/Uuid'
@@ -1534,11 +1756,18 @@ components:
           $ref: '#/components/schemas/AppointmentStatus'
         reason:
           $ref: '#/components/schemas/AppointmentReason'
-        slot:
-          $ref: '#/components/schemas/Slot'
+        doctor:
+          $ref: '#/components/schemas/DoctorRef'
+        startsAt:
+          $ref: '#/components/schemas/Timestamp'
+        endsAt:
+          $ref: '#/components/schemas/Timestamp'
         patient:
-          description: Only for `STAFF`, `DOCTOR` and `ADMIN`; absent in the patient's own view.
+          description: Only for `STAFF`, `DOCTOR` and `ADMIN`; absent in the patient's own view and for guests.
           $ref: '#/components/schemas/PatientRef'
+        guest:
+          description: Only for guest appointments (BR-24), only for `STAFF`, `DOCTOR` and `ADMIN`; absent after erasure.
+          $ref: '#/components/schemas/GuestContact'
         bookedBy:
           $ref: '#/components/schemas/BookingParty'
         createdAt:
@@ -1593,7 +1822,7 @@ components:
           $ref: '#/components/schemas/Timestamp'
     PracticeSettings:
       type: object
-      required: [practiceName, cancellationDeadlineHours, defaultSlotMinutes, updatedAt]
+      required: [practiceName, cancellationDeadlineHours, appointmentMinutes, updatedAt]
       properties:
         practiceName:
           type: string
@@ -1602,7 +1831,7 @@ components:
           type: integer
           minimum: 0
           maximum: 168
-        defaultSlotMinutes:
+        appointmentMinutes:
           type: integer
           minimum: 5
           maximum: 240
@@ -1663,7 +1892,7 @@ components:
         total:
           type: integer
           minimum: 0
-    SlotPage:
+    AvailableTimePage:
       allOf:
         - $ref: '#/components/schemas/PageMeta'
         - type: object
@@ -1673,7 +1902,7 @@ components:
               type: array
               maxItems: 100
               items:
-                $ref: '#/components/schemas/Slot'
+                $ref: '#/components/schemas/AvailableTime'
     AppointmentPage:
       allOf:
         - $ref: '#/components/schemas/PageMeta'
