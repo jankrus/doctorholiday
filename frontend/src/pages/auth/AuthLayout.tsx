@@ -14,12 +14,12 @@ const HIGHLIGHTS: { icon: ReactNode; title: string; text: string }[] = [
   {
     icon: <ClockIcon size={20} />,
     title: 'Flexibel bleiben',
-    text: 'Termine online verschieben oder absagen\u00a0– bis zur Frist der Praxis.',
+    text: 'Termine online verschieben oder absagen.',
   },
   {
     icon: <ShieldIcon size={20} />,
-    title: 'Geschützter Zugang',
-    text: 'Das Praxisteam meldet sich immer mit einem zweiten Faktor an. Auch Sie können einen einrichten.',
+    title: 'Security by Design',
+    text: 'Ihre Daten sind bei uns sicher: DSGVO-konform, verschlüsselt und in Deutschland gehostet.',
   },
 ];
 
