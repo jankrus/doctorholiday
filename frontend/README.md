@@ -16,15 +16,38 @@ npm ci
 
 | Task                               | Command                                                          |
 | :--------------------------------- | :--------------------------------------------------------------- |
-| Dev server (http://localhost:5173) | `npm run dev`                                                    |
+| Dev server (http://localhost:5173) | `npm run dev` (mock API, see [Dev server](#dev-server))          |
 | Production build to `dist/`        | `npm run build` (type check + Vite)                              |
 | Lint and format check              | `npm run lint`                                                   |
 | Format                             | `npm run format`                                                 |
 | Unit tests                         | `npm test`                                                       |
 | Regenerate API types               | `npm run gen:api` (after every change to `backend/openapi.yaml`) |
 
-The dev server proxies `/api` to the backend at `http://localhost:8080`; set `API_PROXY_TARGET` to use another
-address. The frontend never calls another origin, so no CORS is needed.
+## Dev server
+
+### Without a backend (default)
+
+`npm run dev` starts a mock API inside the dev server ([`dev-mock-api.ts`](dev-mock-api.ts)), so all pages can be
+viewed. It answers `GET /api/v1/auth/me` and nothing else (other API calls get `503`). Pick the session the
+frontend sees by opening one of these URLs; it redirects to the matching start page:
+
+| URL                                                             | Session                  |
+| :-------------------------------------------------------------- | :----------------------- |
+| `/__mock/session?as=none`                                       | none (default)           |
+| `/__mock/session?as=PATIENT` (or `STAFF`, `DOCTOR`, `ADMIN`)    | logged in with that role |
+| `/__mock/session?as=MFA_PENDING` (or `MFA_ENROLLMENT_REQUIRED`) | waiting for MFA          |
+
+The mock only exists in the dev server; it is never part of `npm run build`.
+
+### With a backend
+
+Set `API_PROXY_TARGET` to forward `/api` to a running backend instead of the mock:
+
+```sh
+API_PROXY_TARGET=http://localhost:8080 npm run dev
+```
+
+Either way the frontend only calls its own origin, so no CORS is needed.
 
 ## Structure
 

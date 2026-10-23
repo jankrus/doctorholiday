@@ -7,7 +7,7 @@ export function NotFoundPage() {
       <Heading as="h1" size="6" mb="2">
         Page not found
       </Heading>
-      <Text as="p" color="gray">
+      <Text as="p">
         <Link asChild>
           <RouterLink to="/">Back to start</RouterLink>
         </Link>
