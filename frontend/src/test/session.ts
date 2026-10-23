@@ -19,17 +19,26 @@ export const apiError = (code: string, status: number) =>
     { status },
   );
 
-type Handler = (request: Request) => Response | Promise<Response>;
+type Handler = (
+  request: Request,
+  setSession: (next: SessionInfo | null) => void,
+) => Response | Promise<Response>;
 
 /**
  * Stubs `fetch` so `GET /api/v1/auth/me` returns `session`, or 401 for `null`. Other requests go
- * to `handlers` by path (e.g. `{ '/api/v1/auth/login': ... }`), or get 404.
+ * to `handlers` by `METHOD /path` or `/path` (e.g. `{ 'PUT /api/v1/settings': ... }`), or get
+ * 404. A handler can change the session, as the backend does on login, MFA or logout.
  */
-export function stubSession(session: SessionInfo | null, handlers: Record<string, Handler> = {}) {
+export function stubSession(initial: SessionInfo | null, handlers: Record<string, Handler> = {}) {
+  let session = initial;
+  const setSession = (next: SessionInfo | null) => {
+    session = next;
+  };
   const fetchMock = vi.fn(async (request: Request) => {
     const { pathname } = new URL(request.url);
     if (pathname !== '/api/v1/auth/me') {
-      return handlers[pathname]?.(request) ?? new Response(null, { status: 404 });
+      const handler = handlers[`${request.method} ${pathname}`] ?? handlers[pathname];
+      return handler?.(request, setSession) ?? new Response(null, { status: 404 });
     }
     return session
       ? Response.json(session)

@@ -10,6 +10,9 @@ const MESSAGES: Partial<Record<ErrorCode, string>> = {
   VALIDATION_ERROR: 'Bitte überprüfen Sie Ihre Eingaben.',
   UNAUTHENTICATED: 'Bitte melden Sie sich an, um fortzufahren.',
   INVALID_CREDENTIALS: 'E-Mail-Adresse oder Passwort ist falsch.',
+  INVALID_MFA_CODE: 'Der Code ist ungültig oder abgelaufen. Bitte versuchen Sie es erneut.',
+  MFA_REQUIRED: 'Bitte bestätigen Sie zuerst Ihre Anmeldung mit dem zweiten Faktor.',
+  MFA_ALREADY_ENABLED: 'Die Zwei-Faktor-Authentifizierung ist bereits eingerichtet.',
   FORBIDDEN: 'Dazu sind Sie nicht berechtigt.',
   NOT_FOUND: 'Dieser Eintrag wurde nicht gefunden.',
   CONFLICT:

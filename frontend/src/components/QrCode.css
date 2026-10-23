@@ -1,0 +1,14 @@
+/* Fixed black on white, independent of theme: scanners need maximum contrast and fail on
+   inverted (light on dark) codes. */
+.qr-code {
+  display: block;
+  border-radius: var(--radius-3);
+}
+
+.qr-code__background {
+  fill: #fff;
+}
+
+.qr-code__modules {
+  fill: #000;
+}

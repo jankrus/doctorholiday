@@ -28,8 +28,18 @@ npm ci
 ### Without a backend (default)
 
 `npm run dev` starts a mock API inside the dev server ([`dev-mock-api.ts`](dev-mock-api.ts)), so all pages can be
-viewed. It answers `GET /api/v1/auth/me` and nothing else (other API calls get `503`). Pick the session the
-frontend sees by opening one of these URLs; it redirects to the matching start page:
+viewed and the auth flows clicked through. It answers the session, login, registration, logout, MFA and settings
+endpoints; other API calls get `503`. The e-mail address used to log in picks the flow (any password works, except
+`falsch`):
+
+| E-mail                           | Flow                                                    |
+| :------------------------------- | :------------------------------------------------------ |
+| `patient@…` (or anything else)   | logged in directly                                      |
+| `mfa@…`                          | MFA code required (every code works except `000000`)    |
+| `staff@…`, `doctor@…`, `admin@…` | MFA enrolment first; the first admin then sees `/setup` |
+| `limit@…`                        | `429` too many attempts                                 |
+
+To jump to a state directly, open one of these URLs; it redirects to the matching start page:
 
 | URL                                                             | Session                  |
 | :-------------------------------------------------------------- | :----------------------- |
@@ -60,8 +70,9 @@ src/
   auth/session.ts    current session via GET /api/v1/auth/me
   auth/guards.ts     route guards (UX only; the backend authorises every request)
   auth/validation.ts client-side checks mirroring the API contract (server stays authoritative)
-  components/        shared UI: form field, password field, checklist item, logo, icons
-  pages/auth/        split-screen auth layout, login and register pages
+  auth/logout.ts     logout action (POST /auth/logout, back to /login)
+  components/        shared UI: form fields, notices, QR code, copy and logout buttons, logo, icons
+  pages/auth/        split-screen auth layout; login, register, MFA and setup pages
   pages/             app layout, error and placeholder pages
   routes.tsx         route table
 ```
@@ -78,6 +89,7 @@ Colours, typography, layout and form patterns are described in the
 | `/login`, `/register` | no session                                        | #24      |
 | `/mfa`                | session waiting for MFA verification or enrolment | #24      |
 | `/setup`              | `ADMIN` whose practice setup is pending (BR-18)   | #24      |
+| `/logout`             | form target (`POST`) of every logout button       | #24      |
 | `/appointments`       | `PATIENT`                                         | #25      |
 | `/staff`              | `STAFF`, `DOCTOR`                                 | #26      |
 | `/admin`              | `ADMIN`                                           | #26      |

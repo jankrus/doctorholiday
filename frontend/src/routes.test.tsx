@@ -43,11 +43,7 @@ describe('routing', () => {
   });
 
   it('redirects to /mfa until MFA is verified', async () => {
-    await expectPage(
-      renderAt('/admin', { state: 'MFA_PENDING' }),
-      '/mfa',
-      'Zwei-Faktor-Authentifizierung',
-    );
+    await expectPage(renderAt('/admin', { state: 'MFA_PENDING' }), '/mfa', 'Anmeldung bestätigen');
   });
 
   it('redirects an admin to /setup until the practice settings are saved', async () => {

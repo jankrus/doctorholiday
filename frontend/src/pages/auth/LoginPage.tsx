@@ -1,4 +1,4 @@
-import { Button, Callout, Flex, Heading, Link, Text, TextField } from '@radix-ui/themes';
+import { Button, Flex, Link, Text, TextField } from '@radix-ui/themes';
 import { useEffect, useRef } from 'react';
 import {
   Form,
@@ -13,7 +13,8 @@ import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
 import { homePath } from '../../auth/guards';
 import { FormField } from '../../components/FormField';
-import { AlertIcon, SuccessIcon } from '../../components/icons';
+import { Notice } from '../../components/Notice';
+import { PageHeader } from '../../components/PageHeader';
 import { PasswordField } from '../../components/PasswordField';
 
 type LoginResult = { error: string };
@@ -53,33 +54,18 @@ export function LoginPage() {
 
   return (
     <Flex direction="column" gap="6">
-      <Flex direction="column" gap="2">
-        <Heading as="h1" size="8">
-          Anmelden
-        </Heading>
-        <Text as="p" size="3" color="gray">
-          Willkommen zurück. Melden Sie sich an, um Ihre Termine zu verwalten.
-        </Text>
-      </Flex>
+      <PageHeader title="Anmelden">
+        Willkommen zurück. Melden Sie sich an, um Ihre Termine zu verwalten.
+      </PageHeader>
 
       {result?.error ? (
-        <Callout.Root color="red" role="alert" highContrast>
-          <Callout.Icon>
-            <AlertIcon />
-          </Callout.Icon>
-          <Callout.Text>{result.error}</Callout.Text>
-        </Callout.Root>
+        <Notice tone="error">{result.error}</Notice>
+      ) : params.has('registered') ? (
+        <Notice tone="success">
+          Vielen Dank für Ihre Registrierung. Sie können sich jetzt anmelden.
+        </Notice>
       ) : (
-        params.has('registered') && (
-          <Callout.Root role="status" highContrast>
-            <Callout.Icon>
-              <SuccessIcon />
-            </Callout.Icon>
-            <Callout.Text>
-              Vielen Dank für Ihre Registrierung. Sie können sich jetzt anmelden.
-            </Callout.Text>
-          </Callout.Root>
-        )
+        params.has('loggedOut') && <Notice tone="success">Sie wurden abgemeldet.</Notice>
       )}
 
       <Form method="post" noValidate>

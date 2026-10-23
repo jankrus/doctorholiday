@@ -1,5 +1,5 @@
-import { Button, Callout, Flex, Heading, Link, Text, TextField } from '@radix-ui/themes';
-import { useEffect, useRef, useState } from 'react';
+import { Button, Flex, Link, Text, TextField } from '@radix-ui/themes';
+import { useRef, useState } from 'react';
 import {
   Form,
   Link as RouterLink,
@@ -19,8 +19,9 @@ import {
   type FieldErrors,
   type RegistrationInput,
 } from '../../auth/validation';
-import { FormField } from '../../components/FormField';
-import { AlertIcon } from '../../components/icons';
+import { FormField, useFocusFirstError } from '../../components/FormField';
+import { Notice } from '../../components/Notice';
+import { PageHeader } from '../../components/PageHeader';
 import { PasswordField } from '../../components/PasswordField';
 import { Requirement } from '../../components/Requirement';
 
@@ -63,35 +64,18 @@ export function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const errors = result?.fieldErrors ?? {};
 
-  // Move focus to the first field that needs attention, so keyboard and screen reader users land on it.
-  useEffect(() => {
-    const first = Object.keys(result?.fieldErrors ?? {})[0];
-    const field = first && formRef.current?.elements.namedItem(first);
-    if (field instanceof HTMLElement) field.focus();
-  }, [result]);
+  useFocusFirstError(formRef, result?.fieldErrors);
 
   const length = passwordLength(password);
 
   return (
     <Flex direction="column" gap="6">
-      <Flex direction="column" gap="2">
-        <Heading as="h1" size="8">
-          Konto erstellen
-        </Heading>
-        <Text as="p" size="3" color="gray">
-          Mit einem Konto buchen und verwalten Sie Ihre Termine online. Mitarbeitende der Praxis
-          erhalten stattdessen eine Einladung.
-        </Text>
-      </Flex>
+      <PageHeader title="Konto erstellen">
+        Mit einem Konto buchen und verwalten Sie Ihre Termine online. Mitarbeitende der Praxis
+        erhalten stattdessen eine Einladung.
+      </PageHeader>
 
-      {result?.error && (
-        <Callout.Root color="red" role="alert" highContrast>
-          <Callout.Icon>
-            <AlertIcon />
-          </Callout.Icon>
-          <Callout.Text>{result.error}</Callout.Text>
-        </Callout.Root>
-      )}
+      {result?.error && <Notice tone="error">{result.error}</Notice>}
 
       <Form method="post" noValidate ref={formRef}>
         <Flex direction="column" gap="5">

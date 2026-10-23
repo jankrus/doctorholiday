@@ -86,3 +86,16 @@ export const ShieldIcon = (props: IconProps) => (
     <path d="m9 12 2.2 2.2L15.5 10" />
   </Icon>
 );
+
+export const CopyIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="8.5" y="8.5" width="12" height="12" rx="2.5" />
+    <path d="M15.5 5.5v-.5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8.5a2 2 0 0 0 2 2h.5" />
+  </Icon>
+);
+
+export const DownloadIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4 17.5v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1" />
+  </Icon>
+);

@@ -1,11 +1,14 @@
 import { Flex, Spinner } from '@radix-ui/themes';
 import type { RouteObject } from 'react-router';
-import { guestOnly, mfaPending, requireRole, setupPending, toHome } from './auth/guards';
+import { guestOnly, mfaPending, requireRole, toHome } from './auth/guards';
+import { logoutAction } from './auth/logout';
 import { loadSession } from './auth/session';
 import { AppLayout } from './pages/AppLayout';
 import { AuthLayout } from './pages/auth/AuthLayout';
 import { LoginPage, loginAction } from './pages/auth/LoginPage';
+import { MfaPage, mfaAction, mfaShouldRevalidate } from './pages/auth/MfaPage';
 import { RegisterPage, registerAction } from './pages/auth/RegisterPage';
+import { SetupPage, setupAction, setupLoader } from './pages/auth/SetupPage';
 import { ErrorPage } from './pages/ErrorPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
@@ -33,21 +36,21 @@ export const routes: RouteObject[] = [
             action: registerAction,
             element: <RegisterPage />,
           },
-        ],
-      },
-      {
-        element: <AppLayout />,
-        children: [
           {
             path: 'mfa',
             loader: mfaPending,
-            element: <PlaceholderPage title="Zwei-Faktor-Authentifizierung" ticket="#24" />,
+            action: mfaAction,
+            shouldRevalidate: mfaShouldRevalidate,
+            element: <MfaPage />,
           },
-          {
-            path: 'setup',
-            loader: setupPending,
-            element: <PlaceholderPage title="Praxis einrichten" ticket="#24" />,
-          },
+          { path: 'setup', loader: setupLoader, action: setupAction, element: <SetupPage /> },
+        ],
+      },
+      // Form target only; a direct visit goes to the start page.
+      { path: 'logout', loader: toHome, action: logoutAction },
+      {
+        element: <AppLayout />,
+        children: [
           {
             path: 'appointments',
             loader: requireRole(['PATIENT']),

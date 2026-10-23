@@ -1,5 +1,5 @@
 import { Flex, Text } from '@radix-ui/themes';
-import { useId, type ReactNode } from 'react';
+import { useEffect, useId, type ReactNode, type RefObject } from 'react';
 import { AlertIcon } from './icons';
 import './FormField.css';
 
@@ -55,4 +55,19 @@ export function FormField({ label, optional, hint, error, children }: FormFieldP
       )}
     </Flex>
   );
+}
+
+/**
+ * After a failed submit, moves focus to the first field with an error (keys in form order), so
+ * keyboard and screen reader users land on it.
+ */
+export function useFocusFirstError(
+  form: RefObject<HTMLFormElement | null>,
+  errors: Record<string, string | undefined> | undefined,
+) {
+  useEffect(() => {
+    const first = Object.keys(errors ?? {})[0];
+    const field = first && form.current?.elements.namedItem(first);
+    if (field instanceof HTMLElement) field.focus();
+  }, [form, errors]);
 }

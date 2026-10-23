@@ -54,7 +54,7 @@ describe('login page', () => {
     await submit('doctor@example.test', 'correct horse battery');
 
     expect(
-      await screen.findByRole('heading', { name: 'Zwei-Faktor-Authentifizierung' }),
+      await screen.findByRole('heading', { name: 'Anmeldung bestätigen' }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/mfa');
   });

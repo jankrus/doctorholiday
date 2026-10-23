@@ -52,11 +52,15 @@ export const guestOnly: LoaderFunction = async () => {
   return session ? redirect(homePath(session)) : null;
 };
 
-/** A step on the way in: only while the session is at that step, as `homePath` decides. */
+/**
+ * A step on the way in: only while the session is at that step, as `homePath` decides. Returns
+ * the session, so the page knows which variant of the step to show.
+ */
 function stepPage(path: string): LoaderFunction {
   return async () => {
-    const target = homePath(await loadSession());
-    return target === path ? null : redirect(target);
+    const session = await loadSession();
+    const target = homePath(session);
+    return target === path ? session : redirect(target);
   };
 }
 

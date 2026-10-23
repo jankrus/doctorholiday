@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { passwordLength, validateRegistration } from './validation';
+import {
+  normalizeRecoveryCode,
+  normalizeTotpCode,
+  passwordLength,
+  recoveryCodeError,
+  totpCodeError,
+  validatePracticeSettings,
+  validateRegistration,
+} from './validation';
 
 const valid = {
   displayName: '',
@@ -49,5 +57,48 @@ describe('validateRegistration', () => {
     expect(emoji.length).toBe(24);
     expect(passwordLength(emoji)).toBe(12);
     expect(validateRegistration({ ...valid, password: emoji, confirmPassword: emoji })).toBeNull();
+  });
+});
+
+describe('MFA codes', () => {
+  it('accepts six digits, also with spaces', () => {
+    expect(totpCodeError(normalizeTotpCode(' 123 456 '))).toBeUndefined();
+    expect(totpCodeError('12345')).toBeDefined();
+    expect(totpCodeError('12345a')).toBeDefined();
+  });
+
+  it('accepts recovery codes in any case', () => {
+    expect(recoveryCodeError(normalizeRecoveryCode(' ABCDE-FGH27 '))).toBeUndefined();
+    expect(recoveryCodeError('abcde-fgh18')).toBeDefined(); // 1 and 8 are not Base32
+    expect(recoveryCodeError('abcdefghij')).toBeDefined();
+  });
+});
+
+describe('validatePracticeSettings', () => {
+  const input = {
+    practiceName: 'Praxis',
+    cancellationDeadlineHours: '24',
+    appointmentMinutes: '15',
+  };
+
+  it('converts valid input to numbers', () => {
+    expect(validatePracticeSettings(input)).toEqual({
+      value: { practiceName: 'Praxis', cancellationDeadlineHours: 24, appointmentMinutes: 15 },
+    });
+  });
+
+  it.each([
+    [{ practiceName: '' }, 'practiceName'],
+    [{ practiceName: 'a'.repeat(101) }, 'practiceName'],
+    [{ practiceName: 'Praxis <b>' }, 'practiceName'],
+    [{ cancellationDeadlineHours: '-1' }, 'cancellationDeadlineHours'],
+    [{ cancellationDeadlineHours: '169' }, 'cancellationDeadlineHours'],
+    [{ cancellationDeadlineHours: '1.5' }, 'cancellationDeadlineHours'],
+    [{ appointmentMinutes: '4' }, 'appointmentMinutes'],
+    [{ appointmentMinutes: '241' }, 'appointmentMinutes'],
+    [{ appointmentMinutes: '' }, 'appointmentMinutes'],
+  ])('rejects %o', (change, field) => {
+    const result = validatePracticeSettings({ ...input, ...change });
+    expect('errors' in result && Object.keys(result.errors)).toEqual([field]);
   });
 });
