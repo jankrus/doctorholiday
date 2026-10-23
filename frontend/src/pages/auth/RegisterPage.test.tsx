@@ -75,7 +75,8 @@ describe('register page', () => {
     const { sent } = renderRegister(() => new Response(null, { status: 202 }));
     await submit({ email: 'not-an-email', password: 'short', confirm: 'other' });
 
-    const email = await screen.findByLabelText('E-Mail-Adresse');
+    await screen.findByText('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
+    const email = screen.getByLabelText('E-Mail-Adresse');
     expect(email).toHaveAccessibleDescription('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
     expect(email).toHaveAttribute('aria-invalid', 'true');
     expect(email).toHaveFocus();

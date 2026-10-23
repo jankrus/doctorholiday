@@ -53,9 +53,20 @@ async function enroll(): Promise<EnrollResult> {
   }
 }
 
+async function decline(): Promise<FormResult | Response> {
+  try {
+    const { response, error } = await api.POST('/api/v1/auth/mfa/decline');
+    // The index route reloads the session (no offer any more) and picks the start page.
+    return response.ok ? redirect('/') : { error: errorMessage(error) };
+  } catch {
+    return { error: errorMessage(null) };
+  }
+}
+
 /**
- * Three intents: `enroll` creates a TOTP secret, `confirm` enables MFA with the first code and
- * returns the recovery codes, anything else is the login challenge (TOTP or recovery code).
+ * Four intents: `enroll` creates a TOTP secret, `confirm` enables MFA with the first code and
+ * returns the recovery codes, `decline` turns down the optional offer for patients (BR-25),
+ * anything else is the login challenge (TOTP or recovery code).
  */
 export async function mfaAction({
   request,
@@ -65,6 +76,7 @@ export async function mfaAction({
   const raw = String(form.get('code') ?? '');
 
   if (intent === 'enroll') return enroll();
+  if (intent === 'decline') return decline();
 
   if (intent === 'confirm') {
     const code = normalizeTotpCode(raw);
@@ -90,9 +102,15 @@ export async function mfaAction({
  */
 export const mfaShouldRevalidate: ShouldRevalidateFunction = () => false;
 
+/**
+ * Three variants: the login challenge (`MFA_PENDING`), the mandatory enrolment for practice roles
+ * (`MFA_ENROLLMENT_REQUIRED`) and the optional one for patients who have not answered the offer
+ * yet (`ACTIVE` with `mfaOfferPending`, BR-25).
+ */
 export function MfaPage() {
   const session = useLoaderData<SessionInfo>();
-  return session.state === 'MFA_PENDING' ? <MfaChallenge /> : <MfaEnrollment />;
+  if (session.state === 'MFA_PENDING') return <MfaChallenge />;
+  return <MfaEnrollment optional={session.state === 'ACTIVE'} />;
 }
 
 /** Clears and focuses the code input after a failed attempt, so the next code can be typed. */
@@ -179,7 +197,39 @@ function MfaChallenge() {
   );
 }
 
-function MfaEnrollment() {
+/** Leaves the flow: optional enrolment declines the offer, mandatory enrolment logs out. */
+function LeaveEnrollment({ optional }: { optional: boolean }) {
+  const decline = useFetcher<FormResult>();
+  if (!optional) {
+    return (
+      <Box>
+        <LogoutButton>Abbrechen und abmelden</LogoutButton>
+      </Box>
+    );
+  }
+  return (
+    <Flex direction="column" gap="3" align="start">
+      {decline.data?.error && <Notice tone="error">{decline.data.error}</Notice>}
+      <decline.Form method="post">
+        <input type="hidden" name="intent" value="decline" />
+        <Button
+          type="submit"
+          variant="ghost"
+          color="gray"
+          size="2"
+          loading={decline.state !== 'idle'}
+        >
+          Ohne zweiten Faktor fortfahren
+        </Button>
+      </decline.Form>
+      <Text as="p" size="2" color="gray">
+        Wir fragen Sie danach nicht noch einmal.
+      </Text>
+    </Flex>
+  );
+}
+
+function MfaEnrollment({ optional }: { optional: boolean }) {
   const enroll = useFetcher<EnrollResult>();
   const confirm = useFetcher<ConfirmResult>();
   const inputRef = useResetOnError(confirm.data);
@@ -194,21 +244,27 @@ function MfaEnrollment() {
   if (!enrollment) {
     return (
       <Flex direction="column" gap="6">
-        <PageHeader title="Zweiten Faktor einrichten">
-          Konten des Praxisteams sind zusätzlich zum Passwort mit einem zweiten Faktor geschützt.
-          Dafür brauchen Sie eine Authenticator-App auf Ihrem Smartphone. Die Einrichtung dauert
-          etwa zwei Minuten.
-        </PageHeader>
+        {optional ? (
+          <PageHeader title="Konto zusätzlich schützen?">
+            Mit einem zweiten Faktor bleibt Ihr Konto auch dann sicher, wenn jemand Ihr Passwort
+            kennt: Bei der Anmeldung geben Sie zusätzlich einen Code aus einer Authenticator-App auf
+            Ihrem Smartphone ein. Das ist freiwillig und dauert etwa zwei Minuten.
+          </PageHeader>
+        ) : (
+          <PageHeader title="Zweiten Faktor einrichten">
+            Konten des Praxisteams sind zusätzlich zum Passwort mit einem zweiten Faktor geschützt.
+            Dafür brauchen Sie eine Authenticator-App auf Ihrem Smartphone. Die Einrichtung dauert
+            etwa zwei Minuten.
+          </PageHeader>
+        )}
         {enroll.data?.error && <Notice tone="error">{enroll.data.error}</Notice>}
         <enroll.Form method="post">
           <input type="hidden" name="intent" value="enroll" />
           <Button type="submit" size="3" loading={enroll.state !== 'idle'} className="mfa-full">
-            Einrichtung starten
+            {optional ? 'Zweiten Faktor einrichten' : 'Einrichtung starten'}
           </Button>
         </enroll.Form>
-        <Box>
-          <LogoutButton>Abbrechen und abmelden</LogoutButton>
-        </Box>
+        <LeaveEnrollment optional={optional} />
       </Flex>
     );
   }
@@ -279,9 +335,7 @@ function MfaEnrollment() {
         </li>
       </ol>
 
-      <Box>
-        <LogoutButton>Abbrechen und abmelden</LogoutButton>
-      </Box>
+      <LeaveEnrollment optional={optional} />
     </Flex>
   );
 }

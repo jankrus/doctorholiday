@@ -2,7 +2,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { renderRoute } from '../../test/render';
-import { activeSession, apiError, stubSession } from '../../test/session';
+import { activeSession, apiError, patientWithOffer, stubSession } from '../../test/session';
 
 const RECOVERY_CODES = [
   'k7m2p-q4x5z',
@@ -58,7 +58,8 @@ describe('MFA login challenge', () => {
     const user = await typeCode('Bestätigungscode', '12ab');
     await user.click(screen.getByRole('button', { name: 'Bestätigen' }));
 
-    expect(await screen.findByLabelText('Bestätigungscode')).toHaveAccessibleDescription(
+    await screen.findByText('Bitte geben Sie den 6-stelligen Code aus Ihrer App ein.');
+    expect(screen.getByLabelText('Bestätigungscode')).toHaveAccessibleDescription(
       'Bitte geben Sie den 6-stelligen Code aus Ihrer App ein.',
     );
     expect(sent).toEqual([]);
@@ -162,6 +163,75 @@ describe('MFA enrolment', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Der Code ist ungültig');
     expect(screen.getByRole('img', { name: /QR-Code/ })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText('Bestätigungscode')).toHaveValue(''));
+  });
+});
+
+describe('optional MFA offer for patients', () => {
+  function renderOffer() {
+    let declined = false;
+    const fetchMock = stubSession(patientWithOffer(), {
+      'POST /api/v1/auth/mfa/decline': (_, setSession) => {
+        declined = true;
+        setSession(activeSession('PATIENT'));
+        return new Response(null, { status: 204 });
+      },
+      'POST /api/v1/auth/mfa/enroll': () =>
+        Response.json({
+          secret: 'JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP',
+          otpauthUri:
+            'otpauth://totp/Doctor%20Holiday:patient?secret=JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP',
+        }),
+      'POST /api/v1/auth/mfa/verify': (_, setSession) => {
+        const session = activeSession('PATIENT');
+        setSession(session);
+        return Response.json({ session, recoveryCodes: RECOVERY_CODES });
+      },
+    });
+    return { router: renderRoute('/appointments'), declined: () => declined, fetchMock };
+  }
+
+  it('is shown after login instead of the start page', async () => {
+    const { router } = renderOffer();
+    expect(
+      await screen.findByRole('heading', { name: 'Konto zusätzlich schützen?' }),
+    ).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/mfa');
+    expect(screen.queryByRole('button', { name: /abmelden/ })).not.toBeInTheDocument();
+  });
+
+  it('can be declined once and then opens the appointments', async () => {
+    const { router, declined } = renderOffer();
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Ohne zweiten Faktor fortfahren' }),
+    );
+
+    expect(await screen.findByRole('heading', { name: 'Meine Termine' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/appointments');
+    expect(declined()).toBe(true);
+  });
+
+  it('can be accepted and ends with the recovery codes', async () => {
+    const { router } = renderOffer();
+    await userEvent.click(await screen.findByRole('button', { name: 'Zweiten Faktor einrichten' }));
+    const user = await typeCode('Bestätigungscode', '123456');
+    await user.click(screen.getByRole('button', { name: 'Bestätigen und aktivieren' }));
+    await screen.findByRole('list', { name: 'Wiederherstellungscodes' });
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Weiter' }));
+
+    expect(await screen.findByRole('heading', { name: 'Meine Termine' })).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/appointments');
+  });
+});
+
+describe('mandatory MFA enrolment for practice roles', () => {
+  it('offers no way to skip, only to log out', async () => {
+    stubSession({ state: 'MFA_ENROLLMENT_REQUIRED' });
+    renderRoute('/mfa');
+    expect(
+      await screen.findByRole('button', { name: 'Abbrechen und abmelden' }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Ohne zweiten Faktor/ })).not.toBeInTheDocument();
   });
 });
 

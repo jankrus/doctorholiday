@@ -63,7 +63,8 @@ describe('practice setup', () => {
     const user = await replace('Absagefrist', '200');
     await user.click(screen.getByRole('button', { name: 'Speichern und fortfahren' }));
 
-    const name = await screen.findByLabelText('Name der Praxis');
+    await screen.findByText('Bitte geben Sie den Namen der Praxis ein.');
+    const name = screen.getByLabelText('Name der Praxis');
     expect(name).toHaveAccessibleDescription('Bitte geben Sie den Namen der Praxis ein.');
     expect(name).toHaveFocus();
     expect(screen.getByLabelText('Absagefrist')).toHaveAccessibleDescription(

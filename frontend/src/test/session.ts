@@ -13,6 +13,12 @@ export function activeSession(role: Role): SessionInfo {
   };
 }
 
+/** A patient who has neither enabled MFA nor declined the offer yet (BR-25). */
+export function patientWithOffer(): SessionInfo {
+  const session = activeSession('PATIENT');
+  return { ...session, user: session.user && { ...session.user, mfaOfferPending: true } };
+}
+
 export const apiError = (code: string, status: number) =>
   Response.json(
     { error: { code, message: 'Server text.', requestId: '00000000-0000-4000-8000-000000000003' } },

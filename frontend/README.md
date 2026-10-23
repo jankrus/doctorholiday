@@ -34,19 +34,20 @@ endpoints; other API calls get `503`. The e-mail address used to log in picks th
 
 | E-mail                           | Flow                                                    |
 | :------------------------------- | :------------------------------------------------------ |
-| `patient@…` (or anything else)   | logged in directly                                      |
+| `patient@…` (or anything else)   | logged in; MFA offer until accepted or declined (BR-25) |
 | `mfa@…`                          | MFA code required (every code works except `000000`)    |
 | `staff@…`, `doctor@…`, `admin@…` | MFA enrolment first; the first admin then sees `/setup` |
 | `limit@…`                        | `429` too many attempts                                 |
 
 To jump to a state directly, open one of these URLs; it redirects to the matching start page:
 
-| URL                                                             | Session                  |
-| :-------------------------------------------------------------- | :----------------------- |
-| `/__mock/session?as=none`                                       | none (default)           |
-| `/__mock/session?as=PATIENT` (or `STAFF`, `DOCTOR`, `ADMIN`)    | logged in with that role |
-| `/__mock/session?as=ADMIN_SETUP`                                | admin, setup pending     |
-| `/__mock/session?as=MFA_PENDING` (or `MFA_ENROLLMENT_REQUIRED`) | waiting for MFA          |
+| URL                                                             | Session                    |
+| :-------------------------------------------------------------- | :------------------------- |
+| `/__mock/session?as=none`                                       | none (default)             |
+| `/__mock/session?as=PATIENT` (or `STAFF`, `DOCTOR`, `ADMIN`)    | logged in with that role   |
+| `/__mock/session?as=PATIENT_MFA_OFFER`                          | patient, MFA offer pending |
+| `/__mock/session?as=ADMIN_SETUP`                                | admin, setup pending       |
+| `/__mock/session?as=MFA_PENDING` (or `MFA_ENROLLMENT_REQUIRED`) | waiting for MFA            |
 
 The mock only exists in the dev server; it is never part of `npm run build`.
 
@@ -84,15 +85,15 @@ Colours, typography, layout and form patterns are described in the
 
 ## Routes
 
-| Path                  | Who                                               | Built in |
-| :-------------------- | :------------------------------------------------ | :------- |
-| `/login`, `/register` | no session                                        | #24      |
-| `/mfa`                | session waiting for MFA verification or enrolment | #24      |
-| `/setup`              | `ADMIN` whose practice setup is pending (BR-18)   | #24      |
-| `/logout`             | form target (`POST`) of every logout button       | #24      |
-| `/appointments`       | `PATIENT`                                         | #25      |
-| `/staff`              | `STAFF`, `DOCTOR`                                 | #26      |
-| `/admin`              | `ADMIN`                                           | #26      |
+| Path                  | Who                                                                     | Built in |
+| :-------------------- | :---------------------------------------------------------------------- | :------- |
+| `/login`, `/register` | no session                                                              | #24      |
+| `/mfa`                | MFA verification or enrolment pending, or a patient's MFA offer (BR-25) | #24      |
+| `/setup`              | `ADMIN` whose practice setup is pending (BR-18)                         | #24      |
+| `/logout`             | form target (`POST`) of every logout button                             | #24      |
+| `/appointments`       | `PATIENT`                                                               | #25      |
+| `/staff`              | `STAFF`, `DOCTOR`                                                       | #26      |
+| `/admin`              | `ADMIN`                                                                 | #26      |
 
 Without a session every protected route redirects to `/login`; other roles are sent to their own start page.
 The first login creates the admin (BR-04, #15); `GET /api/v1/auth/me` then returns `setupRequired: true` and

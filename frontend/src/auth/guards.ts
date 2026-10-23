@@ -14,12 +14,14 @@ const HOME_BY_ROLE: Record<Role, string> = {
 
 /**
  * Where a session belongs: `/login` without one, `/mfa` until MFA is done, `/setup` while the
- * first admin has not saved the practice settings yet, else its role's start page.
+ * first admin has not saved the practice settings yet, `/mfa` again while a patient has not
+ * answered the optional MFA offer (BR-25), else its role's start page.
  */
 export function homePath(session: SessionInfo | null): string {
   if (!session) return '/login';
   if (session.state !== 'ACTIVE' || !session.user) return '/mfa';
   if (session.setupRequired) return '/setup';
+  if (session.user.mfaOfferPending) return '/mfa';
   return HOME_BY_ROLE[session.user.role];
 }
 
@@ -28,15 +30,10 @@ export function protectedRedirect(
   session: SessionInfo | null,
   roles: readonly Role[],
 ): string | null {
-  if (
-    session?.state === 'ACTIVE' &&
-    session.user &&
-    !session.setupRequired &&
-    roles.includes(session.user.role)
-  ) {
-    return null;
-  }
-  return homePath(session);
+  const home = homePath(session);
+  const role = session?.user?.role;
+  // Only a session without open steps lands on its role's start page.
+  return role && home === HOME_BY_ROLE[role] && roles.includes(role) ? null : home;
 }
 
 export function requireRole(roles: readonly Role[]): LoaderFunction {

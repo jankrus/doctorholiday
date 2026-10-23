@@ -117,6 +117,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/mfa/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decline the optional MFA offer
+         * @description `PATIENT` only (BR-25): records that the patient does not want MFA now, so
+         *     `mfaOfferPending` is no longer returned and the UI stops offering the enrolment after
+         *     login. Idempotent. The patient can still enrol later (A05). Practice roles cannot decline,
+         *     because MFA is mandatory for them (BR-05).
+         */
+        post: operations["declineMfaOffer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/logout": {
         parameters: {
             query?: never;
@@ -148,7 +171,8 @@ export interface paths {
          * Get own account and session state
          * @description Returns the session state and, once the password step is done, the own account.
          *     For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17)
-         *     and whether the practice setup is still pending (BR-18).
+         *     and whether the practice setup is still pending (BR-18); for `PATIENT` whether the
+         *     optional MFA offer is still pending (BR-25).
          */
         get: operations["getCurrentSession"];
         put?: never;
@@ -772,6 +796,11 @@ export interface components {
             displayName?: components["schemas"]["DisplayName"];
             role: components["schemas"]["Role"];
             mfaEnabled: boolean;
+            /**
+             * @description `PATIENT` only: `true` while MFA is not enabled and the patient has never declined the
+             *     offer (BR-25). The client then offers the optional enrolment; absent otherwise.
+             */
+            mfaOfferPending?: boolean;
         };
         SessionInfo: {
             state: components["schemas"]["SessionState"];
@@ -1237,6 +1266,27 @@ export interface operations {
             409: components["responses"]["Conflict"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    declineMfaOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Offer declined. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
             500: components["responses"]["InternalError"];
         };
     };
