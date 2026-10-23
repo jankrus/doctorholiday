@@ -49,7 +49,7 @@ Both single-row tables are filled by the migration, not by dev seed data, so a f
 
 ## Database roles and grants
 
-Least privilege, details and the exact `GRANT` statements go to `backend/README.md` with #12:
+Least privilege; the roles, the exact privileges per table and how migrations run are documented in [`backend/README.md`](../../backend/README.md#database), the statements are in `infrastructure/postgres/init/00-roles.sh` and `backend/migrations/V004__app_grants.sql`:
 
-- **Owner/migration role** owns the schema and runs the migrations. It is not a superuser: `citext` and `btree_gist` are trusted extensions (PostgreSQL 13+), so a role with `CREATE` on the database can install them.
-- **Application role** (used by the running backend) gets `SELECT, INSERT, UPDATE, DELETE` on the tables it needs, but on `audit_events` only `SELECT, INSERT`, so the application cannot rewrite the audit log. It has no `CREATE` on the schema and no DDL rights.
+- **Owner/migration role** (`doctorholiday_owner`) owns the database and schema and runs the migrations. It is not a superuser: `citext` and `btree_gist` are trusted extensions (PostgreSQL 13+), so a role with `CREATE` on the database can install them.
+- **Application role** (`doctorholiday_app`, used by the running backend) has no `CREATE` on the schema and no DDL rights. It gets `DELETE` only on tables whose rows the domain deletes, no `INSERT`/`DELETE` on the two single-row tables, and on `audit_events` only `SELECT, INSERT`, so the application cannot rewrite the audit log.
