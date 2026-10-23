@@ -8,7 +8,7 @@ Read this first. Then read the exam brief and every issue listed under *Dependen
 Deviations from the brief are allowed only if justified in `docs/report/deviations.md`.
 
 - Exam brief: [docs/sbd_pruefungsleistung_3er.pdf](docs/sbd_pruefungsleistung_3er.pdf)
-- Tech stack decision: [ADR-001](docs/architecture/adr/ADR-001-tech-stack.md)
+- Tech stack decision: [ADR-001](docs/architecture/adr/ADR-001-tech-stack.md); frontend libraries: [ADR-004](docs/architecture/adr/ADR-004-frontend-libraries.md)
 - Project board / tickets: https://github.com/users/jankrus/projects/1/
 
 ## Directory map (layout fixed by exam brief §7a)
@@ -25,8 +25,8 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | `VERSION.txt` | SemVer, single line, used as image tag |
 | `Makefile` | Project blueprint: `make up` must yield a healthy cluster and print `Ready` |
 
-## Stack (details in ADR-001)
-- Frontend: React 18, Vite 5, ESLint 8, Vitest
+## Stack (details in ADR-001, ADR-004)
+- Frontend: React 18, TypeScript 5, Vite 8, Radix Themes, React Router 7, `openapi-fetch` (types generated from `backend/openapi.yaml`), ESLint 8, Prettier, Vitest 5; Node.js 22.13+
 - Backend: FastAPI 0.110+, SQLAlchemy 2, Pydantic 2, `passlib` + `argon2-cffi` (Argon2id), `pyotp` (TOTP), `ruff`, `pytest`
 - DB: PostgreSQL 16
 - Auth: server-side sessions in `HttpOnly; Secure; SameSite=Strict` cookies (no JWT in browser storage)
@@ -59,12 +59,14 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 ## Run tests and linters locally
 | Task | Command |
 | :--- | :--- |
-| All tests / lint | `make test` / `make lint` (stubs until #11, #23, #42) |
+| All tests / lint | `make test` / `make lint` (backend part is a stub until #11) |
 | Backend tests | `cd backend && pytest` |
 | Backend lint | `cd backend && ruff check . && ruff format --check .` |
 | API contract lint | `cd backend && npx @redocly/cli@2.60.0 lint openapi.yaml` |
 | Frontend tests | `cd frontend && npm ci && npm test` |
-| Frontend lint | `cd frontend && npm run lint` |
+| Frontend lint | `cd frontend && npm run lint` (ESLint + Prettier) |
+| Frontend build | `cd frontend && npm run build` (static assets in `frontend/dist/`) |
+| Frontend API types | `cd frontend && npm run gen:api` (after changing `backend/openapi.yaml`) |
 | Cluster up / down | `make up` / `make down` |
 
 Commands become valid as the respective skeleton tickets land; update this table when they do.
