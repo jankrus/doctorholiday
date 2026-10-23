@@ -227,6 +227,30 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /api/v1/auth/mfa/decline:
+    post:
+      tags: [auth]
+      operationId: declineMfaOffer
+      summary: Decline the optional MFA offer
+      description: |
+        `PATIENT` only (BR-26): records that the patient does not want MFA now, so
+        `mfaOfferPending` is no longer returned and the UI stops offering the enrolment after
+        login. Idempotent. The patient can still enrol later (A05). Practice roles cannot decline,
+        because MFA is mandatory for them (BR-05).
+      x-action: [A36]
+      x-roles: [PATIENT]
+      x-own-only: [PATIENT]
+      x-session-states: [ACTIVE]
+      responses:
+        '204':
+          description: Offer declined.
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   /api/v1/auth/logout:
     post:
       tags: [auth]
@@ -256,7 +280,8 @@ paths:
       description: |
         Returns the session state and, once the password step is done, the own account.
         For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17)
-        and whether the practice setup is still pending (BR-18).
+        and whether the practice setup is still pending (BR-18); for `PATIENT` whether the
+        optional MFA offer is still pending (BR-26).
       x-action: [A22]
       x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
       x-own-only: [PATIENT, STAFF, DOCTOR, ADMIN]
@@ -1654,6 +1679,11 @@ components:
         role:
           $ref: '#/components/schemas/Role'
         mfaEnabled:
+          type: boolean
+        mfaOfferPending:
+          description: |
+            `PATIENT` only: `true` while MFA is not enabled and the patient has never declined the
+            offer (BR-26). The client then offers the optional enrolment; absent otherwise.
           type: boolean
     SessionInfo:
       type: object
