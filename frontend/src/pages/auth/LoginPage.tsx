@@ -25,7 +25,8 @@ export async function loginAction({
   const form = await request.formData();
   const email = String(form.get('email') ?? '').trim();
   const password = String(form.get('password') ?? '');
-  if (!email || !password) return { error: 'Please enter your e-mail address and password.' };
+  if (!email || !password)
+    return { error: 'Bitte geben Sie Ihre E-Mail-Adresse und Ihr Passwort ein.' };
 
   try {
     const { data, error } = await api.POST('/api/v1/auth/login', { body: { email, password } });
@@ -54,10 +55,10 @@ export function LoginPage() {
     <Flex direction="column" gap="6">
       <Flex direction="column" gap="2">
         <Heading as="h1" size="8">
-          Log in
+          Anmelden
         </Heading>
         <Text as="p" size="3" color="gray">
-          Welcome back. Log in to manage your appointments.
+          Willkommen zurück. Melden Sie sich an, um Ihre Termine zu verwalten.
         </Text>
       </Flex>
 
@@ -74,14 +75,16 @@ export function LoginPage() {
             <Callout.Icon>
               <SuccessIcon />
             </Callout.Icon>
-            <Callout.Text>Thanks for registering. You can log in now.</Callout.Text>
+            <Callout.Text>
+              Vielen Dank für Ihre Registrierung. Sie können sich jetzt anmelden.
+            </Callout.Text>
           </Callout.Root>
         )
       )}
 
       <Form method="post" noValidate>
         <Flex direction="column" gap="5">
-          <FormField label="E-mail address">
+          <FormField label="E-Mail-Adresse">
             {(control) => (
               <TextField.Root
                 {...control}
@@ -95,7 +98,7 @@ export function LoginPage() {
               />
             )}
           </FormField>
-          <FormField label="Password">
+          <FormField label="Passwort">
             {(control) => (
               <PasswordField
                 {...control}
@@ -107,20 +110,20 @@ export function LoginPage() {
             )}
           </FormField>
           <Button type="submit" size="3" loading={submitting}>
-            Log in
+            Anmelden
           </Button>
         </Flex>
       </Form>
 
       <Flex direction="column" gap="2">
         <Text as="p" size="2">
-          <Text color="gray">New patient?</Text>{' '}
+          <Text color="gray">Noch kein Konto?</Text>{' '}
           <Link asChild weight="medium">
-            <RouterLink to="/register">Create an account</RouterLink>
+            <RouterLink to="/register">Jetzt registrieren</RouterLink>
           </Link>
         </Text>
         <Text as="p" size="2" color="gray">
-          Forgot your password? Please contact the practice.
+          Passwort vergessen? Bitte wenden Sie sich an die Praxis.
         </Text>
       </Flex>
     </Flex>

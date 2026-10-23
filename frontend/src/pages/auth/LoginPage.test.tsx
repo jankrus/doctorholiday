@@ -33,10 +33,10 @@ function renderLogin(loginResponse: () => Response | Promise<Response>, path = '
 
 async function submit(email: string, password: string) {
   const user = userEvent.setup();
-  await screen.findByRole('heading', { level: 1, name: 'Log in' });
-  if (email) await user.type(screen.getByLabelText('E-mail address'), email);
-  if (password) await user.type(screen.getByLabelText('Password'), password);
-  await user.click(screen.getByRole('button', { name: 'Log in' }));
+  await screen.findByRole('heading', { level: 1, name: 'Anmelden' });
+  if (email) await user.type(screen.getByLabelText('E-Mail-Adresse'), email);
+  if (password) await user.type(screen.getByLabelText('Passwort'), password);
+  await user.click(screen.getByRole('button', { name: 'Anmelden' }));
 }
 
 describe('login page', () => {
@@ -44,7 +44,7 @@ describe('login page', () => {
     const { router, sent } = renderLogin(() => Response.json(activeSession('PATIENT')));
     await submit('patient@example.test', 'correct horse battery');
 
-    expect(await screen.findByRole('heading', { name: 'My appointments' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Meine Termine' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/appointments');
     expect(sent()).toEqual({ email: 'patient@example.test', password: 'correct horse battery' });
   });
@@ -54,7 +54,7 @@ describe('login page', () => {
     await submit('doctor@example.test', 'correct horse battery');
 
     expect(
-      await screen.findByRole('heading', { name: 'Two-factor authentication' }),
+      await screen.findByRole('heading', { name: 'Zwei-Faktor-Authentifizierung' }),
     ).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/mfa');
   });
@@ -63,25 +63,27 @@ describe('login page', () => {
     renderLogin(() => apiError('INVALID_CREDENTIALS', 401));
     await submit('patient@example.test', 'wrong password');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('E-mail or password is incorrect.');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'E-Mail-Adresse oder Passwort ist falsch.',
+    );
     expect(screen.queryByText('Server text.')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('E-mail address')).toHaveValue('patient@example.test');
-    expect(screen.getByLabelText('Password')).toHaveValue('');
-    expect(screen.getByLabelText('Password')).toHaveFocus();
+    expect(screen.getByLabelText('E-Mail-Adresse')).toHaveValue('patient@example.test');
+    expect(screen.getByLabelText('Passwort')).toHaveValue('');
+    expect(screen.getByLabelText('Passwort')).toHaveFocus();
   });
 
   it('tells the user to wait after too many attempts', async () => {
     renderLogin(() => apiError('RATE_LIMITED', 429));
     await submit('patient@example.test', 'wrong password');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Too many attempts');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Zu viele Versuche');
   });
 
   it('shows a generic error when the network fails', async () => {
     renderLogin(() => Promise.reject(new TypeError('Failed to fetch')));
     await submit('patient@example.test', 'correct horse battery');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Etwas ist schiefgelaufen');
   });
 
   it('asks for both fields without calling the API', async () => {
@@ -89,20 +91,22 @@ describe('login page', () => {
     await submit('', '');
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Please enter your e-mail address and password.',
+      'Bitte geben Sie Ihre E-Mail-Adresse und Ihr Passwort ein.',
     );
     expect(sent()).toBeUndefined();
   });
 
   it('confirms a registration', async () => {
     renderLogin(() => Response.json(activeSession('PATIENT')), '/login?registered');
-    expect(await screen.findByRole('status')).toHaveTextContent('Thanks for registering.');
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Vielen Dank für Ihre Registrierung.',
+    );
   });
 
   it('can show the password', async () => {
     renderLogin(() => Response.json(activeSession('PATIENT')));
-    const password = await screen.findByLabelText('Password');
-    const toggle = screen.getByRole('button', { name: 'Show password' });
+    const password = await screen.findByLabelText('Passwort');
+    const toggle = screen.getByRole('button', { name: 'Passwort anzeigen' });
 
     expect(password).toHaveAttribute('type', 'password');
     await userEvent.click(toggle);

@@ -39,26 +39,26 @@ export function validateRegistration(
   const errors: FieldErrors<keyof RegistrationInput> = {};
 
   if (input.displayName.length > DISPLAY_NAME_MAX_LENGTH) {
-    errors.displayName = `Use at most ${DISPLAY_NAME_MAX_LENGTH} characters.`;
+    errors.displayName = `Bitte verwenden Sie höchstens ${DISPLAY_NAME_MAX_LENGTH} Zeichen.`;
   } else if (DISPLAY_NAME_FORBIDDEN.test(input.displayName)) {
-    errors.displayName = 'Angle brackets (< >) are not allowed.';
+    errors.displayName = 'Spitze Klammern (< >) sind nicht erlaubt.';
   }
 
   if (!input.email) {
-    errors.email = 'Please enter your e-mail address.';
+    errors.email = 'Bitte geben Sie Ihre E-Mail-Adresse ein.';
   } else if (input.email.length > EMAIL_MAX_LENGTH || !/^[^\s@]+@[^\s@]+$/.test(input.email)) {
-    errors.email = 'Please enter a valid e-mail address.';
+    errors.email = 'Bitte geben Sie eine gültige E-Mail-Adresse ein.';
   }
 
   const length = passwordLength(input.password);
   if (length < PASSWORD_MIN_LENGTH) {
-    errors.password = `Use at least ${PASSWORD_MIN_LENGTH} characters.`;
+    errors.password = `Bitte verwenden Sie mindestens ${PASSWORD_MIN_LENGTH} Zeichen.`;
   } else if (length > PASSWORD_MAX_LENGTH) {
-    errors.password = `Use at most ${PASSWORD_MAX_LENGTH} characters.`;
+    errors.password = `Bitte verwenden Sie höchstens ${PASSWORD_MAX_LENGTH} Zeichen.`;
   }
 
   if (input.confirmPassword !== input.password) {
-    errors.confirmPassword = 'The passwords do not match.';
+    errors.confirmPassword = 'Die Passwörter stimmen nicht überein.';
   }
 
   return Object.keys(errors).length > 0 ? errors : null;

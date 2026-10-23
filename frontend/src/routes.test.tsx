@@ -26,19 +26,19 @@ describe('routing', () => {
   it.each(['/', '/appointments', '/staff', '/admin', '/mfa', '/setup'])(
     'redirects %s to /login without a session',
     async (path) => {
-      await expectPage(renderAt(path, null), '/login', 'Log in');
+      await expectPage(renderAt(path, null), '/login', 'Anmelden');
     },
   );
 
   it('keeps users on pages for their role', async () => {
-    await expectPage(renderAt('/staff', activeSession('DOCTOR')), '/staff', 'Practice');
+    await expectPage(renderAt('/staff', activeSession('DOCTOR')), '/staff', 'Praxis');
   });
 
   it('redirects users away from pages of other roles', async () => {
     await expectPage(
       renderAt('/admin', activeSession('PATIENT')),
       '/appointments',
-      'My appointments',
+      'Meine Termine',
     );
   });
 
@@ -46,7 +46,7 @@ describe('routing', () => {
     await expectPage(
       renderAt('/admin', { state: 'MFA_PENDING' }),
       '/mfa',
-      'Two-factor authentication',
+      'Zwei-Faktor-Authentifizierung',
     );
   });
 
@@ -54,16 +54,16 @@ describe('routing', () => {
     await expectPage(
       renderAt('/admin', { ...activeSession('ADMIN'), setupRequired: true }),
       '/setup',
-      'Practice setup',
+      'Praxis einrichten',
     );
   });
 
   it('sends an admin away from /setup once it is done', async () => {
-    await expectPage(renderAt('/setup', activeSession('ADMIN')), '/admin', 'Administration');
+    await expectPage(renderAt('/setup', activeSession('ADMIN')), '/admin', 'Verwaltung');
   });
 
   it('sends logged-in users from /login to their start page', async () => {
-    await expectPage(renderAt('/login', activeSession('ADMIN')), '/admin', 'Administration');
+    await expectPage(renderAt('/login', activeSession('ADMIN')), '/admin', 'Verwaltung');
   });
 
   it('shows a generic error when the session lookup fails', async () => {
@@ -71,12 +71,14 @@ describe('routing', () => {
     const router = createMemoryRouter(routes, { initialEntries: ['/appointments'] });
     render(<RouterProvider router={router} />);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Etwas ist schiefgelaufen');
     expect(screen.queryByText('upstream detail')).not.toBeInTheDocument();
   });
 
   it('shows a not-found page for unknown paths', async () => {
     renderAt('/does-not-exist', null);
-    expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Seite nicht gefunden' }),
+    ).toBeInTheDocument();
   });
 });

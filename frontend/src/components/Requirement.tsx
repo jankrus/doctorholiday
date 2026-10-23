@@ -14,7 +14,7 @@ export function Requirement({ met, children }: { met: boolean; children: ReactNo
       data-met={met || undefined}
     >
       {met ? <CheckIcon size={16} /> : <DotIcon size={16} />}
-      <span className="sr-only">{met ? 'Met: ' : 'Not met yet: '}</span>
+      <span className="sr-only">{met ? 'Erfüllt: ' : 'Noch nicht erfüllt: '}</span>
       {children}
     </Text>
   );

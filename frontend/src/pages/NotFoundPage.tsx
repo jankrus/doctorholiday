@@ -5,11 +5,11 @@ export function NotFoundPage() {
   return (
     <Card size="3">
       <Heading as="h1" size="6" mb="2">
-        Page not found
+        Seite nicht gefunden
       </Heading>
       <Text as="p">
         <Link asChild>
-          <RouterLink to="/">Back to start</RouterLink>
+          <RouterLink to="/">Zur Startseite</RouterLink>
         </Link>
       </Text>
     </Card>

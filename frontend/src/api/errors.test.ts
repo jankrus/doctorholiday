@@ -8,7 +8,7 @@ const apiError = (code: string, message = 'server text') => ({
 describe('errorMessage', () => {
   it('maps known codes to fixed texts and ignores the server message', () => {
     const text = errorMessage(apiError('INVALID_CREDENTIALS', 'internal detail'));
-    expect(text).toBe('E-mail or password is incorrect.');
+    expect(text).toBe('E-Mail-Adresse oder Passwort ist falsch.');
     expect(text).not.toContain('internal detail');
   });
 

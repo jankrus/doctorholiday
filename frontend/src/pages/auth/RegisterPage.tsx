@@ -76,11 +76,11 @@ export function RegisterPage() {
     <Flex direction="column" gap="6">
       <Flex direction="column" gap="2">
         <Heading as="h1" size="8">
-          Create your account
+          Konto erstellen
         </Heading>
         <Text as="p" size="3" color="gray">
-          Register as a patient to book and manage your appointments online. Practice staff are
-          invited by the practice.
+          Mit einem Konto buchen und verwalten Sie Ihre Termine online. Mitarbeitende der Praxis
+          erhalten stattdessen eine Einladung.
         </Text>
       </Flex>
 
@@ -98,14 +98,14 @@ export function RegisterPage() {
           <FormField
             label="Name"
             optional
-            hint="How the practice should address you."
+            hint="So spricht die Praxis Sie an."
             error={errors.displayName}
           >
             {(control) => (
               <TextField.Root {...control} name="displayName" size="3" autoComplete="name" />
             )}
           </FormField>
-          <FormField label="E-mail address" error={errors.email}>
+          <FormField label="E-Mail-Adresse" error={errors.email}>
             {(control) => (
               <TextField.Root
                 {...control}
@@ -119,17 +119,18 @@ export function RegisterPage() {
             )}
           </FormField>
           <FormField
-            label="Password"
+            label="Passwort"
             error={errors.password}
             hint={
               <Flex direction="column" gap="1">
                 <Requirement met={isPasswordLengthValid(password)}>
                   {length > PASSWORD_MAX_LENGTH
-                    ? `At most ${PASSWORD_MAX_LENGTH} characters`
-                    : `At least ${PASSWORD_MIN_LENGTH} characters`}
+                    ? `Höchstens ${PASSWORD_MAX_LENGTH} Zeichen`
+                    : `Mindestens ${PASSWORD_MIN_LENGTH} Zeichen`}
                 </Requirement>
                 <Text as="p" size="2" color="gray">
-                  Tip: a few random words make a strong passphrase that is easy to remember.
+                  Tipp: Einige zufällige Wörter ergeben ein starkes Passwort, das Sie sich leicht
+                  merken können.
                 </Text>
               </Flex>
             }
@@ -146,11 +147,13 @@ export function RegisterPage() {
             )}
           </FormField>
           <FormField
-            label="Repeat password"
+            label="Passwort wiederholen"
             error={errors.confirmPassword}
             hint={
               confirmPassword && (
-                <Requirement met={confirmPassword === password}>Passwords match</Requirement>
+                <Requirement met={confirmPassword === password}>
+                  Passwörter stimmen überein
+                </Requirement>
               )
             }
           >
@@ -166,15 +169,15 @@ export function RegisterPage() {
             )}
           </FormField>
           <Button type="submit" size="3" loading={submitting}>
-            Create account
+            Konto erstellen
           </Button>
         </Flex>
       </Form>
 
       <Text as="p" size="2">
-        <Text color="gray">Already registered?</Text>{' '}
+        <Text color="gray">Bereits registriert?</Text>{' '}
         <Link asChild weight="medium">
-          <RouterLink to="/login">Log in</RouterLink>
+          <RouterLink to="/login">Anmelden</RouterLink>
         </Link>
       </Text>
     </Flex>

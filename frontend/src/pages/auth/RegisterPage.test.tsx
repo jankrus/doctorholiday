@@ -27,17 +27,17 @@ type Input = { name?: string; email?: string; password?: string; confirm?: strin
 
 async function fill({ name, email, password, confirm }: Input) {
   const user = userEvent.setup();
-  await screen.findByRole('heading', { level: 1, name: 'Create your account' });
+  await screen.findByRole('heading', { level: 1, name: 'Konto erstellen' });
   if (name) await user.type(screen.getByLabelText(/^Name/), name);
-  if (email) await user.type(screen.getByLabelText('E-mail address'), email);
-  if (password) await user.type(screen.getByLabelText('Password'), password);
-  if (confirm) await user.type(screen.getByLabelText('Repeat password'), confirm);
+  if (email) await user.type(screen.getByLabelText('E-Mail-Adresse'), email);
+  if (password) await user.type(screen.getByLabelText('Passwort'), password);
+  if (confirm) await user.type(screen.getByLabelText('Passwort wiederholen'), confirm);
   return user;
 }
 
 async function submit(input: Input) {
   const user = await fill(input);
-  await user.click(screen.getByRole('button', { name: 'Create account' }));
+  await user.click(screen.getByRole('button', { name: 'Konto erstellen' }));
 }
 
 const valid = {
@@ -52,7 +52,9 @@ describe('register page', () => {
     const { router, sent } = renderRegister(() => new Response(null, { status: 202 }));
     await submit(valid);
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Thanks for registering.');
+    expect(await screen.findByRole('status')).toHaveTextContent(
+      'Vielen Dank für Ihre Registrierung.',
+    );
     expect(router.state.location.pathname).toBe('/login');
     expect(sent()).toEqual({
       email: 'erika@example.test',
@@ -73,15 +75,15 @@ describe('register page', () => {
     const { sent } = renderRegister(() => new Response(null, { status: 202 }));
     await submit({ email: 'not-an-email', password: 'short', confirm: 'other' });
 
-    const email = await screen.findByLabelText('E-mail address');
-    expect(email).toHaveAccessibleDescription('Please enter a valid e-mail address.');
+    const email = await screen.findByLabelText('E-Mail-Adresse');
+    expect(email).toHaveAccessibleDescription('Bitte geben Sie eine gültige E-Mail-Adresse ein.');
     expect(email).toHaveAttribute('aria-invalid', 'true');
     expect(email).toHaveFocus();
-    expect(screen.getByLabelText('Password')).toHaveAccessibleDescription(
-      'Use at least 12 characters.',
+    expect(screen.getByLabelText('Passwort')).toHaveAccessibleDescription(
+      'Bitte verwenden Sie mindestens 12 Zeichen.',
     );
-    expect(screen.getByLabelText('Repeat password')).toHaveAccessibleDescription(
-      'The passwords do not match.',
+    expect(screen.getByLabelText('Passwort wiederholen')).toHaveAccessibleDescription(
+      'Die Passwörter stimmen nicht überein.',
     );
     expect(sent()).toBeUndefined();
   });
@@ -89,18 +91,18 @@ describe('register page', () => {
   it('ticks off the password rules while typing', async () => {
     renderRegister(() => new Response(null, { status: 202 }));
     await fill({ password: 'short' });
-    expect(screen.getByText('At least 12 characters')).not.toHaveAttribute('data-met');
+    expect(screen.getByText('Mindestens 12 Zeichen')).not.toHaveAttribute('data-met');
 
     await fill({ password: ' but long enough', confirm: 'short but long enough' });
-    expect(screen.getByText('At least 12 characters')).toHaveAttribute('data-met', 'true');
-    expect(screen.getByText('Passwords match')).toHaveAttribute('data-met', 'true');
+    expect(screen.getByText('Mindestens 12 Zeichen')).toHaveAttribute('data-met', 'true');
+    expect(screen.getByText('Passwörter stimmen überein')).toHaveAttribute('data-met', 'true');
   });
 
   it('shows a generic error from the server', async () => {
     renderRegister(() => apiError('RATE_LIMITED', 429));
     await submit(valid);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Too many attempts');
+    expect(await screen.findByRole('alert')).toHaveTextContent('Zu viele Versuche');
     expect(screen.queryByText('Server text.')).not.toBeInTheDocument();
   });
 });

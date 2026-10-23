@@ -20,7 +20,7 @@ export const PasswordField = forwardRef<HTMLInputElement, PasswordFieldProps>(
             variant="ghost"
             color="gray"
             size="2"
-            aria-label="Show password"
+            aria-label="Passwort anzeigen"
             aria-pressed={visible}
             aria-controls={props.id}
             onClick={() => setVisible((v) => !v)}

@@ -8,7 +8,7 @@ export function PlaceholderPage({ title, ticket }: { title: string; ticket: stri
         {title}
       </Heading>
       <Text as="p" color="gray">
-        This page is built in {ticket}.
+        Diese Seite wird in {ticket} umgesetzt.
       </Text>
     </Card>
   );

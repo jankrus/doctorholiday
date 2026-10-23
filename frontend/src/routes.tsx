@@ -41,27 +41,27 @@ export const routes: RouteObject[] = [
           {
             path: 'mfa',
             loader: mfaPending,
-            element: <PlaceholderPage title="Two-factor authentication" ticket="#24" />,
+            element: <PlaceholderPage title="Zwei-Faktor-Authentifizierung" ticket="#24" />,
           },
           {
             path: 'setup',
             loader: setupPending,
-            element: <PlaceholderPage title="Practice setup" ticket="#24" />,
+            element: <PlaceholderPage title="Praxis einrichten" ticket="#24" />,
           },
           {
             path: 'appointments',
             loader: requireRole(['PATIENT']),
-            element: <PlaceholderPage title="My appointments" ticket="#25" />,
+            element: <PlaceholderPage title="Meine Termine" ticket="#25" />,
           },
           {
             path: 'staff',
             loader: requireRole(['STAFF', 'DOCTOR']),
-            element: <PlaceholderPage title="Practice" ticket="#26" />,
+            element: <PlaceholderPage title="Praxis" ticket="#26" />,
           },
           {
             path: 'admin',
             loader: requireRole(['ADMIN']),
-            element: <PlaceholderPage title="Administration" ticket="#26" />,
+            element: <PlaceholderPage title="Verwaltung" ticket="#26" />,
           },
           { path: '*', element: <NotFoundPage /> },
         ],

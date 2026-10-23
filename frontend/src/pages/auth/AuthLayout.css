@@ -57,7 +57,7 @@
 
 .auth-layout__claim {
   color: var(--accent-12);
-  max-width: 14ch;
+  max-width: 18ch;
   letter-spacing: -0.02em;
   text-wrap: balance;
 }

@@ -8,18 +8,18 @@ import './AuthLayout.css';
 const HIGHLIGHTS: { icon: ReactNode; title: string; text: string }[] = [
   {
     icon: <CalendarIcon size={20} />,
-    title: 'Book online, any time',
-    text: 'Choose a free slot that suits you, without waiting on the phone.',
+    title: 'Rund um die Uhr online buchen',
+    text: 'Wählen Sie einen freien Termin, der Ihnen passt\u00a0– ohne Warteschleife am Telefon.',
   },
   {
     icon: <ClockIcon size={20} />,
-    title: 'Stay flexible',
-    text: 'Move or cancel your appointment online up to the practice deadline.',
+    title: 'Flexibel bleiben',
+    text: 'Termine online verschieben oder absagen\u00a0– bis zur Frist der Praxis.',
   },
   {
     icon: <ShieldIcon size={20} />,
-    title: 'Protected access',
-    text: 'Practice staff always log in with a second factor. You can add one too.',
+    title: 'Geschützter Zugang',
+    text: 'Das Praxisteam meldet sich immer mit einem zweiten Faktor an. Auch Sie können einen einrichten.',
   },
 ];
 
@@ -34,7 +34,7 @@ export function AuthLayout() {
         <BrandMark size="large" />
         <Flex direction="column" gap="6" className="auth-layout__intro">
           <Text as="p" size="8" weight="bold" className="auth-layout__claim">
-            Your practice, just a few clicks away.
+            Ihre Praxis, nur wenige Klicks entfernt.
           </Text>
           <Flex asChild direction="column" gap="5">
             <ul className="auth-layout__highlights">

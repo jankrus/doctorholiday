@@ -85,7 +85,7 @@ Colour never carries meaning alone: every error has an icon and text, every met 
   | Labels | 2 | medium |
   | Body, hints, errors, links in text | 2 | regular |
 
-- **Sentence case** everywhere ("Create your account", not "Create Your Account").
+- **Normal German capitalisation** in titles and buttons ("Konto erstellen"); no English-style title case.
 - Large headings get slight negative letter spacing (`-0.02em`) and `text-wrap: balance` to avoid lone words.
 
 ## 4. Shape, spacing and depth
@@ -153,7 +153,7 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | Live checklist | `Requirement` | Rules that can be met while typing (password length, passwords match). Gray dot → jade tick. Positive feedback only; no red while the user is still typing. |
 | Page message | Radix `Callout` | Above the form, below the intro. Errors: red, `role="alert"`. Confirmations: accent, `role="status"`. Always with an icon. |
 | Primary action | Radix `Button` `size="3"` | One per form, solid, full width, at the end of the form. Shows a spinner (`loading`) while submitting, which also blocks double submits. |
-| Secondary navigation | Radix `Link` | Below the form, as a sentence: "New patient? Create an account". |
+| Secondary navigation | Radix `Link` | Below the form, as a sentence: „Noch kein Konto? Jetzt registrieren“. |
 | Inputs | Radix `TextField` `size="3"` | 40 px high: a comfortable touch target. |
 
 ### Form behaviour
@@ -181,14 +181,27 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | Nothing from a form is written to `localStorage`/`sessionStorage` or the URL. | Acceptance criterion of #24; only a harmless `?registered` flag is put in the URL. |
 | No "forgot password" link that promises a reset. | Password reset by e-mail is out of scope; the page says to contact the practice instead. |
 
-## 9. Voice and wording
+## 9. Language, voice and wording
 
-- **Friendly and direct**, addressing the user as "you". Short sentences, no jargon ("second factor" is explained on
-  the MFA screen, not assumed).
-- **One verb per action**: "Log in" (never "Sign in"), "Create account" / "register" (never "Sign up"), "Log out".
-- **Errors say what to do**: "Use at least 12 characters." rather than "Invalid password".
-- **E-mail address**, not "Email" or "Mail".
-- UI language is English for now. German, the practice's likely language, would be a separate decision.
+**The UI is German.** The practice and its patients are in Germany, and patients must understand every step without
+effort, including older people and people who are unwell. Code, comments and documentation stay in English.
+
+- **German only, no i18n framework.** Texts are written directly in the components and in the error map
+  (`api/errors.ts`). A translation library would add a dependency (SBOM, SCA) for a second language nobody has
+  asked for; if one is needed later, the texts are easy to find.
+- **`<html lang="de">`**, so screen readers pronounce the texts correctly and browsers hyphenate and spell-check in
+  German.
+- **Formal address „Sie“**, the norm for a medical practice. Friendly and direct, short sentences, no jargon
+  („zweiter Faktor“ is explained on the MFA screen, not assumed).
+- **Gender-neutral without special characters**: neutral nouns („Mitarbeitende“, „Praxisteam“) or both forms
+  („Patientinnen und Patienten“). No gender star or colon: screen readers read them out awkwardly and they hurt
+  readability for some users.
+- **One verb per action**: „Anmelden“ (never „Einloggen“ or „Login“), „Registrieren“ / „Konto erstellen“,
+  „Abmelden“ (never „Ausloggen“).
+- **Errors say what to do**: „Bitte verwenden Sie mindestens 12 Zeichen.“ rather than „Ungültiges Passwort“.
+- **Spelling**: „E-Mail-Adresse“, German quotation marks („…“) and the en dash (–) with spaces.
+- **Formats** for later screens: dates as `23.10.2026`, times as `14:30 Uhr` (24-hour clock), weekdays written out
+  („Freitag, 23. Oktober“). Use `Intl` with the locale `de-DE`, not hand-built strings.
 
 ## 10. Rollout and open points
 
@@ -199,5 +212,5 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 4. **Later**: dark mode. All colours are tokens, so it is mostly a matter of setting `appearance` on `<Theme>` and
    checking the brand panel.
 
-Open questions for review: wording of the brand claim and highlights, whether the name field belongs in
-registration, and the UI language.
+Open questions for review: wording of the brand claim and highlights, and whether the name field belongs in
+registration.
