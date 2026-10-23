@@ -79,7 +79,7 @@ Colour never carries meaning alone: every error has an icon and text, every met 
 
   | Element | Size | Weight |
   | :--- | :--- | :--- |
-  | Page title (`h1`) on auth screens | 8 | bold |
+  | Page title (`h1`) on auth screens | 7 (German compounds such as „Wiederherstellungscodes“ need the room) | bold |
   | Brand claim | 8 | bold, accent 12 |
   | Intro text below the title | 3 | regular, gray |
   | Labels | 2 | medium |
@@ -117,7 +117,7 @@ Colour never carries meaning alone: every error has an icon and text, every met 
 
 ### Split screen (auth screens)
 
-Used by `AuthLayout` for `/login` and `/register`; `/mfa` and `/setup` follow next.
+Used by `AuthLayout` for every step before the app: `/login`, `/register`, `/mfa` and `/setup`.
 
 ```text
 ≥ 900 px                                   < 900 px
@@ -151,10 +151,17 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | Field | `FormField` | Label above the input; "(optional)" marker instead of an asterisk on required fields; one message line below: the hint, replaced by the error when there is one. Wires `id`, `aria-invalid` and `aria-describedby`. |
 | Password | `PasswordField` | Show/hide toggle (`aria-pressed`), so long passphrases can be checked. Only switches the input type. |
 | Live checklist | `Requirement` | Rules that can be met while typing (password length, passwords match). Gray dot → jade tick. Positive feedback only; no red while the user is still typing. |
-| Page message | Radix `Callout` | Above the form, below the intro. Errors: red, `role="alert"`. Confirmations: accent, `role="status"`. Always with an icon. |
+| Page title | `PageHeader` | `h1` and one intro paragraph in gray: what this page is for and what happens next. |
+| Page message | `Notice` (Radix `Callout`) | Above the form, below the intro. Errors: red, `role="alert"`. Confirmations: accent, `role="status"`. Always with an icon, always `highContrast`. |
+| Code input | `CodeInput` in `MfaPage` | Monospace, large, spaced out, `autocomplete="one-time-code"`; numeric keyboard for app codes. Spaces are ignored. After a wrong code the field is cleared and focused. |
+| Steps | `.mfa-steps` | Numbered accent circles joined by a thin line, for tasks that happen outside the app (scan with the phone, then type the code). |
+| QR code | `QrCode` | Always black on white in a card, whatever the theme (scanners need contrast). Generated locally; the key for manual entry sits in a `<details>` below it, grouped in fours, with a copy button. |
+| One-time secrets | `RecoveryCodes` in `MfaPage` | Shown once in a card with „Codes kopieren“ and „Herunterladen“ (.txt). „Weiter“ stays disabled until the user confirms they saved them. Held only in component state. |
+| Copy | `CopyButton` | Soft button, label turns into „Kopiert“ with a tick for two seconds (announced politely). |
+| Leave the flow | `LogoutButton` | Ghost button at the end of every step page („Abbrechen und abmelden“), so nobody is stuck in a half-finished login. |
 | Primary action | Radix `Button` `size="3"` | One per form, solid, full width, at the end of the form. Shows a spinner (`loading`) while submitting, which also blocks double submits. |
 | Secondary navigation | Radix `Link` | Below the form, as a sentence: „Noch kein Konto? Jetzt registrieren“. |
-| Inputs | Radix `TextField` `size="3"` | 40 px high: a comfortable touch target. |
+| Inputs | Radix `TextField` `size="3"` | 40 px high: a comfortable touch target. Numbers get their unit inside the field („Stunden“, „Minuten“) and the allowed range in the hint. |
 
 ### Form behaviour
 
@@ -166,8 +173,9 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 4. **`autocomplete` attributes** on every field (`username`, `email`, `current-password`, `new-password`, `name`),
    so password managers work. That matters because BR-01 encourages long passphrases.
 5. **Failed login**: the e-mail stays, the password is cleared and focused.
-6. Submission uses React Router actions (`<Form method="post">`), so pending and error states follow one pattern on
-   every screen.
+6. Submission uses React Router actions (`<Form method="post">`, or a fetcher where one page holds several steps),
+   so pending and error states follow one pattern on every screen.
+7. **Defaults are prefilled** where the system has sensible ones (practice setup), so the common case is one click.
 
 ## 8. Security-driven design rules
 
@@ -178,7 +186,8 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | User-facing error texts come from a fixed local map (`api/errors.ts`), never from the server's `message`. | Server details cannot leak into the UI (ADR-004). |
 | Login shows one generic error for every failure. | Does not reveal whether an account exists (BR-03). |
 | The registration confirmation is worded the same whether or not the e-mail was new. | The API answers `202` either way (BR-02); the UI must not hint otherwise. |
-| Nothing from a form is written to `localStorage`/`sessionStorage` or the URL. | Acceptance criterion of #24; only a harmless `?registered` flag is put in the URL. |
+| Nothing from a form is written to `localStorage`/`sessionStorage` or the URL. | Acceptance criterion of #24 (covered by a test); only harmless `?registered` / `?loggedOut` flags are put in the URL. |
+| The TOTP secret and recovery codes live only in component state and are shown once. | BR-06, BR-07; they disappear when the user continues. The QR code is drawn locally, never by a web service. |
 | No "forgot password" link that promises a reset. | Password reset by e-mail is out of scope; the page says to contact the practice instead. |
 
 ## 9. Language, voice and wording
@@ -205,10 +214,10 @@ effort, including older people and people who are unwell. Code, comments and doc
 
 ## 10. Rollout and open points
 
-1. **Now**: `/login` and `/register` as the reference. Review here first.
-2. **Next**: `/mfa` (code entry, enrolment with QR code and recovery codes) and `/setup` on the same `AuthLayout` and
+1. **Done**: `/login` and `/register` as the reference.
+2. **Done**: `/mfa` (code entry, enrolment with QR code and recovery codes) and `/setup` on the same `AuthLayout` and
    form patterns.
-3. **Then**: redesign `AppLayout` (header, navigation, logout) for the patient, staff and admin areas.
+3. **Next**: redesign `AppLayout` (header, navigation, logout) for the patient, staff and admin areas.
 4. **Later**: dark mode. All colours are tokens, so it is mostly a matter of setting `appearance` on `<Theme>` and
    checking the brand panel.
 
