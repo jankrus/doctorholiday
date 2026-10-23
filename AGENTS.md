@@ -18,6 +18,8 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | `backend/` | Python 3.12 + FastAPI REST API (`backend/openapi.yaml` = API contract) |
 | `infrastructure/k8s/` | Kubernetes manifests (Kustomize) |
 | `infrastructure/kind/` | kind cluster config |
+| `infrastructure/postgres/` | DB role init script and migration runner; migrations live in `backend/migrations/` |
+| `compose.yaml` | Local PostgreSQL for development (`make db-up`) |
 | `.github/workflows/` | CI/CD pipeline |
 | `scripts/` | Helper scripts (quality gate, packaging, cluster setup) |
 | `evidence/<image>/{run,sast,sbom,sca,secrets,signing}/` | Pipeline reports per image (`frontend`, `backend`) |
@@ -66,5 +68,6 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | Frontend tests | `cd frontend && npm ci && npm test` |
 | Frontend lint | `cd frontend && npm run lint` |
 | Cluster up / down | `make up` / `make down` |
+| Local DB up (+ migrations) / down / reset | `make db-up` / `make db-down` / `make db-reset` |
 
 Commands become valid as the respective skeleton tickets land; update this table when they do.
