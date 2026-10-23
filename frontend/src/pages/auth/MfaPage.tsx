@@ -65,7 +65,7 @@ async function decline(): Promise<FormResult | Response> {
 
 /**
  * Four intents: `enroll` creates a TOTP secret, `confirm` enables MFA with the first code and
- * returns the recovery codes, `decline` turns down the optional offer for patients (BR-25),
+ * returns the recovery codes, `decline` turns down the optional offer for patients (BR-26),
  * anything else is the login challenge (TOTP or recovery code).
  */
 export async function mfaAction({
@@ -105,7 +105,7 @@ export const mfaShouldRevalidate: ShouldRevalidateFunction = () => false;
 /**
  * Three variants: the login challenge (`MFA_PENDING`), the mandatory enrolment for practice roles
  * (`MFA_ENROLLMENT_REQUIRED`) and the optional one for patients who have not answered the offer
- * yet (`ACTIVE` with `mfaOfferPending`, BR-25).
+ * yet (`ACTIVE` with `mfaOfferPending`, BR-26).
  */
 export function MfaPage() {
   const session = useLoaderData<SessionInfo>();

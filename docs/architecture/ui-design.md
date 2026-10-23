@@ -158,7 +158,7 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | QR code | `QrCode` | Always black on white in a card, whatever the theme (scanners need contrast). Generated locally; the key for manual entry sits in a `<details>` below it, grouped in fours, with a copy button. |
 | One-time secrets | `RecoveryCodes` in `MfaPage` | Shown once in a card with „Codes kopieren“ and „Herunterladen“ (.txt). „Weiter“ stays disabled until the user confirms they saved them. Held only in component state. |
 | Copy | `CopyButton` | Soft button, label turns into „Kopiert“ with a tick for two seconds (announced politely). |
-| Leave the flow | `LogoutButton` / `LeaveEnrollment` | Ghost button at the end of every step page, so nobody is stuck in a half-finished login. Mandatory steps offer „Abbrechen und abmelden“; the optional MFA offer for patients (BR-25) offers „Ohne zweiten Faktor fortfahren“ and says it will not ask again. |
+| Leave the flow | `LogoutButton` / `LeaveEnrollment` | Ghost button at the end of every step page, so nobody is stuck in a half-finished login. Mandatory steps offer „Abbrechen und abmelden“; the optional MFA offer for patients (BR-26) offers „Ohne zweiten Faktor fortfahren“ and says it will not ask again. |
 | Primary action | Radix `Button` `size="3"` | One per form, solid, full width, at the end of the form. Shows a spinner (`loading`) while submitting, which also blocks double submits. |
 | Secondary navigation | Radix `Link` | Below the form, as a sentence: „Noch kein Konto? Jetzt registrieren“. |
 | Inputs | Radix `TextField` `size="3"` | 40 px high: a comfortable touch target. Numbers get their unit inside the field („Stunden“, „Minuten“) and the allowed range in the hint. |
@@ -188,7 +188,7 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | The registration confirmation is worded the same whether or not the e-mail was new. | The API answers `202` either way (BR-02); the UI must not hint otherwise. |
 | Nothing from a form is written to `localStorage`/`sessionStorage` or the URL. | Acceptance criterion of #24 (covered by a test); only harmless `?registered` / `?loggedOut` flags are put in the URL. |
 | The TOTP secret and recovery codes live only in component state and are shown once. | BR-06, BR-07; they disappear when the user continues. The QR code is drawn locally, never by a web service. |
-| MFA is mandatory for practice roles and offered once to patients; only patients can skip it. | BR-05, BR-25. The skip is stored on the account (A33), not in the browser, so it holds on every device. |
+| MFA is mandatory for practice roles and offered once to patients; only patients can skip it. | BR-05, BR-26. The skip is stored on the account (A36), not in the browser, so it holds on every device. |
 | No "forgot password" link that promises a reset. | Password reset by e-mail is out of scope; the page says to contact the practice instead. |
 
 ## 9. Language, voice and wording

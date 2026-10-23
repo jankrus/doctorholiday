@@ -79,7 +79,7 @@ export function mockApi(): Plugin {
   // Role the session gets once the MFA step is done.
   let pendingRole: Role = 'PATIENT';
   let setupDone = false;
-  // Patients: optional MFA offer (BR-25) still open, declined, or MFA enabled.
+  // Patients: optional MFA offer (BR-26) still open, declined, or MFA enabled.
   let patientMfa: 'offer' | 'declined' | 'enabled' = 'offer';
   let secretPending = false;
   let settings = {

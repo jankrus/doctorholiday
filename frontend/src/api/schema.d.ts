@@ -128,7 +128,7 @@ export interface paths {
         put?: never;
         /**
          * Decline the optional MFA offer
-         * @description `PATIENT` only (BR-25): records that the patient does not want MFA now, so
+         * @description `PATIENT` only (BR-26): records that the patient does not want MFA now, so
          *     `mfaOfferPending` is no longer returned and the UI stops offering the enrolment after
          *     login. Idempotent. The patient can still enrol later (A05). Practice roles cannot decline,
          *     because MFA is mandatory for them (BR-05).
@@ -172,7 +172,7 @@ export interface paths {
          * @description Returns the session state and, once the password step is done, the own account.
          *     For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17)
          *     and whether the practice setup is still pending (BR-18); for `PATIENT` whether the
-         *     optional MFA offer is still pending (BR-25).
+         *     optional MFA offer is still pending (BR-26).
          */
         get: operations["getCurrentSession"];
         put?: never;
@@ -798,7 +798,7 @@ export interface components {
             mfaEnabled: boolean;
             /**
              * @description `PATIENT` only: `true` while MFA is not enabled and the patient has never declined the
-             *     offer (BR-25). The client then offers the optional enrolment; absent otherwise.
+             *     offer (BR-26). The client then offers the optional enrolment; absent otherwise.
              */
             mfaOfferPending?: boolean;
         };

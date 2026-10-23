@@ -15,7 +15,7 @@ const HOME_BY_ROLE: Record<Role, string> = {
 /**
  * Where a session belongs: `/login` without one, `/mfa` until MFA is done, `/setup` while the
  * first admin has not saved the practice settings yet, `/mfa` again while a patient has not
- * answered the optional MFA offer (BR-25), else its role's start page.
+ * answered the optional MFA offer (BR-26), else its role's start page.
  */
 export function homePath(session: SessionInfo | null): string {
   if (!session) return '/login';

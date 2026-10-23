@@ -34,7 +34,7 @@ endpoints; other API calls get `503`. The e-mail address used to log in picks th
 
 | E-mail                           | Flow                                                    |
 | :------------------------------- | :------------------------------------------------------ |
-| `patient@…` (or anything else)   | logged in; MFA offer until accepted or declined (BR-25) |
+| `patient@…` (or anything else)   | logged in; MFA offer until accepted or declined (BR-26) |
 | `mfa@…`                          | MFA code required (every code works except `000000`)    |
 | `staff@…`, `doctor@…`, `admin@…` | MFA enrolment first; the first admin then sees `/setup` |
 | `limit@…`                        | `429` too many attempts                                 |
@@ -88,7 +88,7 @@ Colours, typography, layout and form patterns are described in the
 | Path                  | Who                                                                     | Built in |
 | :-------------------- | :---------------------------------------------------------------------- | :------- |
 | `/login`, `/register` | no session                                                              | #24      |
-| `/mfa`                | MFA verification or enrolment pending, or a patient's MFA offer (BR-25) | #24      |
+| `/mfa`                | MFA verification or enrolment pending, or a patient's MFA offer (BR-26) | #24      |
 | `/setup`              | `ADMIN` whose practice setup is pending (BR-18)                         | #24      |
 | `/logout`             | form target (`POST`) of every logout button                             | #24      |
 | `/appointments`       | `PATIENT`                                                               | #25      |

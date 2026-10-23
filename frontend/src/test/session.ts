@@ -13,7 +13,7 @@ export function activeSession(role: Role): SessionInfo {
   };
 }
 
-/** A patient who has neither enabled MFA nor declined the offer yet (BR-25). */
+/** A patient who has neither enabled MFA nor declined the offer yet (BR-26). */
 export function patientWithOffer(): SessionInfo {
   const session = activeSession('PATIENT');
   return { ...session, user: session.user && { ...session.user, mfaOfferPending: true } };
