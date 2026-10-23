@@ -104,7 +104,7 @@ Every requirement maps to exactly one action of the [permission matrix](roles-an
 | BR-15 | **Role changes and deactivation** follow the [role assignment rules](roles-and-permissions.md#role-assignment-rules), including the last-admin protection (`409 LAST_ADMIN`) and the ban on promoting `PATIENT` accounts (`409 ROLE_CHANGE_NOT_ALLOWED`). A role change, deactivation or password change deletes all other sessions of the user. |
 | BR-16 | **MFA reset.** An admin can reset the MFA of another user, never their own (`403`); own recovery uses the recovery codes. The reset deletes TOTP secret, recovery codes and all sessions of the user. A `STAFF`, `DOCTOR` or `ADMIN` must enrol again at the next login. |
 | BR-17 | **Time-based admin access (TBAC)** as defined in [roles-and-permissions.md](roles-and-permissions.md#admin-and-health-data-rbac--tbac): a grant lasts 30 minutes and needs a purpose. While a grant is active, creating another returns `409 ACCESS_GRANT_ACTIVE`. Without an active grant, A10 and A12 return `403 ACCESS_GRANT_REQUIRED`. `GET /auth/me` shows the expiry of the active grant. |
-| BR-18 | **Practice settings** form a single record: practice name (1–100 characters), cancellation deadline (0–168 hours, default 24) and appointment length `appointmentMinutes` (5–240 minutes, default 15). A new appointment length only affects availability from then on; booked appointments keep their times. |
+| BR-18 | **Practice settings** form a single record: practice name (1–100 characters), cancellation deadline (0–168 hours, default 24) and appointment length `appointmentMinutes` (5–240 minutes, default 15). A new appointment length only affects availability from then on; booked appointments keep their times. The record is seeded with practice name `Doctor Holiday` and the defaults, without `updated_by_id`; until an admin saves it for the first time, `GET /auth/me` returns `setupRequired: true` to `ADMIN` sessions and the UI forwards them to the setup page. |
 | BR-19 | **Audit log.** Security-relevant events are recorded with actor, action, target, client IP, timestamp and outcome: login success/failure, MFA enrolment/verification/reset, bootstrap, invitation, role change, deactivation, password change, account deletion, bookings, reschedulings and cancellations, working-hour and absence changes, TBAC grants and every appointment access under a grant, settings changes and authorisation denials. Audit events never contain passwords, session IDs, tokens, TOTP secrets, recovery codes or request bodies (details in #20). |
 | BR-20 | **Lists are paginated** with `limit` (1–100, default 20) and `offset` (0–10 000). Lists are sorted by time; available times and appointments ascending by start, users by creation, audit events descending by timestamp. Time filters `from`/`to` are inclusive/exclusive. |
 | BR-21 | **Health endpoints** live outside `/api/v1` because they are infrastructure, not API. They need no authentication and return only a status word, no versions, hostnames or error details. `/readyz` returns `503` when the database is unreachable. |
@@ -275,7 +275,7 @@ PostgreSQL has no built-in e-mail type. E-mail columns therefore use the domain 
 | `cancellation_deadline_hours` | int | 0–168 |
 | `appointment_minutes` | int | 5–240 |
 | `updated_at` | timestamptz | |
-| `updated_by_id` | UUID | FK → User |
+| `updated_by_id` | UUID | FK → User; `NULL` until the first save (practice setup pending, BR-18) |
 
 **AdminBootstrap** – single row that serialises the first-admin bootstrap (BR-04).
 
