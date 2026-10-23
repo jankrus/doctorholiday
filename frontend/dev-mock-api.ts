@@ -9,11 +9,11 @@ import type { Plugin } from 'vite';
 type Role = 'PATIENT' | 'STAFF' | 'DOCTOR' | 'ADMIN';
 type Session = Record<string, unknown>;
 
-const active = (role: string) => ({
+const active = (role: string, email = `${role.toLowerCase()}@example.test`) => ({
   state: 'ACTIVE',
   user: {
     id: '00000000-0000-4000-8000-000000000001',
-    email: `${role.toLowerCase()}@example.test`,
+    email,
     role,
     mfaEnabled: role !== 'PATIENT',
   },
@@ -79,8 +79,10 @@ export function mockApi(): Plugin {
   // Role the session gets once the MFA step is done.
   let pendingRole: Role = 'PATIENT';
   let setupDone = false;
-  // Patients: optional MFA offer (BR-26) still open, declined, or MFA enabled.
-  let patientMfa: 'offer' | 'declined' | 'enabled' = 'offer';
+  // Per patient e-mail, like `user.mfa_offer_declined_at` per account: optional MFA offer
+  // (BR-26) still open (default for every new address), declined, or MFA enabled.
+  const patientMfa = new Map<string, 'offer' | 'declined' | 'enabled'>();
+  let currentEmail = '';
   let secretPending = false;
   let settings = {
     practiceName: 'Doctor Holiday',
@@ -90,10 +92,11 @@ export function mockApi(): Plugin {
   };
 
   const activeSession = (role: Role): Session => {
-    const session = active(role);
+    const session = active(role, currentEmail || undefined);
     if (role === 'PATIENT') {
-      session.user.mfaEnabled = patientMfa === 'enabled';
-      if (patientMfa === 'offer') Object.assign(session.user, { mfaOfferPending: true });
+      const mfa = patientMfa.get(currentEmail) ?? 'offer';
+      session.user.mfaEnabled = mfa === 'enabled';
+      if (mfa === 'offer') Object.assign(session.user, { mfaOfferPending: true });
     }
     return { ...session, ...(role === 'ADMIN' && !setupDone ? { setupRequired: true } : {}) };
   };
@@ -111,8 +114,9 @@ export function mockApi(): Plugin {
         }
         session = SESSIONS[value] ?? null;
         if (value === 'ADMIN' || value === 'ADMIN_SETUP') setupDone = value === 'ADMIN';
-        if (value === 'PATIENT_MFA_OFFER') patientMfa = 'offer';
-        if (value === 'PATIENT') patientMfa = 'declined';
+        currentEmail = value.startsWith('PATIENT') ? 'patient@example.test' : '';
+        if (value === 'PATIENT_MFA_OFFER') patientMfa.set(currentEmail, 'offer');
+        if (value === 'PATIENT') patientMfa.set(currentEmail, 'declined');
         pendingRole = value === 'MFA_PENDING' ? 'DOCTOR' : 'ADMIN';
         res.statusCode = 302;
         res.setHeader('Location', '/');
@@ -129,19 +133,20 @@ export function mockApi(): Plugin {
             else sendJson(res, 401, apiError('UNAUTHENTICATED', 'Login required.'));
             return;
 
-          // E-mail decides the flow: patient@… logs in directly (with the MFA offer until it is
-          // answered), mfa@… needs a code, staff@…, doctor@… and admin@… must enrol MFA first,
+          // E-mail decides the flow: any other address is a patient (with the MFA offer until that
+          // address answers it), mfa@… needs a code, staff@…, doctor@… and admin@… must enrol MFA first,
           // limit@… is rate limited. Password "falsch" fails.
           case 'POST /v1/auth/login': {
             const { email = '', password = '' } = (await readJson(req)) as Record<string, string>;
             const name = email.split('@')[0]?.toLowerCase();
+            currentEmail = email.trim().toLowerCase();
             if (name === 'limit') {
               sendJson(res, 429, apiError('RATE_LIMITED', 'Too many attempts.'));
             } else if (password === 'falsch') {
               sendJson(res, 401, apiError('INVALID_CREDENTIALS', 'Invalid credentials.'));
             } else if (name === 'mfa') {
               pendingRole = 'PATIENT';
-              patientMfa = 'enabled';
+              patientMfa.set(currentEmail, 'enabled');
               session = { state: 'MFA_PENDING' };
               sendJson(res, 200, session);
             } else if (name === 'staff' || name === 'doctor' || name === 'admin') {
@@ -168,7 +173,7 @@ export function mockApi(): Plugin {
             secretPending = true;
             sendJson(res, 200, {
               secret: SECRET,
-              otpauthUri: `otpauth://totp/Doctor%20Holiday:${pendingRole.toLowerCase()}%40example.test?secret=${SECRET}&issuer=Doctor%20Holiday`,
+              otpauthUri: `otpauth://totp/Doctor%20Holiday:${encodeURIComponent(currentEmail || 'user@example.test')}?secret=${SECRET}&issuer=Doctor%20Holiday`,
             });
             return;
 
@@ -182,7 +187,7 @@ export function mockApi(): Plugin {
             const enrolling = secretPending;
             secretPending = false;
             const role = (session.user as { role?: Role } | undefined)?.role ?? pendingRole;
-            if (enrolling && role === 'PATIENT') patientMfa = 'enabled';
+            if (enrolling && role === 'PATIENT') patientMfa.set(currentEmail, 'enabled');
             session = activeSession(role);
             sendJson(
               res,
@@ -198,7 +203,7 @@ export function mockApi(): Plugin {
               sendJson(res, 403, apiError('FORBIDDEN', 'Not allowed.'));
               return;
             }
-            patientMfa = 'declined';
+            patientMfa.set(currentEmail, 'declined');
             session = activeSession('PATIENT');
             sendEmpty(res, 204);
             return;

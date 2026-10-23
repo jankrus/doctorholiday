@@ -32,12 +32,15 @@ viewed and the auth flows clicked through. It answers the session, login, regist
 endpoints; other API calls get `503`. The e-mail address used to log in picks the flow (any password works, except
 `falsch`):
 
-| E-mail                           | Flow                                                    |
-| :------------------------------- | :------------------------------------------------------ |
-| `patient@…` (or anything else)   | logged in; MFA offer until accepted or declined (BR-26) |
-| `mfa@…`                          | MFA code required (every code works except `000000`)    |
-| `staff@…`, `doctor@…`, `admin@…` | MFA enrolment first; the first admin then sees `/setup` |
-| `limit@…`                        | `429` too many attempts                                 |
+| E-mail                                          | Flow                                                                 |
+| :---------------------------------------------- | :------------------------------------------------------------------- |
+| any other address (e.g. a newly registered one) | patient; MFA offer until this address accepts or declines it (BR-26) |
+| `mfa@…`                                         | MFA code required (every code works except `000000`)                 |
+| `staff@…`, `doctor@…`, `admin@…`                | MFA enrolment first; the first admin then sees `/setup`              |
+| `limit@…`                                       | `429` too many attempts                                              |
+
+The mock keeps its state in memory per e-mail address, like the backend does per account; restarting the dev
+server resets it.
 
 To jump to a state directly, open one of these URLs; it redirects to the matching start page:
 
