@@ -1,0 +1,13 @@
+.requirement {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.requirement > svg {
+  flex-shrink: 0;
+}
+
+.requirement[data-met] {
+  color: var(--accent-11);
+}

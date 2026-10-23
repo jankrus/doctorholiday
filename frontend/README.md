@@ -54,14 +54,22 @@ Either way the frontend only calls its own origin, so no CORS is needed.
 
 ```text
 src/
-  api/client.ts     typed API client (same origin, session cookie, CSRF hook for #19)
-  api/errors.ts     maps API errors to fixed, generic user-facing texts
-  api/schema.d.ts   generated from backend/openapi.yaml, do not edit
-  auth/session.ts   current session via GET /api/v1/auth/me
-  auth/guards.ts    route guards (UX only; the backend authorises every request)
-  pages/            layout, error and placeholder pages
-  routes.tsx        route table
+  api/client.ts      typed API client (same origin, session cookie, CSRF hook for #19)
+  api/errors.ts      maps API errors to fixed, generic user-facing texts
+  api/schema.d.ts    generated from backend/openapi.yaml, do not edit
+  auth/session.ts    current session via GET /api/v1/auth/me
+  auth/guards.ts     route guards (UX only; the backend authorises every request)
+  auth/validation.ts client-side checks mirroring the API contract (server stays authoritative)
+  components/        shared UI: form field, password field, checklist item, logo, icons
+  pages/auth/        split-screen auth layout, login and register pages
+  pages/             app layout, error and placeholder pages
+  routes.tsx         route table
 ```
+
+## Design
+
+Colours, typography, layout and form patterns are described in the
+[UI design guide](../docs/architecture/ui-design.md). `/login` and `/register` are the reference implementation.
 
 ## Routes
 

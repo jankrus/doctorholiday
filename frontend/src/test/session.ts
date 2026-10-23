@@ -13,11 +13,23 @@ export function activeSession(role: Role): SessionInfo {
   };
 }
 
-/** Stubs `fetch` so `GET /api/v1/auth/me` returns `session`, or 401 for `null`. */
-export function stubSession(session: SessionInfo | null) {
+export const apiError = (code: string, status: number) =>
+  Response.json(
+    { error: { code, message: 'Server text.', requestId: '00000000-0000-4000-8000-000000000003' } },
+    { status },
+  );
+
+type Handler = (request: Request) => Response | Promise<Response>;
+
+/**
+ * Stubs `fetch` so `GET /api/v1/auth/me` returns `session`, or 401 for `null`. Other requests go
+ * to `handlers` by path (e.g. `{ '/api/v1/auth/login': ... }`), or get 404.
+ */
+export function stubSession(session: SessionInfo | null, handlers: Record<string, Handler> = {}) {
   const fetchMock = vi.fn(async (request: Request) => {
-    if (new URL(request.url).pathname !== '/api/v1/auth/me') {
-      return new Response(null, { status: 404 });
+    const { pathname } = new URL(request.url);
+    if (pathname !== '/api/v1/auth/me') {
+      return handlers[pathname]?.(request) ?? new Response(null, { status: 404 });
     }
     return session
       ? Response.json(session)
