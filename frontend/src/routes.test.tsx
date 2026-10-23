@@ -23,7 +23,7 @@ async function expectPage(router: ReturnType<typeof renderAt>, path: string, hea
 }
 
 describe('routing', () => {
-  it.each(['/', '/appointments', '/staff', '/admin', '/mfa'])(
+  it.each(['/', '/appointments', '/staff', '/admin', '/mfa', '/setup'])(
     'redirects %s to /login without a session',
     async (path) => {
       await expectPage(renderAt(path, null), '/login', 'Log in');
@@ -48,6 +48,18 @@ describe('routing', () => {
       '/mfa',
       'Two-factor authentication',
     );
+  });
+
+  it('redirects an admin to /setup until the practice settings are saved', async () => {
+    await expectPage(
+      renderAt('/admin', { ...activeSession('ADMIN'), setupRequired: true }),
+      '/setup',
+      'Practice setup',
+    );
+  });
+
+  it('sends an admin away from /setup once it is done', async () => {
+    await expectPage(renderAt('/setup', activeSession('ADMIN')), '/admin', 'Administration');
   });
 
   it('sends logged-in users from /login to their start page', async () => {

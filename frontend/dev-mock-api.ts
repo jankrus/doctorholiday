@@ -23,6 +23,7 @@ const SESSIONS: Record<string, object | null> = {
   STAFF: active('STAFF'),
   DOCTOR: active('DOCTOR'),
   ADMIN: active('ADMIN'),
+  ADMIN_SETUP: { ...active('ADMIN'), setupRequired: true },
 };
 
 function sendJson(res: ServerResponse, status: number, body: object) {

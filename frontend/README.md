@@ -35,6 +35,7 @@ frontend sees by opening one of these URLs; it redirects to the matching start p
 | :-------------------------------------------------------------- | :----------------------- |
 | `/__mock/session?as=none`                                       | none (default)           |
 | `/__mock/session?as=PATIENT` (or `STAFF`, `DOCTOR`, `ADMIN`)    | logged in with that role |
+| `/__mock/session?as=ADMIN_SETUP`                                | admin, setup pending     |
 | `/__mock/session?as=MFA_PENDING` (or `MFA_ENROLLMENT_REQUIRED`) | waiting for MFA          |
 
 The mock only exists in the dev server; it is never part of `npm run build`.
@@ -68,9 +69,11 @@ src/
 | :-------------------- | :------------------------------------------------ | :------- |
 | `/login`, `/register` | no session                                        | #24      |
 | `/mfa`                | session waiting for MFA verification or enrolment | #24      |
+| `/setup`              | `ADMIN` whose practice setup is pending (BR-18)   | #24      |
 | `/appointments`       | `PATIENT`                                         | #25      |
 | `/staff`              | `STAFF`, `DOCTOR`                                 | #26      |
 | `/admin`              | `ADMIN`                                           | #26      |
 
 Without a session every protected route redirects to `/login`; other roles are sent to their own start page.
-There is no `/setup` route: the first admin is created by the first login (BR-04, #15).
+The first login creates the admin (BR-04, #15); `GET /api/v1/auth/me` then returns `setupRequired: true` and
+every route forwards the admin to `/setup` until the practice settings are saved for the first time.

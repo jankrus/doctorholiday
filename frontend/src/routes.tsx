@@ -1,6 +1,6 @@
 import { Flex, Spinner } from '@radix-ui/themes';
 import type { RouteObject } from 'react-router';
-import { guestOnly, mfaPending, requireRole, toHome } from './auth/guards';
+import { guestOnly, mfaPending, requireRole, setupPending, toHome } from './auth/guards';
 import { loadSession } from './auth/session';
 import { ErrorPage } from './pages/ErrorPage';
 import { NotFoundPage } from './pages/NotFoundPage';
@@ -34,6 +34,11 @@ export const routes: RouteObject[] = [
         path: 'mfa',
         loader: mfaPending,
         element: <PlaceholderPage title="Two-factor authentication" ticket="#24" />,
+      },
+      {
+        path: 'setup',
+        loader: setupPending,
+        element: <PlaceholderPage title="Practice setup" ticket="#24" />,
       },
       {
         path: 'appointments',

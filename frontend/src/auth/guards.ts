@@ -12,10 +12,14 @@ const HOME_BY_ROLE: Record<Role, string> = {
   ADMIN: '/admin',
 };
 
-/** Where a session belongs: its role's start page, `/mfa` until MFA is done, else `/login`. */
+/**
+ * Where a session belongs: `/login` without one, `/mfa` until MFA is done, `/setup` while the
+ * first admin has not saved the practice settings yet, else its role's start page.
+ */
 export function homePath(session: SessionInfo | null): string {
   if (!session) return '/login';
   if (session.state !== 'ACTIVE' || !session.user) return '/mfa';
+  if (session.setupRequired) return '/setup';
   return HOME_BY_ROLE[session.user.role];
 }
 
@@ -24,7 +28,12 @@ export function protectedRedirect(
   session: SessionInfo | null,
   roles: readonly Role[],
 ): string | null {
-  if (session?.state === 'ACTIVE' && session.user && roles.includes(session.user.role)) {
+  if (
+    session?.state === 'ACTIVE' &&
+    session.user &&
+    !session.setupRequired &&
+    roles.includes(session.user.role)
+  ) {
     return null;
   }
   return homePath(session);
@@ -43,10 +52,18 @@ export const guestOnly: LoaderFunction = async () => {
   return session ? redirect(homePath(session)) : null;
 };
 
+/** A step on the way in: only while the session is at that step, as `homePath` decides. */
+function stepPage(path: string): LoaderFunction {
+  return async () => {
+    const target = homePath(await loadSession());
+    return target === path ? null : redirect(target);
+  };
+}
+
 /** MFA: only while the session still waits for MFA verification or enrolment. */
-export const mfaPending: LoaderFunction = async () => {
-  const session = await loadSession();
-  return homePath(session) === '/mfa' ? null : redirect(homePath(session));
-};
+export const mfaPending = stepPage('/mfa');
+
+/** Practice setup: only for an admin who has not saved the practice settings yet. */
+export const setupPending = stepPage('/setup');
 
 export const toHome: LoaderFunction = async () => redirect(homePath(await loadSession()));

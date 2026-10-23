@@ -147,7 +147,8 @@ export interface paths {
         /**
          * Get own account and session state
          * @description Returns the session state and, once the password step is done, the own account.
-         *     For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17).
+         *     For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17)
+         *     and whether the practice setup is still pending (BR-18).
          */
         get: operations["getCurrentSession"];
         put?: never;
@@ -555,7 +556,8 @@ export interface paths {
         get: operations["getSettings"];
         /**
          * Update practice settings
-         * @description Replaces the single settings record (BR-18).
+         * @description Replaces the single settings record (BR-18). The first call completes the practice setup,
+         *     so `setupRequired` in `GET /auth/me` is no longer returned.
          */
         put: operations["updateSettings"];
         post?: never;
@@ -777,6 +779,11 @@ export interface components {
             user?: components["schemas"]["CurrentUser"];
             /** @description `ADMIN` only: expiry of the active grant (BR-17); absent without grant. */
             appointmentAccessUntil?: components["schemas"]["Timestamp"];
+            /**
+             * @description `ADMIN` in `ACTIVE` only: `true` while the practice settings were never saved (BR-18).
+             *     The client then shows the setup page; absent otherwise.
+             */
+            setupRequired?: boolean;
         };
         MfaEnrollResponse: {
             /** @description Base32 TOTP secret for manual entry. Returned only here. */

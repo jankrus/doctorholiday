@@ -19,6 +19,10 @@ describe('homePath', () => {
   ] as const)('sends %s to %s', (role, path) => {
     expect(homePath(activeSession(role))).toBe(path);
   });
+
+  it('sends an admin to /setup until the practice settings are saved', () => {
+    expect(homePath({ ...activeSession('ADMIN'), setupRequired: true })).toBe('/setup');
+  });
 });
 
 describe('protectedRedirect', () => {
@@ -36,5 +40,11 @@ describe('protectedRedirect', () => {
 
   it('redirects to /mfa before MFA is verified', () => {
     expect(protectedRedirect({ state: 'MFA_PENDING' }, ['ADMIN'])).toBe('/mfa');
+  });
+
+  it('redirects to /setup before the practice setup is done', () => {
+    expect(protectedRedirect({ ...activeSession('ADMIN'), setupRequired: true }, ['ADMIN'])).toBe(
+      '/setup',
+    );
   });
 });
