@@ -1,4 +1,4 @@
-/* Codes are compared character by character: monospace, spaced out, large. */
+/* Recovery codes are compared character by character: monospace, spaced out, large. */
 .mfa-code-input input {
   font-family: var(--code-font-family);
   font-size: var(--font-size-5);

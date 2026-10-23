@@ -1,5 +1,5 @@
 import { Box, Button, Card, Checkbox, Flex, Text, TextField } from '@radix-ui/themes';
-import { useEffect, useRef, useState, type Ref } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Form,
   redirect,
@@ -24,6 +24,7 @@ import { CopyButton } from '../../components/CopyButton';
 import { FormField, type FieldControlProps } from '../../components/FormField';
 import { DownloadIcon } from '../../components/icons';
 import { LogoutButton } from '../../components/LogoutButton';
+import { OtpInput } from '../../components/OtpInput';
 import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { QrCode } from '../../components/QrCode';
@@ -113,37 +114,39 @@ export function MfaPage() {
   return <MfaEnrollment optional={session.state === 'ACTIVE'} />;
 }
 
-/** Clears and focuses the code input after a failed attempt, so the next code can be typed. */
-function useResetOnError(result: FormResult | undefined) {
-  const ref = useRef<HTMLInputElement>(null);
+/**
+ * Changes after every failed attempt. Used as `key`, it remounts the code input: the input is
+ * empty again and takes the focus for the next code.
+ */
+function useAttemptKey(result: FormResult | undefined): number {
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
-    if ((result?.error || result?.fieldError) && ref.current) {
-      ref.current.value = '';
-      ref.current.focus();
-    }
+    if (result?.error || result?.fieldError) setAttempt((n) => n + 1);
   }, [result]);
-  return ref;
+  return attempt;
 }
 
+/** App codes get one box per digit; recovery codes (`xxxxx-xxxxx`) a single text field. */
 function CodeInput({
   mode,
-  inputRef,
+  label,
+  autoFocus,
   ...control
-}: FieldControlProps & { mode: Mode; inputRef: Ref<HTMLInputElement> }) {
-  const totp = mode === 'totp';
+}: FieldControlProps & { mode: Mode; label: string; autoFocus: boolean }) {
+  if (mode === 'totp') {
+    return <OtpInput {...control} label={label} name="code" autoFocus={autoFocus} />;
+  }
   return (
     <TextField.Root
       {...control}
-      ref={inputRef}
       name="code"
       size="3"
       className="mfa-code-input"
       autoComplete="one-time-code"
-      inputMode={totp ? 'numeric' : 'text'}
-      placeholder={totp ? '123456' : 'xxxxx-xxxxx'}
+      placeholder="xxxxx-xxxxx"
       autoCapitalize="off"
       spellCheck={false}
-      autoFocus
+      autoFocus={autoFocus}
     />
   );
 }
@@ -153,7 +156,7 @@ function MfaChallenge() {
   const submitting = useNavigation().state === 'submitting';
   const [mode, setMode] = useState<Mode>('totp');
   const current = result?.mode === mode ? result : undefined;
-  const inputRef = useResetOnError(current);
+  const attempt = useAttemptKey(current);
 
   return (
     <Flex direction="column" gap="6">
@@ -172,7 +175,15 @@ function MfaChallenge() {
             label={mode === 'totp' ? 'Bestätigungscode' : 'Wiederherstellungscode'}
             error={current?.fieldError}
           >
-            {(control) => <CodeInput {...control} mode={mode} inputRef={inputRef} />}
+            {(control) => (
+              <CodeInput
+                {...control}
+                key={attempt}
+                mode={mode}
+                label={mode === 'totp' ? 'Bestätigungscode' : 'Wiederherstellungscode'}
+                autoFocus
+              />
+            )}
           </FormField>
           <Button type="submit" size="3" loading={submitting}>
             Bestätigen
@@ -232,7 +243,7 @@ function LeaveEnrollment({ optional }: { optional: boolean }) {
 function MfaEnrollment({ optional }: { optional: boolean }) {
   const enroll = useFetcher<EnrollResult>();
   const confirm = useFetcher<ConfirmResult>();
-  const inputRef = useResetOnError(confirm.data);
+  const attempt = useAttemptKey(confirm.data);
   const enrollment = enroll.data?.enrollment;
 
   if (confirm.data?.recoveryCodes && confirm.data.session) {
@@ -324,7 +335,16 @@ function MfaEnrollment({ optional }: { optional: boolean }) {
                   hint="Die App zeigt einen 6-stelligen Code, der sich alle 30 Sekunden ändert."
                   error={confirm.data?.fieldError}
                 >
-                  {(control) => <CodeInput {...control} mode="totp" inputRef={inputRef} />}
+                  {(control) => (
+                    // No focus on first show, so the page does not jump past the QR code.
+                    <CodeInput
+                      {...control}
+                      key={attempt}
+                      mode="totp"
+                      label="Bestätigungscode"
+                      autoFocus={attempt > 0}
+                    />
+                  )}
                 </FormField>
                 <Button type="submit" size="3" loading={confirm.state !== 'idle'}>
                   Bestätigen und aktivieren

@@ -17,11 +17,19 @@ const RECOVERY_CODES = [
   'zt5r4-e3w2q',
 ];
 
+/** App codes go into the digit boxes (focus moves on by itself), recovery codes into one field. */
 async function typeCode(label: string, code: string) {
   const user = userEvent.setup();
-  await user.type(await screen.findByLabelText(label), code);
+  if (label === 'Bestätigungscode') {
+    await user.click(await screen.findByLabelText('Ziffer 1 von 6'));
+    await user.keyboard(code);
+  } else {
+    await user.type(await screen.findByLabelText(label), code);
+  }
   return user;
 }
+
+const codeBoxes = () => screen.getAllByLabelText(/^Ziffer \d von 6$/);
 
 describe('MFA login challenge', () => {
   function renderChallenge(verify: (body: unknown) => Response) {
@@ -59,7 +67,7 @@ describe('MFA login challenge', () => {
     await user.click(screen.getByRole('button', { name: 'Bestätigen' }));
 
     await screen.findByText('Bitte geben Sie den 6-stelligen Code aus Ihrer App ein.');
-    expect(screen.getByLabelText('Bestätigungscode')).toHaveAccessibleDescription(
+    expect(screen.getByRole('group', { name: 'Bestätigungscode' })).toHaveAccessibleDescription(
       'Bitte geben Sie den 6-stelligen Code aus Ihrer App ein.',
     );
     expect(sent).toEqual([]);
@@ -72,8 +80,8 @@ describe('MFA login challenge', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Der Code ist ungültig');
     expect(screen.queryByText('Server text.')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Bestätigungscode')).toHaveValue('');
-    expect(screen.getByLabelText('Bestätigungscode')).toHaveFocus();
+    for (const box of codeBoxes()) expect(box).toHaveValue('');
+    expect(screen.getByLabelText('Ziffer 1 von 6')).toHaveFocus();
   });
 
   it('accepts a recovery code instead', async () => {
@@ -162,7 +170,8 @@ describe('MFA enrolment', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Der Code ist ungültig');
     expect(screen.getByRole('img', { name: /QR-Code/ })).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByLabelText('Bestätigungscode')).toHaveValue(''));
+    await waitFor(() => expect(screen.getByLabelText('Ziffer 1 von 6')).toHaveFocus());
+    for (const box of codeBoxes()) expect(box).toHaveValue('');
   });
 });
 
