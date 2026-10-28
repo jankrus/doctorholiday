@@ -30,7 +30,7 @@ The following native GitHub security features have been enabled in the repositor
 
 ## 3. Lecturer Access (§7a)
 
-Before the submission deadline, the lecturer was invited to the repository as a collaborator with the **Maintain** role, providing access to the code, CI/CD pipelines, test reports, and evidence.
+Before the submission deadline, the lecturer will be invited to the repository as a collaborator with the **Maintain** role, providing access to the code, CI/CD pipelines, test reports, and evidence.
 
 ---
 
