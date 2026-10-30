@@ -151,7 +151,7 @@ These conventions apply to every endpoint in [`backend/openapi.yaml`](../../back
 
 ## Domain model
 
-The model below is the logical model; #12 turns it into SQLAlchemy models and migrations. Column names are snake_case in the database and camelCase in the API (`starts_at` ↔ `startsAt`). `start`/`end` from the issue are named `starts_at`/`ends_at` because `END` is an SQL keyword.
+The model below is the logical model; #12 turns it into SQLAlchemy models and migrations. Its physical form (column types, constraints, indexes, grants) is defined in [database.md](database.md) and the diagram [database-erm.drawio](database-erm.drawio). Column names are snake_case in the database and camelCase in the API (`starts_at` ↔ `startsAt`). `start`/`end` from the issue are named `starts_at`/`ends_at` because `END` is an SQL keyword.
 
 ### Entities
 

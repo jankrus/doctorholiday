@@ -1,0 +1,55 @@
+# Database Schema (Physical ER Model)
+
+This document and the diagram [`database-erm.drawio`](database-erm.drawio) define the PostgreSQL 16 schema that the migrations of [#12](https://github.com/jankrus/doctorholiday/issues/12) create. The logical model (entities, fields, meaning) stays in [requirements.md](requirements.md#domain-model); this is its physical form: column types, nullability, defaults, keys, constraints and indexes.
+
+- **Diagram:** open `database-erm.drawio` in draw.io (desktop, web or the VS Code extension). Each table shows its columns; the dashed box below a table lists its constraints and indexes.
+- **Builds on:** [requirements.md](requirements.md) (domain model, BR-01–BR-25), [roles-and-permissions.md](roles-and-permissions.md), [ADR-001](adr/ADR-001-tech-stack.md) (PostgreSQL 16, SQLAlchemy 2).
+- **Open PR included:** the model already contains the schema change of an open PR, marked yellow in the diagram: `users.mfa_offer_declined_at` (#67, optional MFA for patients). If that PR is dropped, its column is dropped here too.
+
+## Conventions
+
+| Topic | Decision |
+| --- | --- |
+| Names | Tables plural, columns snake_case, as listed in #12. `starts_at`/`ends_at` instead of `start`/`end` (SQL keyword). |
+| Primary keys | Random `uuid` with `DEFAULT gen_random_uuid()` (built into PostgreSQL 13+), so IDs cannot be enumerated. The two single-row tables use `smallint id = 1`. |
+| Enums | `text` + `CHECK (col IN (…))` instead of PostgreSQL `ENUM` types. Adding a value is a plain constraint change in a migration, and the values match the OpenAPI enums one to one. |
+| Time | Every timestamp is `timestamptz` (stored in UTC). Only `working_hours` uses `time`, because it is local time in `Europe/Berlin` (BR-08). |
+| E-mail | Domain `email_address` over `citext` (case-insensitive uniqueness), see requirements.md. |
+| Secrets | Only hashes or ciphertext: `password_hash` (Argon2id), `token_hash` (SHA-256, 32 bytes), `code_hash`, `mfa_secret_enc`. Raw tokens and codes never reach the database. |
+| Deletion | Users, appointments and audit events are never deleted; account deletion erases personal data instead (BR-13). Rows that only exist for a user's login (`credentials`, `sessions`, `recovery_codes`, `password_reset_codes`) use `ON DELETE CASCADE`; every other FK keeps the default `NO ACTION`, so history can never lose its references. |
+| Extensions | `citext` (e-mail), `btree_gist` (exclusion constraints mixing `=` on `uuid`/`smallint` with `&&` on ranges). |
+
+## Additions to the logical model
+
+The physical model needs four things the domain model in requirements.md does not have yet. They should be added to the domain model in the PR that implements #12.
+
+| Addition | Why |
+| --- | --- |
+| `credentials.totp_last_step` (`bigint`, `NULL`) | RFC 6238 §5.2: a verifier must not accept the same TOTP code twice. Stores the time step of the last accepted code; codes with a step `<=` this value are rejected. Without it, a code observed by an attacker stays valid for its 30 s window (#21). |
+| `audit_events.details` (`jsonb`, `NULL`) | BR-22 requires the audit event of a rescheduling to record the old and the new time, and `target` holds only one ID. `details` takes a small object with allow-listed keys only (e.g. `oldStartsAt`, `newStartsAt`, `oldDoctorId`, `newDoctorId`, `oldRole`, `newRole`); the audit module never copies request bodies or personal data into it (BR-19). |
+| `admin_access_grants.expiry_logged_at` (`timestamptz`, `NULL`) | BR-17 requires an `APPOINTMENT_ACCESS_EXPIRED` audit event when a grant expires. The column marks grants whose event was written, so the event is written exactly once even if several pods or job runs see the same expired grant. |
+| Exclusion constraints on `working_hours` and `admin_access_grants` | BR-08 (entries of one weekday do not overlap) and BR-17 (only one active grant per admin) are checked by the backend, but two concurrent requests can both pass the check. As with appointments (BR-09), the database is the final guard. `working_hours` needs the range type `timerange` over `time`, which the first migration creates. |
+
+## Constraints the database cannot express
+
+These rules stay in the backend and need tests there (#12, #14–#18):
+
+- **Role of a referenced user:** `doctor_id` must reference a `DOCTOR`, `patient_id` a `PATIENT`, `admin_id` an `ADMIN`. A plain FK cannot check this, and the role can change later (BR-15), which must not invalidate history.
+- **Counting rules:** at most 5 working-hours entries per weekday (BR-08), 5 open appointments per patient or guest phone (BR-09, BR-24), 100 open absences per doctor (BR-12). Each check runs in the same transaction as the insert.
+- **Time-relative rules:** "in the future", "at most 365 days ahead", cancellation deadline (BR-11, BR-12, BR-23) depend on `now()` and do not belong in `CHECK` constraints.
+- **Last active admin** (BR-15): checked under `SELECT … FOR UPDATE` on the admin rows.
+- **Absence vs. booked appointment** (BR-12): checked in the transaction that creates the absence.
+
+## Rows created by the migrations
+
+Both single-row tables are filled by the migration, not by dev seed data, so a fresh cluster works without seeding:
+
+- `practice_settings`: `(1, 'Doctor Holiday', 24, 15, now(), NULL)`; `updated_by_id IS NULL` means the practice setup is still pending (BR-18).
+- `admin_bootstrap`: `(1, false, NULL, NULL)`; the first login locks this row (BR-04).
+
+## Database roles and grants
+
+Least privilege, details and the exact `GRANT` statements go to `backend/README.md` with #12:
+
+- **Owner/migration role** owns the schema and runs the migrations. It is not a superuser: `citext` and `btree_gist` are trusted extensions (PostgreSQL 13+), so a role with `CREATE` on the database can install them.
+- **Application role** (used by the running backend) gets `SELECT, INSERT, UPDATE, DELETE` on the tables it needs, but on `audit_events` only `SELECT, INSERT`, so the application cannot rewrite the audit log. It has no `CREATE` on the schema and no DDL rights.
