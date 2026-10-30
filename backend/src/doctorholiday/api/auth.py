@@ -98,7 +98,8 @@ _NO_STORE = {"Cache-Control": "no-store"}
 
 
 def _client_ip(request: Request) -> IPAddress | None:
-    # The direct peer; behind ingress-nginx that is the proxy until forwarded headers are handled.
+    # The direct peer; behind ingress-nginx that is the proxy until forwarded headers are handled
+    # (#75).
     if request.client is None:
         return None
     try:
