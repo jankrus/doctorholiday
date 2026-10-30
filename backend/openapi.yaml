@@ -332,7 +332,8 @@ paths:
       summary: Get own account and session state
       description: |
         Returns the session state and, only in `ACTIVE`, the own account (BR-05). Before MFA is
-        verified or enrolled, the response contains the state alone. For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17).
+        verified or enrolled, the response contains the state alone. For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17)
+        and whether the practice setup is still pending (BR-18).
       x-action: [A22]
       x-roles: [PATIENT, STAFF, DOCTOR, ADMIN]
       x-own-only: [PATIENT, STAFF, DOCTOR, ADMIN]
@@ -1174,7 +1175,9 @@ paths:
       tags: [admin]
       operationId: updateSettings
       summary: Update practice settings
-      description: Replaces the single settings record (BR-18).
+      description: |
+        Replaces the single settings record (BR-18). The first call completes the practice setup,
+        so `setupRequired` in `GET /auth/me` is no longer returned.
       x-action: [A20]
       x-roles: [ADMIN]
       x-session-states: [ACTIVE]
@@ -1902,6 +1905,11 @@ components:
         appointmentAccessUntil:
           description: '`ADMIN` only: expiry of the active grant (BR-17); absent without grant.'
           $ref: '#/components/schemas/Timestamp'
+        setupRequired:
+          description: |
+            `ADMIN` in `ACTIVE` only: `true` while the practice settings were never saved (BR-18).
+            The client then shows the setup page; absent otherwise.
+          type: boolean
     MfaEnrollResponse:
       type: object
       required: [secret, otpauthUri]

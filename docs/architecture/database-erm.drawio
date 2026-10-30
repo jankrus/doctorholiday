@@ -1171,7 +1171,7 @@
             <mxRectangle width="180" height="24" as="alternateBounds"/>
           </mxGeometry>
         </mxCell>
-        <mxCell id="r_practice_settings_updated_by_id" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=#fff2cc;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;strokeColor=#d79b00;html=1;" vertex="1" parent="t_practice_settings">
+        <mxCell id="r_practice_settings_updated_by_id" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;fillColor=none;collapsible=0;dropTarget=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;top=0;left=0;right=0;bottom=0;strokeColor=#d79b00;html=1;" vertex="1" parent="t_practice_settings">
           <mxGeometry y="152" width="540" height="24" as="geometry"/>
         </mxCell>
         <mxCell id="r_practice_settings_updated_by_id_c0" value="FK" style="shape=partialRectangle;connectable=0;fillColor=none;top=0;left=0;bottom=0;right=1;strokeColor=#d79b00;overflow=hidden;whiteSpace=wrap;html=1;fontSize=12;fontStyle=1;align=center;" vertex="1" parent="r_practice_settings_updated_by_id">
@@ -2445,7 +2445,7 @@
         <mxCell id="legend" value="&lt;b&gt;Legend&lt;/b&gt;&lt;br&gt;PK primary key &#xB7; FK foreign key &#xB7; UK unique &#xB7; UX partial unique index&lt;br&gt;CK check constraint &#xB7; EX exclusion constraint &#xB7; IX index&lt;br&gt;NOT NULL = x: column default x &#xB7; enums are text + CHECK&lt;br&gt;Solid line: ownership (who the row belongs to)&lt;br&gt;Dashed line: actor reference (who did it)&lt;br&gt;All FKs reference users.id; ON DELETE RESTRICT unless noted" style="text;html=1;align=left;verticalAlign=top;fontSize=11;whiteSpace=wrap;strokeColor=#999999;spacing=8;" vertex="1" parent="1">
           <mxGeometry x="1580" y="20" width="540" height="118" as="geometry"/>
         </mxCell>
-        <mxCell id="lg0" value="Column from an open PR (#64 practice setup, #67 MFA offer)" style="rounded=0;html=1;align=left;spacingLeft=8;fontSize=11;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#999999;" vertex="1" parent="1">
+        <mxCell id="lg0" value="Column from an open PR (#67 MFA offer)" style="rounded=0;html=1;align=left;spacingLeft=8;fontSize=11;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#999999;" vertex="1" parent="1">
           <mxGeometry x="810" y="40" width="540" height="28" as="geometry"/>
         </mxCell>
         <mxCell id="types" value="&lt;b&gt;Database objects created before the tables&lt;/b&gt;&lt;br&gt;CREATE EXTENSION citext; CREATE EXTENSION btree_gist;&lt;br&gt;CREATE DOMAIN email_address AS citext&lt;br&gt;&amp;nbsp;&amp;nbsp;CHECK (length(VALUE) &amp;lt;= 254 AND VALUE ~ '^[^@\s]+@[^@\s]+$');&lt;br&gt;CREATE TYPE timerange AS RANGE (subtype = time);" style="text;html=1;align=left;verticalAlign=top;fontSize=11;fontFamily=Courier New;whiteSpace=wrap;strokeColor=#999999;spacing=8;" vertex="1" parent="1">

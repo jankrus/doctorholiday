@@ -4,7 +4,7 @@ This document and the diagram [`database-erm.drawio`](database-erm.drawio) defin
 
 - **Diagram:** open `database-erm.drawio` in draw.io (desktop, web or the VS Code extension). Each table shows its columns; the dashed box below a table lists its constraints and indexes.
 - **Builds on:** [requirements.md](requirements.md) (domain model, BR-01–BR-25), [roles-and-permissions.md](roles-and-permissions.md), [ADR-001](adr/ADR-001-tech-stack.md) (PostgreSQL 16, SQLAlchemy 2).
-- **Open PRs included:** the model already contains the schema changes of open PRs, marked yellow in the diagram: `practice_settings.updated_by_id` nullable (#64), `users.mfa_offer_declined_at` (#67, optional MFA for patients). If one of these PRs is dropped, its columns are dropped here too.
+- **Open PR included:** the model already contains the schema change of an open PR, marked yellow in the diagram: `users.mfa_offer_declined_at` (#67, optional MFA for patients). If that PR is dropped, its column is dropped here too.
 
 ## Conventions
 
