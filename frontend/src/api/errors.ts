@@ -13,6 +13,8 @@ const MESSAGES: Partial<Record<ErrorCode, string>> = {
   INVALID_MFA_CODE: 'Der Code ist ungültig oder abgelaufen. Bitte versuchen Sie es erneut.',
   MFA_REQUIRED: 'Bitte bestätigen Sie zuerst Ihre Anmeldung mit dem zweiten Faktor.',
   MFA_ALREADY_ENABLED: 'Die Zwei-Faktor-Authentifizierung ist bereits eingerichtet.',
+  MFA_NOT_ENABLED:
+    'Die Zwei-Faktor-Authentifizierung ist nicht eingerichtet. Bitte starten Sie die Einrichtung neu.',
   FORBIDDEN: 'Dazu sind Sie nicht berechtigt.',
   NOT_FOUND: 'Dieser Eintrag wurde nicht gefunden.',
   CONFLICT:
@@ -20,8 +22,6 @@ const MESSAGES: Partial<Record<ErrorCode, string>> = {
   PAYLOAD_TOO_LARGE: 'Die Anfrage ist zu groß.',
   RATE_LIMITED:
     'Zu viele Versuche. Bitte warten Sie einen Moment und versuchen Sie es dann erneut.',
-  SERVICE_UNAVAILABLE:
-    'Der Dienst ist vorübergehend nicht erreichbar. Bitte versuchen Sie es später erneut.',
 };
 
 /** Maps any error (API error body, network failure, anything else) to a generic user-facing text. */

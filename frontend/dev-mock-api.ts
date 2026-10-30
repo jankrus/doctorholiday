@@ -223,7 +223,7 @@ export function mockApi(): Plugin {
           }
 
           default:
-            sendJson(res, 503, apiError('SERVICE_UNAVAILABLE', 'Not mocked.'));
+            sendJson(res, 500, apiError('INTERNAL_ERROR', 'Not mocked.'));
         }
       });
 

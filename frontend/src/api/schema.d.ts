@@ -46,6 +46,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/password-reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a new password with a reset code
+         * @description Redeems a one-time code issued by the practice (A34) and sets a new password (BR-25).
+         *     Every failure returns the same `400 INVALID_RESET_CODE`. Deletes all sessions of the user
+         *     and leaves MFA unchanged. Does not log in.
+         */
+        post: operations["resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -108,7 +130,8 @@ export interface paths {
          *       secret): the first TOTP code enables MFA, and the response contains ten recovery codes,
          *       exactly once (BR-07).
          *
-         *     The session ID is rotated on success (BR-05).
+         *     The session ID is rotated on success (BR-05). Without enabled MFA or an unconfirmed secret
+         *     the endpoint returns `409 MFA_NOT_ENABLED` (BR-06).
          */
         post: operations["verifyMfa"];
         delete?: never;
@@ -169,8 +192,8 @@ export interface paths {
         };
         /**
          * Get own account and session state
-         * @description Returns the session state and, once the password step is done, the own account.
-         *     For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17)
+         * @description Returns the session state and, only in `ACTIVE`, the own account (BR-05). Before MFA is
+         *     verified or enrolled, the response contains the state alone. For `ADMIN` it also returns the expiry of an active appointment-access grant (BR-17)
          *     and whether the practice setup is still pending (BR-18); for `PATIENT` whether the
          *     optional MFA offer is still pending (BR-26).
          */
@@ -305,9 +328,10 @@ export interface paths {
         put?: never;
         /**
          * Book an appointment
-         * @description A `PATIENT` books for themselves and sends neither `patientEmail` nor `guest`. `STAFF` sends
-         *     exactly one: `patientEmail` of an active patient, or `guest` for a person without an account
-         *     (BR-09, BR-24). `startsAt` must be an available
+         * @description A `PATIENT` books for themselves and sends neither `patientEmail` nor `guest` (otherwise
+         *     `403`). `STAFF` sends exactly one of them (both or none: `422`): `patientEmail` of an active
+         *     patient (otherwise `404`), or `guest` for a person without an account (BR-09, BR-24).
+         *     `startsAt` must be an available
          *     time of the doctor (BR-23). The booking is atomic; booked appointments of one doctor never
          *     overlap, and a patient has at most five open appointments.
          */
@@ -528,6 +552,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/users/{id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reactivate a deactivated user
+         * @description The user can log in again with the previous role, password and MFA; no sessions are
+         *     restored. Deleted accounts return `404`, active accounts `409 CONFLICT` (BR-15).
+         */
+        post: operations["reactivateUser"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/users/password-reset-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Issue a one-time password reset code
+         * @description For a user who forgot their password and proved their identity in person or by phone
+         *     (BR-25). `STAFF` only for active patients; `ADMIN` for any active account except their own
+         *     (`403`). Other e-mails return `404`. The code is returned exactly once, valid for 15 minutes,
+         *     and replaces an unused earlier code.
+         */
+        post: operations["issuePasswordResetCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/users/{id}/mfa/reset": {
         parameters: {
             query?: never;
@@ -540,7 +608,8 @@ export interface paths {
         /**
          * Reset another user's MFA
          * @description Deletes TOTP secret, recovery codes and all sessions of the user (BR-16). Not allowed for
-         *     the own account (`403`).
+         *     the own account (`403`); a user with neither MFA nor an unconfirmed secret returns
+         *     `409 MFA_NOT_ENABLED`.
          */
         post: operations["resetUserMfa"];
         delete?: never;
@@ -676,6 +745,8 @@ export interface components {
         };
         TotpCode: string;
         RecoveryCodeValue: string;
+        /** @description One-time password reset code, 10 random base32 characters (BR-25). */
+        ResetCode: string;
         /** @description 32 random bytes, base64url without padding. */
         InvitationToken: string;
         /** @enum {string} */
@@ -706,11 +777,11 @@ export interface components {
         /** @enum {string} */
         AccessPurpose: "SUPPORT_REQUEST" | "INCIDENT_RESPONSE" | "DATA_SUBJECT_REQUEST" | "AUDIT";
         /** @enum {string} */
-        AuditAction: "USER_REGISTERED" | "INVITATION_CREATED" | "INVITATION_ACCEPTED" | "LOGIN" | "LOGOUT" | "MFA_ENROLLED" | "MFA_VERIFIED" | "MFA_RECOVERY_CODE_USED" | "MFA_RESET" | "ADMIN_BOOTSTRAPPED" | "PASSWORD_CHANGED" | "ACCOUNT_DELETED" | "ROLE_CHANGED" | "USER_DEACTIVATED" | "WORKING_HOURS_CHANGED" | "ABSENCE_CREATED" | "ABSENCE_DELETED" | "APPOINTMENT_BOOKED" | "APPOINTMENT_RESCHEDULED" | "APPOINTMENT_CANCELLED" | "APPOINTMENT_ACCESS_GRANTED" | "APPOINTMENT_DATA_ACCESSED" | "SETTINGS_UPDATED" | "ACCESS_DENIED";
+        AuditAction: "USER_REGISTERED" | "INVITATION_CREATED" | "INVITATION_ACCEPTED" | "LOGIN" | "LOGOUT" | "MFA_ENROLLED" | "MFA_VERIFIED" | "MFA_RECOVERY_CODE_USED" | "MFA_RESET" | "ADMIN_BOOTSTRAPPED" | "PASSWORD_CHANGED" | "ACCOUNT_DELETED" | "ROLE_CHANGED" | "USER_DEACTIVATED" | "USER_REACTIVATED" | "PASSWORD_RESET_CODE_ISSUED" | "PASSWORD_RESET" | "WORKING_HOURS_CHANGED" | "ABSENCE_CREATED" | "ABSENCE_DELETED" | "APPOINTMENT_BOOKED" | "APPOINTMENT_RESCHEDULED" | "APPOINTMENT_CANCELLED" | "APPOINTMENT_ACCESS_GRANTED" | "APPOINTMENT_ACCESS_EXPIRED" | "APPOINTMENT_DATA_ACCESSED" | "SETTINGS_UPDATED" | "ACCESS_DENIED";
         /** @enum {string} */
         AuditOutcome: "SUCCESS" | "FAILURE" | "DENIED";
         /** @enum {string} */
-        ErrorCode: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "MFA_REQUIRED" | "FORBIDDEN" | "ACCESS_GRANT_REQUIRED" | "REAUTHENTICATION_FAILED" | "INVALID_MFA_CODE" | "INVALID_INVITATION" | "NOT_FOUND" | "CONFLICT" | "MFA_ALREADY_ENABLED" | "MFA_NOT_ENABLED" | "WORKING_HOURS_OVERLAP" | "TIME_NOT_AVAILABLE" | "TIME_ALREADY_BOOKED" | "ABSENCE_HAS_APPOINTMENTS" | "APPOINTMENT_LIMIT_REACHED" | "APPOINTMENT_NOT_CANCELLABLE" | "APPOINTMENT_NOT_RESCHEDULABLE" | "CANCELLATION_DEADLINE_PASSED" | "LAST_ADMIN" | "ROLE_CHANGE_NOT_ALLOWED" | "ACCESS_GRANT_ACTIVE" | "PAYLOAD_TOO_LARGE" | "RATE_LIMITED" | "INTERNAL_ERROR" | "SERVICE_UNAVAILABLE";
+        ErrorCode: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "MFA_REQUIRED" | "FORBIDDEN" | "ACCESS_GRANT_REQUIRED" | "REAUTHENTICATION_FAILED" | "INVALID_MFA_CODE" | "INVALID_INVITATION" | "INVALID_RESET_CODE" | "NOT_FOUND" | "CONFLICT" | "MFA_ALREADY_ENABLED" | "MFA_NOT_ENABLED" | "WORKING_HOURS_OVERLAP" | "TIME_NOT_AVAILABLE" | "TIME_ALREADY_BOOKED" | "ABSENCE_HAS_APPOINTMENTS" | "APPOINTMENT_LIMIT_REACHED" | "APPOINTMENT_NOT_CANCELLABLE" | "APPOINTMENT_NOT_RESCHEDULABLE" | "CANCELLATION_DEADLINE_PASSED" | "LAST_ADMIN" | "ROLE_CHANGE_NOT_ALLOWED" | "ACCESS_GRANT_ACTIVE" | "PAYLOAD_TOO_LARGE" | "RATE_LIMITED" | "INTERNAL_ERROR";
         Error: {
             error: {
                 code: components["schemas"]["ErrorCode"];
@@ -727,6 +798,15 @@ export interface components {
         InvitationAcceptRequest: {
             token: components["schemas"]["InvitationToken"];
             password: components["schemas"]["NewPassword"];
+        };
+        PasswordResetRequest: {
+            email: components["schemas"]["Email"];
+            code: components["schemas"]["ResetCode"];
+            newPassword: components["schemas"]["NewPassword"];
+        };
+        PasswordResetCodeRequest: {
+            /** @description E-mail of the user who forgot their password. */
+            email: components["schemas"]["Email"];
         };
         LoginRequest: {
             email: components["schemas"]["Email"];
@@ -758,7 +838,10 @@ export interface components {
             endsAt: components["schemas"]["Timestamp"];
             doctorId?: components["schemas"]["Uuid"];
         };
-        /** @description `patientEmail` and `guest` are mutually exclusive; sending both returns `422` (BR-09). */
+        /**
+         * @description `PATIENT` sends neither `patientEmail` nor `guest` (`403` otherwise). `STAFF` sends exactly
+         *     one of them; both or none return `422` (BR-09).
+         */
         AppointmentCreateRequest: {
             doctorId: components["schemas"]["Uuid"];
             startsAt: components["schemas"]["Timestamp"];
@@ -804,7 +887,10 @@ export interface components {
         };
         SessionInfo: {
             state: components["schemas"]["SessionState"];
-            /** @description Absent in `MFA_PENDING`, so a password alone reveals nothing about the account. */
+            /**
+             * @description Only in `ACTIVE`; absent in `MFA_PENDING` and `MFA_ENROLLMENT_REQUIRED`, so a password
+             *     alone reveals nothing about the account (BR-05).
+             */
             user?: components["schemas"]["CurrentUser"];
             /** @description `ADMIN` only: expiry of the active grant (BR-17); absent without grant. */
             appointmentAccessUntil?: components["schemas"]["Timestamp"];
@@ -831,7 +917,9 @@ export interface components {
         };
         PatientRef: {
             id: components["schemas"]["Uuid"];
-            email: components["schemas"]["Email"];
+            /** @description `true` if the patient deleted their account (BR-13); e-mail and name are then absent. */
+            deleted: boolean;
+            email?: components["schemas"]["Email"];
             displayName?: components["schemas"]["DisplayName"];
         };
         Absence: {
@@ -874,6 +962,10 @@ export interface components {
             isActive: boolean;
             mfaEnabled: boolean;
             createdAt: components["schemas"]["Timestamp"];
+        };
+        PasswordResetCodeIssued: {
+            code: components["schemas"]["ResetCode"];
+            expiresAt: components["schemas"]["Timestamp"];
         };
         InvitationCreated: {
             id: components["schemas"]["Uuid"];
@@ -947,6 +1039,24 @@ export interface components {
                  *       "error": {
                  *         "code": "VALIDATION_ERROR",
                  *         "message": "The request is invalid.",
+                 *         "requestId": "3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f"
+                 *       }
+                 *     }
+                 */
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /** @description Request body exceeds the size limit; rejected before parsing (`PAYLOAD_TOO_LARGE`). */
+        PayloadTooLarge: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "error": {
+                 *         "code": "PAYLOAD_TOO_LARGE",
+                 *         "message": "The request is too large.",
                  *         "requestId": "3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f"
                  *       }
                  *     }
@@ -1135,6 +1245,16 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Request with a valid session (`FORBIDDEN`); only callers without a session may do this. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1169,6 +1289,69 @@ export interface operations {
                     "application/json": components["schemas"]["Error"];
                 };
             };
+            /** @description Request with a valid session (`FORBIDDEN`); only callers without a session may do this. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description The invited e-mail got an account after the invitation was created (`CONFLICT`, BR-14). */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            413: components["responses"]["PayloadTooLarge"];
+            422: components["responses"]["ValidationError"];
+            429: components["responses"]["RateLimited"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Password changed. The user logs in next. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description E-mail unknown, or code wrong, expired or used up (`INVALID_RESET_CODE`). */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description Request with a valid session (`FORBIDDEN`); only callers without a session may do this. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1199,6 +1382,16 @@ export interface operations {
                 };
             };
             401: components["responses"]["InvalidCredentials"];
+            /** @description Request with a valid session (`FORBIDDEN`); only callers without a session may do this. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1264,6 +1457,7 @@ export interface operations {
             };
             401: components["responses"]["Unauthenticated"];
             409: components["responses"]["Conflict"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1351,12 +1545,14 @@ export interface operations {
             204: {
                 headers: {
                     "Set-Cookie": components["headers"]["SetSessionCookie"];
+                    "Cache-Control": components["headers"]["NoStore"];
                     [name: string]: unknown;
                 };
                 content?: never;
             };
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1385,6 +1581,7 @@ export interface operations {
             };
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1438,6 +1635,7 @@ export interface operations {
             /** @description Absence created. */
             201: {
                 headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1448,6 +1646,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1538,6 +1737,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1633,6 +1833,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1678,6 +1879,7 @@ export interface operations {
             /** @description The doctor's schedule. */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1709,6 +1911,7 @@ export interface operations {
             /** @description Working hours replaced; returns the updated schedule. */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1719,6 +1922,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1779,6 +1983,7 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1801,6 +2006,7 @@ export interface operations {
             /** @description Role changed. */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1811,6 +2017,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1829,6 +2036,7 @@ export interface operations {
             /** @description User deactivated. */
             200: {
                 headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
                     [name: string]: unknown;
                 };
                 content: {
@@ -1839,6 +2047,66 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    reactivateUser: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User reactivated. */
+            200: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["User"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            422: components["responses"]["ValidationError"];
+            500: components["responses"]["InternalError"];
+        };
+    };
+    issuePasswordResetCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Code issued. */
+            201: {
+                headers: {
+                    "Cache-Control": components["headers"]["NoStore"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordResetCodeIssued"];
+                };
+            };
+            401: components["responses"]["Unauthenticated"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1894,6 +2162,7 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1945,6 +2214,7 @@ export interface operations {
             };
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
+            413: components["responses"]["PayloadTooLarge"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };

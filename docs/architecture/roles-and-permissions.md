@@ -6,7 +6,7 @@ This document defines which roles exist in Doctor Holiday, what each role may do
 - **Grading:** Secure Coding & App-Security → *Berechtigungskonzept* (5 points)
 - **Exam brief:** §1 requires clarifying which roles exist; §4 requires that the first user to log in becomes the admin.
 - **Protection needs:** Appointment data of a medical practice is health data (GDPR Art. 9). Access follows need-to-know and data minimisation.
-- **API contract:** Each action in the matrix is mapped to exactly one API endpoint in [#4](https://github.com/jankrus/doctorholiday/issues/4): [requirements.md](requirements.md#traceability-permission-matrix--endpoints) and [`backend/openapi.yaml`](../../backend/openapi.yaml), where every operation names its roles (`x-roles`). A22–A29 were added in #4 to close gaps the API contract revealed; A30–A32 (rescheduling, working hours and absences instead of slots) were added in the #4 review.
+- **API contract:** Each action in the matrix is mapped to exactly one API endpoint in [#4](https://github.com/jankrus/doctorholiday/issues/4): [requirements.md](requirements.md#traceability-permission-matrix--endpoints) and [`backend/openapi.yaml`](../../backend/openapi.yaml), where every operation names its roles (`x-roles`). A22–A29 were added in #4 to close gaps the API contract revealed; A30–A32 (rescheduling, working hours and absences instead of slots) were added in the #4 review; A33–A35 (reactivation, password reset without e-mail) in the follow-up consistency check.
 - **Implementation:** [#15](https://github.com/jankrus/doctorholiday/issues/15) (admin bootstrap), [#16](https://github.com/jankrus/doctorholiday/issues/16) (authorisation and default deny), [#55](https://github.com/jankrus/doctorholiday/issues/55) (invitations, TBAC, MFA for staff, admin self-demotion).
 
 ## Roles
@@ -15,11 +15,11 @@ Four authenticated roles plus the unauthenticated actor `ANONYMOUS`. Every accou
 
 | Role | Who | Core permissions |
 | --- | --- | --- |
-| `ANONYMOUS` | Visitors without a session (not logged in) | Register, accept an invitation, log in, call the health probes. No access to availability or appointments. |
+| `ANONYMOUS` | Visitors without a session (not logged in) | Register, accept an invitation, log in, reset a forgotten password with a code from the practice, call the health probes. No access to availability or appointments. |
 | `PATIENT` | Self-registered patients | See available times; book, view, reschedule and cancel their own appointments; delete their own account |
-| `STAFF` | Practice staff (reception, administration), invited by `ADMIN` | Manage working hours and absences of all doctors, view and manage all appointments, book on behalf of patients |
+| `STAFF` | Practice staff (reception, administration), invited by `ADMIN` | Manage working hours and absences of all doctors, view and manage all appointments, book on behalf of patients, issue password reset codes for patients |
 | `DOCTOR` | Doctors, invited by `ADMIN` | Manage their own working hours and absences, view and manage all appointments |
-| `ADMIN` | Practice manager; the first user to log in becomes `ADMIN` ([bootstrap](#bootstrapping-the-first-admin)) | User and role management, MFA reset of other users, practice settings, audit log; access to appointment data only time-limited (see [ADMIN and health data](#admin-and-health-data-rbac--tbac)) |
+| `ADMIN` | Practice manager; the first user to log in becomes `ADMIN` ([bootstrap](#bootstrapping-the-first-admin)) | User and role management (including deactivation and reactivation), MFA and password reset of other users, working hours and absences of all doctors, practice settings, audit log; access to appointment data only time-limited (see [ADMIN and health data](#admin-and-health-data-rbac--tbac)) |
 
 `STAFF` and `DOCTOR` are separate roles (least privilege): only `STAFF` books on behalf of patients, and `DOCTOR` manages only their own working hours and absences.
 
@@ -61,10 +61,13 @@ Values: **allow**, **own only** (only resources of the logged-in user), **deny**
 | A30 | Reschedule appointment | deny | own only ¹⁰ | allow ¹⁰ | allow ¹⁰ | deny | `POST /api/v1/appointments/{id}/reschedule` |
 | A31 | Remove absence | deny | deny | allow | own only ⁶ | allow | `DELETE /api/v1/absences/{id}` |
 | A32 | View doctor schedule (working hours and absences) | deny | deny | allow | own only ⁶ | allow | `GET /api/v1/doctors/{id}/schedule` |
+| A33 | Reactivate user | deny | deny | deny | deny | allow ⁷ | `POST /api/v1/users/{id}/reactivate` |
+| A34 | Issue password reset code | deny | deny | allow ¹¹ | deny | allow ¹¹ | `POST /api/v1/users/password-reset-codes` |
+| A35 | Reset password with code | allow ¹² | deny | deny | deny | deny | `POST /api/v1/auth/password-reset` |
 | A36 | Decline optional MFA offer ([BR-26](requirements.md#business-rules)) | deny | own only | deny | deny | deny | `POST /api/v1/auth/mfa/decline` |
 
 1. Only with a valid invitation token from A16. The token is single-use, expires after 72 hours, is stored only as a hash and is sent in the request body, never in the URL. The role comes from the invitation, never from the request.
-2. Also allowed before MFA is verified. After a correct password (A03) the session already belongs to an account and therefore to its role, so the role columns apply; `ANONYMOUS` means no session at all. What the session may do is restricted by its state instead ([BR-05](requirements.md#business-rules)): in `MFA_PENDING` only A04, A06 and A22, in `MFA_ENROLLMENT_REQUIRED` additionally A05. A22 then returns only the session state, not the account.
+2. Also allowed before MFA is verified. After a correct password (A03) the session already belongs to an account and therefore to its role, so the role columns apply; `ANONYMOUS` means no session at all. What the session may do is restricted by its state instead ([BR-05](requirements.md#business-rules)): in `MFA_PENDING` only A04, A06 and A22, in `MFA_ENROLLMENT_REQUIRED` additionally A05. Until the session is `ACTIVE`, A22 returns only the session state, not the account.
 3. A patient may have at most 5 open (future, not cancelled) appointments, regardless of who booked them. The limit is checked server-side in the same transaction as the booking.
 4. `STAFF` books on behalf of a patient, identified by the patient's e-mail in the request body (no patient search for `STAFF`, data minimisation). The e-mail must belong to an active `PATIENT`; the booking is recorded in the audit log with `STAFF` as the actor. Alternatively `STAFF` books for a guest without an account (name and phone, [BR-24](requirements.md#business-rules)); guests have no login and manage their appointments through the practice.
 5. Permitted via RBAC; the actual access additionally requires an active time-limited grant from A19 (TBAC), see below.
@@ -73,6 +76,8 @@ Values: **allow**, **own only** (only resources of the logged-in user), **deny**
 8. Only after re-entering the password. Personal data is erased; past appointments and audit events keep only the pseudonymous user ID (GDPR Art. 17). Staff accounts are deactivated by an admin instead (A18).
 9. Never for the own account, so a stolen admin session cannot replace the admin's MFA. The reset deletes TOTP secret, recovery codes and all sessions of the user; staff roles must enrol MFA again at the next login.
 10. Moves an appointment to another available time in one transaction; patient and reason stay the same. `PATIENT` only until the cancellation deadline, `STAFF` and `DOCTOR` until the start. `ADMIN` does not book and therefore does not reschedule.
+11. For a user who forgot their password and proved their identity in person or by phone ([BR-25](requirements.md#business-rules)). `STAFF` only for active `PATIENT` accounts, identified by e-mail as in footnote 4; other e-mails return `404`. `ADMIN` for any active account except their own (`403`). The code is returned once and handed over out of band.
+12. Only with a valid code from A34: single use, valid 15 minutes, invalid after 5 failed attempts, stored only as a hash. Ends all sessions of the user and leaves MFA unchanged, so a code alone does not get past MFA.
 
 **Ownership check:** A09 and A10 share one endpoint. For `PATIENT` (A09, A30), the backend checks `appointment.patient_id == user.id`. "Own only" is always checked server-side against the session, never against IDs from the request (IDOR protection).
 
@@ -121,6 +126,7 @@ Only an `ADMIN` changes roles; every change is recorded in the audit log.
 3. Only `ADMIN` may change roles between `STAFF`, `DOCTOR` and `ADMIN` (A17).
 4. An admin may demote themselves only if another active admin remains. The last active admin can be neither demoted nor deactivated. The check locks the admin rows (`SELECT … FOR UPDATE`) in the same transaction as the change, so two admins cannot demote each other at the same time.
 5. A role change or deactivation immediately deletes all server-side sessions of the affected user. The user must log in again and gets the new permissions only then.
+6. Reactivation (A33) restores a deactivated account with its previous role; deleted accounts cannot be reactivated.
 
 ## Default deny
 
@@ -128,5 +134,6 @@ Any action not listed in the matrix is forbidden. This applies to every role, in
 
 - Authorisation is enforced centrally in the backend (middleware/guard per route), never only in the frontend.
 - New endpoints are unreachable without an explicit role grant.
+- Actions only for `ANONYMOUS` (A01–A03, A35) are denied to every request with a valid session, whatever its state. An expired or unknown session cookie counts as no session.
 - Rejections return `403` (or `404` for other users' resources, so their existence is not disclosed) using the uniform error schema from #4.
 - A role × endpoint test matrix generated from this document, plus a test that fails for any route without an authorisation rule, verifies the matrix ([#16](https://github.com/jankrus/doctorholiday/issues/16)).
