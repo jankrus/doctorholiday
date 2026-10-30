@@ -3,8 +3,8 @@
 This document and the diagram [`database-erm.drawio`](database-erm.drawio) define the PostgreSQL 16 schema that the migrations of [#12](https://github.com/jankrus/doctorholiday/issues/12) create. The logical model (entities, fields, meaning) stays in [requirements.md](requirements.md#domain-model); this is its physical form: column types, nullability, defaults, keys, constraints and indexes.
 
 - **Diagram:** open `database-erm.drawio` in draw.io (desktop, web or the VS Code extension). Each table shows its columns; the dashed box below a table lists its constraints and indexes.
-- **Builds on:** [requirements.md](requirements.md) (domain model, BR-01–BR-24), [roles-and-permissions.md](roles-and-permissions.md), [ADR-001](adr/ADR-001-tech-stack.md) (PostgreSQL 16, SQLAlchemy 2).
-- **Open PRs included:** the model already contains the schema changes of open PRs, marked yellow in the diagram: `password_reset_codes` and `appointments.guest_erased_at` (#63, password reset and guest erasure), `practice_settings.updated_by_id` nullable (#64), `users.mfa_offer_declined_at` (#67, optional MFA for patients). If one of these PRs is dropped, its columns are dropped here too.
+- **Builds on:** [requirements.md](requirements.md) (domain model, BR-01–BR-25), [roles-and-permissions.md](roles-and-permissions.md), [ADR-001](adr/ADR-001-tech-stack.md) (PostgreSQL 16, SQLAlchemy 2).
+- **Open PRs included:** the model already contains the schema changes of open PRs, marked yellow in the diagram: `practice_settings.updated_by_id` nullable (#64), `users.mfa_offer_declined_at` (#67, optional MFA for patients). If one of these PRs is dropped, its columns are dropped here too.
 
 ## Conventions
 
@@ -27,7 +27,7 @@ The physical model needs four things the domain model in requirements.md does no
 | --- | --- |
 | `credentials.totp_last_step` (`bigint`, `NULL`) | RFC 6238 §5.2: a verifier must not accept the same TOTP code twice. Stores the time step of the last accepted code; codes with a step `<=` this value are rejected. Without it, a code observed by an attacker stays valid for its 30 s window (#21). |
 | `audit_events.details` (`jsonb`, `NULL`) | BR-22 requires the audit event of a rescheduling to record the old and the new time, and `target` holds only one ID. `details` takes a small object with allow-listed keys only (e.g. `oldStartsAt`, `newStartsAt`, `oldDoctorId`, `newDoctorId`, `oldRole`, `newRole`); the audit module never copies request bodies or personal data into it (BR-19). |
-| `admin_access_grants.expiry_logged_at` (`timestamptz`, `NULL`) | #63 adds an `APPOINTMENT_ACCESS_EXPIRED` audit event when a grant expires. The column marks grants whose event was written, so the event is written exactly once even if several pods or job runs see the same expired grant. |
+| `admin_access_grants.expiry_logged_at` (`timestamptz`, `NULL`) | BR-17 requires an `APPOINTMENT_ACCESS_EXPIRED` audit event when a grant expires. The column marks grants whose event was written, so the event is written exactly once even if several pods or job runs see the same expired grant. |
 | Exclusion constraints on `working_hours` and `admin_access_grants` | BR-08 (entries of one weekday do not overlap) and BR-17 (only one active grant per admin) are checked by the backend, but two concurrent requests can both pass the check. As with appointments (BR-09), the database is the final guard. `working_hours` needs the range type `timerange` over `time`, which the first migration creates. |
 
 ## Constraints the database cannot express
