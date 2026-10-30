@@ -53,6 +53,8 @@ paths:
       description: |
         Creates a `PATIENT` account. Always answers `202` without body, whether or not the e-mail
         is already taken, so the endpoint cannot be used to enumerate accounts (BR-02).
+        Every request counts against a limit per client IP (default 10 within 60 minutes);
+        reaching it locks the IP for 60 minutes with `429 RATE_LIMITED` (BR-03).
 
         **MVP-TEMP:** the optional `role` creates accounts of every role until invitations
         (FR-02) and the first-admin bootstrap (#15) exist. It will be removed again.
