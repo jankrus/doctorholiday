@@ -101,6 +101,11 @@ class AuditAction(enum.StrEnum):
     ACCESS_DENIED = "ACCESS_DENIED"
 
 
+class ThrottleScope(enum.StrEnum):
+    IP = "IP"
+    ACCOUNT = "ACCOUNT"
+
+
 class AuditOutcome(enum.StrEnum):
     SUCCESS = "SUCCESS"
     FAILURE = "FAILURE"
@@ -173,6 +178,18 @@ class UserSession(Base):
     created_at: Mapped[datetime] = mapped_column(server_default=_DB_DEFAULT)
     last_seen_at: Mapped[datetime] = mapped_column(server_default=_DB_DEFAULT)
     expires_at: Mapped[datetime]
+
+
+class LoginThrottle(Base):
+    """Failed logins of one client IP or e-mail address (#14); key_hash is the SHA-256 of it."""
+
+    __tablename__ = "login_throttles"
+
+    scope: Mapped[ThrottleScope] = mapped_column(primary_key=True)
+    key_hash: Mapped[bytes] = mapped_column(primary_key=True)
+    window_started_at: Mapped[datetime] = mapped_column(server_default=_DB_DEFAULT)
+    failures: Mapped[int] = mapped_column(SmallInteger, server_default=_DB_DEFAULT)
+    locked_until: Mapped[datetime | None]
 
 
 class RecoveryCode(Base):

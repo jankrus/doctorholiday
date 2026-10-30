@@ -6,6 +6,7 @@ Minimal for now: API errors, request validation and unhandled exceptions. #13 ex
 
 import enum
 import logging
+from collections.abc import Mapping
 
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -22,6 +23,7 @@ class ErrorCode(enum.StrEnum):
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS"
     MFA_REQUIRED = "MFA_REQUIRED"
     FORBIDDEN = "FORBIDDEN"
+    RATE_LIMITED = "RATE_LIMITED"
     INTERNAL_ERROR = "INTERNAL_ERROR"
 
 
@@ -40,10 +42,15 @@ class ApiError(Exception):
 
 
 def error_response(
-    request: Request, status_code: int, code: ErrorCode, message: str
+    request: Request,
+    status_code: int,
+    code: ErrorCode,
+    message: str,
+    headers: Mapping[str, str] | None = None,
 ) -> JSONResponse:
     return JSONResponse(
         status_code=status_code,
+        headers=headers,
         content={
             "error": {
                 "code": code.value,

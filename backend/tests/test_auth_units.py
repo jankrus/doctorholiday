@@ -1,6 +1,7 @@
 """Auth building blocks that need no database; the endpoints are tested in tests/db/test_auth.py."""
 
 import logging
+from ipaddress import ip_address
 
 import pytest
 from fastapi import FastAPI
@@ -8,6 +9,7 @@ from fastapi.testclient import TestClient
 
 from doctorholiday.auth.passwords import hash_password, verify_password
 from doctorholiday.auth.sessions import hash_token, new_token
+from doctorholiday.auth.throttling import account_key, ip_key
 
 PASSWORD = "correct horse battery staple"
 
@@ -72,3 +74,25 @@ def test_validation_error_does_not_log_the_input(
     assert "short-secre" not in caplog.text
     (record,) = [r for r in caplog.records if r.getMessage() == "request validation failed"]
     assert record.fields == [{"loc": ["body", "password"], "type": "too_short"}]
+
+
+@pytest.mark.parametrize(
+    ("ip", "key"),
+    [
+        ("203.0.113.7", "203.0.113.7"),
+        # One IPv6 client usually owns a whole /64.
+        ("2001:db8:1:2:3:4:5:6", "2001:db8:1:2::/64"),
+        ("2001:db8:1:2:ffff::1", "2001:db8:1:2::/64"),
+        ("::ffff:203.0.113.7", "203.0.113.7"),
+    ],
+)
+def test_ip_key(ip: str, key: str) -> None:
+    assert ip_key(ip_address(ip)) == key
+
+
+def test_ip_key_without_a_client_address() -> None:
+    assert ip_key(None) == "unknown"
+
+
+def test_account_key_ignores_case() -> None:
+    assert account_key("Patient@Example.COM") == account_key("patient@example.com")
