@@ -10,12 +10,12 @@ up: ## Create kind cluster and deploy the app (#42)
 down: ## Delete the kind cluster (#42)
 	@echo "TODO: down"
 
-test: ## Run backend and frontend tests (backend: #11)
-	@echo "TODO: backend test (#11)"
+test: ## Run backend and frontend tests
+	$(MAKE) -C backend test
 	cd frontend && npm test
 
-lint: ## Run linters (backend: #11)
-	@echo "TODO: backend lint (#11)"
+lint: ## Run linters
+	$(MAKE) -C backend lint
 	cd frontend && npm run lint
 
 package: ## Build the team-<nr>.zip submission (#51)

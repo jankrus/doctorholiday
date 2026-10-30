@@ -56,13 +56,14 @@ For authentication, we will use **Server-Side Sessions with a strict HttpOnly, S
 *   **Backend:**
     *   Language: Python 3.12
     *   Framework: FastAPI v0.110+
-    *   ORM / Query Layer: SQLAlchemy v2 (using parameterized queries to prevent SQL injection)
+    *   ORM / Query Layer: SQLAlchemy v2 (using parameterized queries to prevent SQL injection); synchronous API, see [ADR-003](ADR-003-synchronous-data-access.md)
     *   Validation: Pydantic v2
     *   Auth / Session: Custom implementation based on FastAPI dependencies and `itsdangerous` or `fastapi-users`.
     *   Password Hashing: `passlib` (with `argon2-cffi` v23)
     *   TOTP (MFA): `pyotp` v2.9
     *   Linter / Formatter: `ruff`
     *   Testing: `pytest`
+    *   Package / environment manager: `uv` with `uv.lock`, see [ADR-002](ADR-002-python-package-manager.md)
 *   **Database:**
     *   Engine: PostgreSQL 16
 
