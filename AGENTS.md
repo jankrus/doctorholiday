@@ -64,7 +64,8 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | :--- | :--- |
 | All tests / lint | `make test` / `make lint` |
 | Backend setup | `cd backend && make install` (= `uv sync --locked`; needs [uv](https://docs.astral.sh/uv/) 0.12.x) |
-| Backend tests | `make -C backend test` (= `uv run --locked pytest`) |
+| Backend tests | `make -C backend test` (= `uv run --locked pytest`; skips the database tests) |
+| Backend tests with database | `make test-db` (throwaway migrated PostgreSQL, deleted afterwards) |
 | Backend lint | `make -C backend lint` (= `uv run --locked ruff check . && uv run --locked ruff format --check .`) |
 | Backend run | `make -C backend run` (reads `backend/.env`, copy from `.env.example`) |
 | API contract lint | `cd backend && npx @redocly/cli@2.60.0 lint openapi.yaml` |

@@ -21,7 +21,7 @@ This document and the diagram [`database-erm.drawio`](database-erm.drawio) defin
 
 ## Additions to the logical model
 
-The physical model needs four things the domain model in requirements.md does not have yet. They should be added to the domain model in the PR that implements #12.
+The physical model needed four things the first version of the domain model did not have. The three columns are now part of the domain model in requirements.md; the exclusion constraints are physical only.
 
 | Addition | Why |
 | --- | --- |
