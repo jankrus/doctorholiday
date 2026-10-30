@@ -15,7 +15,6 @@ const MESSAGES: Partial<Record<ErrorCode, string>> = {
   CONFLICT: 'This change conflicts with the current state. Please reload and try again.',
   PAYLOAD_TOO_LARGE: 'The request is too large.',
   RATE_LIMITED: 'Too many attempts. Please wait a moment and try again.',
-  SERVICE_UNAVAILABLE: 'The service is temporarily unavailable. Please try again later.',
 };
 
 /** Maps any error (API error body, network failure, anything else) to a generic user-facing text. */

@@ -64,7 +64,7 @@ export function mockApi(): Plugin {
           else sendJson(res, 401, apiError('UNAUTHENTICATED', 'Login required.'));
           return;
         }
-        sendJson(res, 503, apiError('SERVICE_UNAVAILABLE', 'Not mocked.'));
+        sendJson(res, 500, apiError('INTERNAL_ERROR', 'Not mocked.'));
       });
 
       server.httpServer?.once('listening', () => {
