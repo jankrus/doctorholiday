@@ -78,6 +78,16 @@ Read only from environment variables and validated at startup (`src/doctorholida
 | `ALLOWED_ORIGINS` | yes | comma-separated `http(s)://host[:port]` origins, no wildcard |
 | `PORT` | no (8080) | 1024-65535 |
 | `LOG_LEVEL` | no (`INFO`) | `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
+| `SESSION_IDLE_TIMEOUT_MINUTES` | no (30) | 1-1440; a session ends after this long without a request |
+| `SESSION_ABSOLUTE_TIMEOUT_MINUTES` | no (480) | 1-10080, at least the idle timeout; a session ends this long after the login |
+| `LOGIN_MAX_FAILURES_PER_ACCOUNT` | no (5) | 1-100; failed logins per e-mail address within the window before it is locked |
+| `LOGIN_MAX_FAILURES_PER_IP` | no (20) | 1-1000; failed logins per client IP within the window before it is locked |
+| `LOGIN_FAILURE_WINDOW_MINUTES` | no (15) | 1-1440; how long failed logins are counted |
+| `LOGIN_LOCKOUT_MINUTES` | no (15) | 1-1440; how long a locked e-mail or IP gets `429` |
+| `REGISTRATION_MAX_PER_IP` | no (10) | 1-1000; registrations per client IP within the window before it is locked |
+| `REGISTRATION_WINDOW_MINUTES` | no (60) | 1-1440; how long registrations are counted, and how long a locked IP gets `429` |
+
+`SESSION_SECRET` is validated but not used yet: session tokens are random and only their hash is stored, so they need no signing key (#59).
 
 ## Code layout
 
@@ -86,12 +96,16 @@ src/doctorholiday/
   __main__.py     entry point: config, logging, uvicorn (SIGTERM = graceful shutdown)
   main.py         create_app(): FastAPI app, middleware, routers
   config.py       Settings from environment variables
+  errors.py       error responses in the contract's Error shape, exception handlers
   logs.py         JSON logging to stdout, redaction of sensitive fields
   middleware.py   request ID (X-Request-Id), access log
   db.py           SQLAlchemy engine, per-request transaction (DbSession), readiness check
   models.py       ORM models mirroring the migrated schema, enums
   repositories/   data access layer: the only code that builds queries
+  auth/           passwords (Argon2id), session tokens and cookie, CurrentSession/ActiveUser,
+                  rate limiting (rate_limiting.py)
   api/health.py   GET /healthz, GET /readyz
+  api/auth.py     POST /api/v1/auth/register, /login, /logout, GET /api/v1/auth/me
 tests/            pytest; tests/db/ needs a database (`make test-db`)
 ```
 
@@ -100,9 +114,33 @@ Conventions for new code:
 - **Synchronous data access** ([ADR-003](../docs/architecture/adr/ADR-003-synchronous-data-access.md)): endpoints that use the database or other blocking code are `def`, not `async def`.
 - **Data access:** see [Data access layer](#data-access-layer).
 - **Logging:** use `logging.getLogger(__name__)` and pass data via `extra={...}`. Every line is JSON on stdout with the `requestId` of the current request. Never log passwords, session IDs, tokens, MFA secrets or request bodies. Fields with such names are redacted, but that is a safety net, not a licence.
-- **Request ID:** every response carries a fresh UUID in `X-Request-Id`, also available as `request.state.request_id` (used by the error responses in #13). Client-supplied IDs are ignored.
+- **Request ID:** every response carries a fresh UUID in `X-Request-Id`, also available as `request.state.request_id` (used in the `requestId` of every error body). Client-supplied IDs are ignored.
 - **Files:** the container runs with a read-only root filesystem. Write nothing to disk; if unavoidable, only below `/tmp`.
+- **Errors:** raise `ApiError(status, ErrorCode.X, "generic message")`; the handler in `errors.py` answers with `{"error": {"code", "message", "requestId"}}`. Pydantic validation errors become `422 VALIDATION_ERROR`, unhandled exceptions `500 INTERNAL_ERROR`; neither returns or logs the submitted values. Raising rolls back the request transaction, so an endpoint that must keep its writes (e.g. the audit event of a failed login) returns `error_response(...)` instead.
 - **No API docs at runtime:** `/docs`, `/redoc` and `/openapi.json` are disabled; the contract is `openapi.yaml`.
+
+## Authentication
+
+MVP subset of #14: register, login, logout and `/me` with a server-side session (ADR-001, BR-01 to BR-05), and login rate limiting with temporary lockout. Still missing: MFA, the first-admin bootstrap (#15), CSRF protection, invitations, rate limiting of the other endpoints BR-03 names (registration etc.). Temporary shortcuts are marked `MVP-TEMP` in the code and in `openapi.yaml`:
+
+- `RegisterRequest` takes an optional `role` (default `PATIENT`), so every role can be tested before invitations and the bootstrap exist.
+- Every session is `ACTIVE`; there is no MFA step yet.
+- `GET /auth/me` never returns `setupRequired`, because `PUT /api/v1/settings` does not exist yet.
+
+How it works:
+
+- **Passwords** are hashed with Argon2id (`argon2-cffi`, RFC 9106 low-memory parameters) and are 12-128 characters, not trimmed (BR-01). They are `SecretStr` in the request models, so they never appear in a repr or traceback.
+- **Sessions:** login creates a token with `secrets.token_urlsafe(32)` (256 bits); `sessions.token_hash` holds only its SHA-256. The cookie is `__Host-dh_session=<token>; HttpOnly; Secure; SameSite=Strict; Path=/`, without `Max-Age`, so it ends with the browser session. Every request checks the idle and the absolute timeout against the database clock and refreshes `last_seen_at` in the same `UPDATE`. Logout deletes the row and clears the cookie. Several sessions per user (devices) are allowed.
+- **Session fixation:** the token is always new. A cookie sent along with a login is never adopted, and the session it names (if it timed out) is deleted. Register and login with a valid session answer `403 FORBIDDEN`.
+- **No account enumeration:** register always answers `202` without body; for a taken e-mail nothing is created, but the password is still hashed so the response takes as long (BR-02). Login answers the same `401 INVALID_CREDENTIALS` for an unknown e-mail, a wrong password and a deactivated account, and checks unknown e-mails against a dummy hash (BR-03).
+- **Rate limiting and lockout** (BR-03; `auth/rate_limiting.py`, table `rate_limits`): a `Limit` allows a number of counted attempts per key (client IP, e-mail or user) within a window; the attempt that reaches it locks the key for the lockout time, and every request with that key answers `429 RATE_LIMITED` with `Retry-After` before doing the protected work. After a lockout ends, attempts still inside the window lock again at once. Counters live in the database (across restarts and pods), keyed by scope and the SHA-256 of the key, compared with the database clock and row-locked for the rest of the request, so parallel requests cannot overshoot a limit. Expired counters of a scope are deleted by later requests of that scope. An endpoint creates a `RateLimiter` with its limits before the protected work, answers `429` if `retry_after()` says so, and calls `count()` for each attempt that counts. Implemented so far:
+  - **Login:** failed logins are counted per e-mail address and per client IP (IPv6: per /64). 5 failures per e-mail or 20 per IP within 15 minutes lock that key for 15 minutes; meanwhile every login with it answers `429 RATE_LIMITED` with `Retry-After`, without checking the password, so not even the right one gets through. The IP limit is higher because a practice or household shares one IP behind NAT. Every failure cause counts (unknown e-mail, wrong password, deactivated account), and unknown e-mails get a counter too, so a lockout reveals no accounts. A successful login resets the e-mail counter, never the IP counter, so a known account cannot reset the IP limit between guesses. Trade-off: anyone can lock an account for 15 minutes with 5 wrong passwords; the values are configurable (see [Configuration](#configuration)).
+  - **Registration:** every request counts per client IP, whatever the e-mail, so the limit reveals no accounts either: 10 within 60 minutes, then the IP is locked for 60 minutes. A locked request is answered before the password is hashed, so a flood costs no Argon2id time.
+  - **Still to come** with their endpoints (scopes already in the schema, limits in BR-03): MFA verification (#76, with #21), invitation acceptance (#77, with #55), password reset (#78, with #61), re-authentication for password change and account deletion (#79, with #66 and #18).
+- **Who is calling:** `CurrentSession` (any session state, for `/me` and `/logout`) and `ActiveUser` (`ACTIVE` sessions only, else `403 MFA_REQUIRED`) in `auth/dependencies.py` resolve cookie → hash → session → active user and answer `401 UNAUTHENTICATED` otherwise. New endpoints that need a login take `user: ActiveUser`. A deactivated user's sessions stop working immediately.
+- **Audit:** `USER_REGISTERED`, `LOGIN` (`SUCCESS`/`FAILURE` with `details.reason`), `LOGOUT`, with the user as target and the client IP; never an e-mail address. A rate-limited request is audited as `LOGIN` or `USER_REGISTERED` `FAILURE` with `reason: RATE_LIMITED`; the start of a lockout is logged as a warning. The IP is the direct peer; behind ingress-nginx that is the proxy until forwarded headers are handled (#75), and until then all clients share one IP counter.
+- Responses with session data send `Cache-Control: no-store`.
+- E-mail addresses are validated with `email-validator`, which rejects special-use domains such as `.test` or `.localhost`; use e.g. `@example.com` for test accounts.
 
 ## Database
 
@@ -161,7 +199,7 @@ Plain SQL files in [`migrations/`](migrations), named `V<nnn>__<name>.sql` and a
 | Table | Privileges | Why not more |
 | --- | --- | --- |
 | `users`, `appointments`, `invitations`, `admin_access_grants` | `SELECT, INSERT, UPDATE` | Never deleted (BR-11, BR-13); expired invitations and grants stay as history. |
-| `credentials`, `sessions`, `recovery_codes`, `password_reset_codes`, `working_hours` | `SELECT, INSERT, UPDATE, DELETE` | Rows are deleted by logout, account deletion, MFA reset or a new schedule. |
+| `credentials`, `sessions`, `recovery_codes`, `password_reset_codes`, `working_hours`, `rate_limits` | `SELECT, INSERT, UPDATE, DELETE` | Rows are deleted by logout, account deletion, MFA reset, a new schedule, a successful login or the expiry of a rate limit counter. |
 | `absences` | `SELECT, INSERT, DELETE` | Absences are created and deleted, never changed (A14, A31). |
 | `practice_settings`, `admin_bootstrap` | `SELECT, UPDATE` | Single rows created by the migration; the app cannot add or remove them. |
 | `audit_events` | `SELECT, INSERT` | Append-only, the application cannot rewrite the audit log (BR-19). |

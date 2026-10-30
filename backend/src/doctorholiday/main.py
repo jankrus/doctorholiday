@@ -5,9 +5,10 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from doctorholiday.api import health
+from doctorholiday.api import auth, health
 from doctorholiday.config import Settings
 from doctorholiday.db import create_db_engine, create_session_factory
+from doctorholiday.errors import install_error_handlers
 from doctorholiday.middleware import RequestContextMiddleware
 
 
@@ -32,5 +33,7 @@ def create_app(settings: Settings) -> FastAPI:
     app.state.engine = engine
     app.state.session_factory = create_session_factory(engine)
     app.add_middleware(RequestContextMiddleware)
+    install_error_handlers(app)
     app.include_router(health.router)
+    app.include_router(auth.router)
     return app
