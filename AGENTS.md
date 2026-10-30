@@ -29,7 +29,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 
 ## Stack (details in ADR-001 to ADR-004)
 - Frontend: React 18, TypeScript 5, Vite 8, Radix Themes, React Router 7, `openapi-fetch` (types generated from `backend/openapi.yaml`), ESLint 8, Prettier, Vitest 5; Node.js 22.13+
-- Backend: FastAPI 0.110+, SQLAlchemy 2 (synchronous, psycopg 3), Pydantic 2, `passlib` + `argon2-cffi` (Argon2id), `pyotp` (TOTP), `ruff`, `pytest`
+- Backend: FastAPI 0.110+, SQLAlchemy 2 (synchronous, psycopg 3), Pydantic 2 (+ `email-validator`), `argon2-cffi` (Argon2id, no `passlib`), `pyotp` (TOTP), `ruff`, `pytest`
 - Backend tooling: **`uv`** manages Python 3.12, the virtualenv and `backend/uv.lock`. Never use `pip install` or hand-edit `uv.lock`; add dependencies with `uv add` (see `backend/README.md`)
 - DB: PostgreSQL 16
 - Auth: server-side sessions in `HttpOnly; Secure; SameSite=Strict` cookies (no JWT in browser storage)

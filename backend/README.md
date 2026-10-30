@@ -78,6 +78,10 @@ Read only from environment variables and validated at startup (`src/doctorholida
 | `ALLOWED_ORIGINS` | yes | comma-separated `http(s)://host[:port]` origins, no wildcard |
 | `PORT` | no (8080) | 1024-65535 |
 | `LOG_LEVEL` | no (`INFO`) | `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` |
+| `SESSION_IDLE_TIMEOUT_MINUTES` | no (30) | 1-1440; a session ends after this long without a request |
+| `SESSION_ABSOLUTE_TIMEOUT_MINUTES` | no (480) | 1-10080, at least the idle timeout; a session ends this long after the login |
+
+`SESSION_SECRET` is validated but not used yet: session tokens are random and only their hash is stored, so they need no signing key (#59).
 
 ## Code layout
 
@@ -86,12 +90,15 @@ src/doctorholiday/
   __main__.py     entry point: config, logging, uvicorn (SIGTERM = graceful shutdown)
   main.py         create_app(): FastAPI app, middleware, routers
   config.py       Settings from environment variables
+  errors.py       error responses in the contract's Error shape, exception handlers
   logs.py         JSON logging to stdout, redaction of sensitive fields
   middleware.py   request ID (X-Request-Id), access log
   db.py           SQLAlchemy engine, per-request transaction (DbSession), readiness check
   models.py       ORM models mirroring the migrated schema, enums
   repositories/   data access layer: the only code that builds queries
+  auth/           passwords (Argon2id), session tokens and cookie, CurrentSession/ActiveUser
   api/health.py   GET /healthz, GET /readyz
+  api/auth.py     POST /api/v1/auth/register, /login, /logout, GET /api/v1/auth/me
 tests/            pytest; tests/db/ needs a database (`make test-db`)
 ```
 
@@ -100,9 +107,29 @@ Conventions for new code:
 - **Synchronous data access** ([ADR-003](../docs/architecture/adr/ADR-003-synchronous-data-access.md)): endpoints that use the database or other blocking code are `def`, not `async def`.
 - **Data access:** see [Data access layer](#data-access-layer).
 - **Logging:** use `logging.getLogger(__name__)` and pass data via `extra={...}`. Every line is JSON on stdout with the `requestId` of the current request. Never log passwords, session IDs, tokens, MFA secrets or request bodies. Fields with such names are redacted, but that is a safety net, not a licence.
-- **Request ID:** every response carries a fresh UUID in `X-Request-Id`, also available as `request.state.request_id` (used by the error responses in #13). Client-supplied IDs are ignored.
+- **Request ID:** every response carries a fresh UUID in `X-Request-Id`, also available as `request.state.request_id` (used in the `requestId` of every error body). Client-supplied IDs are ignored.
 - **Files:** the container runs with a read-only root filesystem. Write nothing to disk; if unavoidable, only below `/tmp`.
+- **Errors:** raise `ApiError(status, ErrorCode.X, "generic message")`; the handler in `errors.py` answers with `{"error": {"code", "message", "requestId"}}`. Pydantic validation errors become `422 VALIDATION_ERROR`, unhandled exceptions `500 INTERNAL_ERROR`; neither returns or logs the submitted values. Raising rolls back the request transaction, so an endpoint that must keep its writes (e.g. the audit event of a failed login) returns `error_response(...)` instead.
 - **No API docs at runtime:** `/docs`, `/redoc` and `/openapi.json` are disabled; the contract is `openapi.yaml`.
+
+## Authentication
+
+MVP subset of #14: register, login, logout and `/me` with a server-side session (ADR-001, BR-01 to BR-05). Still missing: rate limiting and lockout (429), MFA, the first-admin bootstrap (#15), CSRF protection, invitations. Temporary shortcuts are marked `MVP-TEMP` in the code and in `openapi.yaml`:
+
+- `RegisterRequest` takes an optional `role` (default `PATIENT`), so every role can be tested before invitations and the bootstrap exist.
+- Every session is `ACTIVE`; there is no MFA step yet.
+- `GET /auth/me` never returns `setupRequired`, because `PUT /api/v1/settings` does not exist yet.
+
+How it works:
+
+- **Passwords** are hashed with Argon2id (`argon2-cffi`, RFC 9106 low-memory parameters) and are 12-128 characters, not trimmed (BR-01). They are `SecretStr` in the request models, so they never appear in a repr or traceback.
+- **Sessions:** login creates a token with `secrets.token_urlsafe(32)` (256 bits); `sessions.token_hash` holds only its SHA-256. The cookie is `__Host-dh_session=<token>; HttpOnly; Secure; SameSite=Strict; Path=/`, without `Max-Age`, so it ends with the browser session. Every request checks the idle and the absolute timeout against the database clock and refreshes `last_seen_at` in the same `UPDATE`. Logout deletes the row and clears the cookie. Several sessions per user (devices) are allowed.
+- **Session fixation:** the token is always new. A cookie sent along with a login is never adopted, and the session it names (if it timed out) is deleted. Register and login with a valid session answer `403 FORBIDDEN`.
+- **No account enumeration:** register always answers `202` without body; for a taken e-mail nothing is created, but the password is still hashed so the response takes as long (BR-02). Login answers the same `401 INVALID_CREDENTIALS` for an unknown e-mail, a wrong password and a deactivated account, and checks unknown e-mails against a dummy hash (BR-03).
+- **Who is calling:** `CurrentSession` (any session state, for `/me` and `/logout`) and `ActiveUser` (`ACTIVE` sessions only, else `403 MFA_REQUIRED`) in `auth/dependencies.py` resolve cookie → hash → session → active user and answer `401 UNAUTHENTICATED` otherwise. New endpoints that need a login take `user: ActiveUser`. A deactivated user's sessions stop working immediately.
+- **Audit:** `USER_REGISTERED`, `LOGIN` (`SUCCESS`/`FAILURE` with `details.reason`), `LOGOUT`, with the user as target and the client IP; never an e-mail address. The IP is the direct peer; behind ingress-nginx that is the proxy until forwarded headers are handled.
+- Responses with session data send `Cache-Control: no-store`.
+- E-mail addresses are validated with `email-validator`, which rejects special-use domains such as `.test` or `.localhost`; use e.g. `@example.com` for test accounts.
 
 ## Database
 
