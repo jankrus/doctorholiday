@@ -1,7 +1,7 @@
 """Register, login, logout and the current session (A01, A03, A06, A22; #14).
 
 MVP subset of #14; not here yet: MFA, the first-admin bootstrap (#15), CSRF protection,
-invitations, rate limiting of registration. Search for MVP-TEMP to find the temporary shortcuts.
+invitations. Search for MVP-TEMP to find the temporary shortcuts.
 """
 
 import logging
@@ -16,6 +16,13 @@ from sqlalchemy.orm import Session
 
 from doctorholiday.auth.dependencies import CurrentSession, reject_session
 from doctorholiday.auth.passwords import hash_password, verify_dummy, verify_password
+from doctorholiday.auth.rate_limiting import (
+    RateLimiter,
+    account_key,
+    ip_key,
+    login_limits,
+    registration_limit,
+)
 from doctorholiday.auth.sessions import (
     clear_session_cookie,
     hash_token,
@@ -23,11 +30,18 @@ from doctorholiday.auth.sessions import (
     set_session_cookie,
     token_from_cookie,
 )
-from doctorholiday.auth.throttling import LoginThrottle
 from doctorholiday.config import Settings
 from doctorholiday.db import DbSession
 from doctorholiday.errors import ErrorCode, error_response
-from doctorholiday.models import AuditAction, AuditOutcome, IPAddress, Role, SessionState, User
+from doctorholiday.models import (
+    AuditAction,
+    AuditOutcome,
+    IPAddress,
+    RateLimitScope,
+    Role,
+    SessionState,
+    User,
+)
 from doctorholiday.repositories import sessions, users
 from doctorholiday.repositories.audit import audit_target, record_event
 from doctorholiday.repositories.errors import EmailAlreadyRegisteredError
@@ -93,6 +107,17 @@ def _client_ip(request: Request) -> IPAddress | None:
         return None
 
 
+def _rate_limited(request: Request, retry_after: int) -> Response:
+    # Returned, not raised, like a failed login: raising would roll back the audit event.
+    return error_response(
+        request,
+        status.HTTP_429_TOO_MANY_REQUESTS,
+        ErrorCode.RATE_LIMITED,
+        "Too many attempts. Please try again later.",
+        headers={"Retry-After": str(retry_after)},
+    )
+
+
 def _session_info(db: Session, state: SessionState, user: User) -> SessionInfo:
     if state is not SessionState.ACTIVE:
         return SessionInfo(state=state)
@@ -116,6 +141,23 @@ def _session_info(db: Session, state: SessionState, user: User) -> SessionInfo:
     dependencies=[Depends(reject_session)],
 )
 def register(body: RegisterRequest, request: Request, db: DbSession) -> Response:
+    settings: Settings = request.app.state.settings
+    ip = _client_ip(request)
+    # Every request counts, whatever the e-mail, so the limit reveals no accounts either.
+    limiter = RateLimiter(db, (registration_limit(settings), ip_key(ip)))
+    if (retry_after := limiter.retry_after()) is not None:
+        record_event(
+            db,
+            action=AuditAction.USER_REGISTERED,
+            outcome=AuditOutcome.FAILURE,
+            ip=ip,
+            details={"reason": "RATE_LIMITED"},
+        )
+        logger.info("registration rate limited")
+        return _rate_limited(request, retry_after)
+    if limiter.count():
+        logger.warning("registration lockout started")
+
     # Hashed before the insert, so a taken e-mail costs the same time as a new account (BR-02).
     password_hash = hash_password(body.password.get_secret_value())
     try:
@@ -133,7 +175,7 @@ def register(body: RegisterRequest, request: Request, db: DbSession) -> Response
             action=AuditAction.USER_REGISTERED,
             outcome=AuditOutcome.FAILURE,
             target=audit_target("user", existing.id) if existing else None,
-            ip=_client_ip(request),
+            ip=ip,
             details={"reason": "EMAIL_TAKEN"},
         )
         logger.info("registration with a taken e-mail ignored")
@@ -144,7 +186,7 @@ def register(body: RegisterRequest, request: Request, db: DbSession) -> Response
             outcome=AuditOutcome.SUCCESS,
             actor_id=user.id,
             target=audit_target("user", user.id),
-            ip=_client_ip(request),
+            ip=ip,
         )
         logger.info("user registered", extra={"userId": str(user.id), "role": user.role})
     # The same answer in both cases, so the endpoint cannot be used to find accounts.
@@ -161,10 +203,11 @@ def register(body: RegisterRequest, request: Request, db: DbSession) -> Response
 def login(body: LoginRequest, request: Request, response: Response, db: DbSession) -> object:
     settings: Settings = request.app.state.settings
     ip = _client_ip(request)
-    throttle = LoginThrottle(db, settings, ip=ip, email=body.email)
+    ip_limit, account_limit = login_limits(settings)
+    limiter = RateLimiter(db, (ip_limit, ip_key(ip)), (account_limit, account_key(body.email)))
     user = users.get_user_by_email(db, body.email)
     # Before the password check: a locked key gets no further guesses, not even a correct one.
-    if (retry_after := throttle.retry_after()) is not None:
+    if (retry_after := limiter.retry_after()) is not None:
         record_event(
             db,
             action=AuditAction.LOGIN,
@@ -174,13 +217,7 @@ def login(body: LoginRequest, request: Request, response: Response, db: DbSessio
             details={"reason": "RATE_LIMITED"},
         )
         logger.info("login rate limited")
-        return error_response(
-            request,
-            status.HTTP_429_TOO_MANY_REQUESTS,
-            ErrorCode.RATE_LIMITED,
-            "Too many attempts. Please try again later.",
-            headers={"Retry-After": str(retry_after)},
-        )
+        return _rate_limited(request, retry_after)
 
     password = body.password.get_secret_value()
     if user is None:
@@ -202,7 +239,7 @@ def login(body: LoginRequest, request: Request, response: Response, db: DbSessio
     if failure is not None:
         # Every cause counts, so the counters cannot tell an inactive account from a wrong
         # password either.
-        if locked := throttle.record_failure():
+        if locked := limiter.count():
             logger.warning("login lockout started", extra={"scopes": locked})
         record_event(
             db,
@@ -222,7 +259,8 @@ def login(body: LoginRequest, request: Request, response: Response, db: DbSessio
             "E-mail or password is incorrect.",
         )
 
-    throttle.record_success()
+    # Only the e-mail counter: resetting the IP counter would let one known account reset it.
+    limiter.reset(RateLimitScope.LOGIN_ACCOUNT)
     # A cookie sent along here is no valid session (reject_session), but may name an expired one.
     # It is deleted and never reused: the new session always gets a fresh token (session fixation).
     if (old_token := token_from_cookie(request)) is not None:

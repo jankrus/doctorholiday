@@ -8,8 +8,8 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from doctorholiday.auth.passwords import hash_password, verify_password
+from doctorholiday.auth.rate_limiting import account_key, ip_key
 from doctorholiday.auth.sessions import hash_token, new_token
-from doctorholiday.auth.throttling import account_key, ip_key
 
 PASSWORD = "correct horse battery staple"
 

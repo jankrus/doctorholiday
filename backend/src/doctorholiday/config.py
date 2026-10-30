@@ -40,13 +40,17 @@ class Settings(BaseSettings):
     # long after the login (absolute), whatever the activity.
     session_idle_timeout_minutes: int = Field(default=30, ge=1, le=1440)
     session_absolute_timeout_minutes: int = Field(default=480, ge=1, le=10080)
-    # Login rate limiting (#14, auth/throttling.py): this many failed logins per e-mail address
-    # or per client IP within the window lock that key for the lockout time. The IP limit is
-    # higher because a practice or household shares one IP behind NAT.
+    # Rate limiting (BR-03, auth/rate_limiting.py). Login: this many failed logins per e-mail
+    # address or per client IP within the window lock that key for the lockout time. The IP limit
+    # is higher because a practice or household shares one IP behind NAT.
     login_max_failures_per_account: int = Field(default=5, ge=1, le=100)
     login_max_failures_per_ip: int = Field(default=20, ge=1, le=1000)
     login_failure_window_minutes: int = Field(default=15, ge=1, le=1440)
     login_lockout_minutes: int = Field(default=15, ge=1, le=1440)
+    # Registration: this many requests per client IP within the window lock that IP until the
+    # window has passed once more.
+    registration_max_per_ip: int = Field(default=10, ge=1, le=1000)
+    registration_window_minutes: int = Field(default=60, ge=1, le=1440)
 
     @field_validator("database_url")
     @classmethod

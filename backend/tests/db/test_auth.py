@@ -19,7 +19,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx2 import Response
-from sqlalchemy import Engine, func, select, update
+from sqlalchemy import ColumnElement, Engine, and_, func, select, update
 from sqlalchemy.orm import Session
 
 from doctorholiday.auth.dependencies import ActiveUser
@@ -32,7 +32,8 @@ from doctorholiday.models import (
     AuditEvent,
     AuditOutcome,
     Credential,
-    LoginThrottle,
+    RateLimit,
+    RateLimitScope,
     Role,
     SessionState,
     User,
@@ -457,38 +458,50 @@ def test_malformed_cookie_is_no_session(client: TestClient, cookie: str) -> None
 # ---------- Rate limiting and lockout ----------
 
 WRONG = "wrong password, but long"
+LOGIN_LOCKOUT = timedelta(minutes=15)
+REGISTRATION_WINDOW = timedelta(minutes=60)
 
 
 def unknown_email() -> str:
     return f"unknown-{uuid.uuid4().hex}@example.com"
 
 
-def throttle_row(engine: Engine, key: str) -> LoginThrottle | None:
+def _is_counter(scope: RateLimitScope, key: str) -> ColumnElement[bool]:
+    return and_(
+        RateLimit.scope == scope, RateLimit.key_hash == hashlib.sha256(key.encode()).digest()
+    )
+
+
+def counter_row(
+    engine: Engine, key: str, scope: RateLimitScope = RateLimitScope.LOGIN_ACCOUNT
+) -> RateLimit | None:
+    # Looked up by SHA-256: the table has no column for the clear text.
     with Session(engine) as session:
-        return session.scalars(
-            select(LoginThrottle).where(
-                LoginThrottle.key_hash == hashlib.sha256(key.encode()).digest()
-            )
-        ).one_or_none()
+        return session.scalars(select(RateLimit).where(_is_counter(scope, key))).one_or_none()
 
 
-def move_throttle_back(engine: Engine, key: str, by: timedelta) -> None:
-    """Let `by` pass for one counter, as if its failures and lockout were that much older."""
+def move_counter_back(
+    engine: Engine,
+    key: str,
+    by: timedelta,
+    scope: RateLimitScope = RateLimitScope.LOGIN_ACCOUNT,
+) -> None:
+    """Let `by` pass for one counter, as if its attempts and lockout were that much older."""
     with Session(engine) as session, session.begin():
         session.execute(
-            update(LoginThrottle)
-            .where(LoginThrottle.key_hash == hashlib.sha256(key.encode()).digest())
+            update(RateLimit)
+            .where(_is_counter(scope, key))
             .values(
-                window_started_at=LoginThrottle.window_started_at - by,
-                locked_until=LoginThrottle.locked_until - by,
+                window_started_at=RateLimit.window_started_at - by,
+                locked_until=RateLimit.locked_until - by,
             )
         )
 
 
-def assert_rate_limited(response: Response) -> None:
+def assert_rate_limited(response: Response, max_retry_after: timedelta = LOGIN_LOCKOUT) -> None:
     assert response.status_code == 429
     assert response.json()["error"]["code"] == "RATE_LIMITED"
-    assert 1 <= int(response.headers["retry-after"]) <= 15 * 60
+    assert 1 <= int(response.headers["retry-after"]) <= max_retry_after.total_seconds()
     assert "set-cookie" not in response.headers
 
 
@@ -548,10 +561,10 @@ def test_lockout_ends_after_the_lockout_time(
         login(client, email, WRONG)
     assert_rate_limited(login(client, email))
 
-    move_throttle_back(db_engine, email, timedelta(minutes=15))
+    move_counter_back(db_engine, email, timedelta(minutes=15))
     assert login(client, email).status_code == 200
     # A successful login resets the account counter.
-    assert throttle_row(db_engine, email) is None
+    assert counter_row(db_engine, email) is None
 
 
 def test_failure_right_after_a_lockout_locks_again(
@@ -563,8 +576,8 @@ def test_failure_right_after_a_lockout_locks_again(
     # Lockout over, but the failures are still inside a (longer) window: one guess per lockout.
     with Session(db_engine) as session, session.begin():
         session.execute(
-            update(LoginThrottle)
-            .where(LoginThrottle.key_hash == hashlib.sha256(email.encode()).digest())
+            update(RateLimit)
+            .where(_is_counter(RateLimitScope.LOGIN_ACCOUNT, email))
             .values(locked_until=func.now())
         )
     assert login(client, email, WRONG).status_code == 401
@@ -577,7 +590,7 @@ def test_failures_outside_the_window_are_forgotten(
     register(client, email)
     for _ in range(4):
         login(client, email, WRONG)
-    move_throttle_back(db_engine, email, timedelta(minutes=15))
+    move_counter_back(db_engine, email, timedelta(minutes=15))
 
     for _ in range(4):
         assert login(client, email, WRONG).status_code == 401
@@ -675,21 +688,83 @@ def test_counters_are_keyed_by_hashes_only(
     client: TestClient, email: str, db_engine: Engine, client_ip: str
 ) -> None:
     login(client, email, WRONG)
-    # throttle_row looks the counters up by SHA-256; the table has no column for the clear text.
-    account = throttle_row(db_engine, email)
-    ip = throttle_row(db_engine, client_ip)
+    account = counter_row(db_engine, email)
+    ip = counter_row(db_engine, client_ip, RateLimitScope.LOGIN_IP)
     assert account is not None
-    assert (account.scope, account.failures) == ("ACCOUNT", 1)
+    assert account.attempts == 1
     assert ip is not None
-    assert (ip.scope, ip.failures) == ("IP", 1)
+    assert ip.attempts == 1
 
 
 def test_stale_counters_are_deleted(client: TestClient, email: str, db_engine: Engine) -> None:
     login(client, email, WRONG)
-    move_throttle_back(db_engine, email, timedelta(minutes=15))
+    move_counter_back(db_engine, email, timedelta(minutes=15))
 
     login(client, unknown_email(), WRONG)
-    assert throttle_row(db_engine, email) is None
+    assert counter_row(db_engine, email) is None
+
+
+def test_eleventh_registration_from_one_ip_returns_429(
+    client: TestClient, db_engine: Engine
+) -> None:
+    taken = f"patient-{uuid.uuid4().hex}@example.com"
+    assert register(client, taken).status_code == 202
+    for _ in range(9):
+        assert register(client, f"patient-{uuid.uuid4().hex}@example.com").status_code == 202
+
+    # New and taken e-mails alike: the limit reveals no accounts.
+    fresh = f"patient-{uuid.uuid4().hex}@example.com"
+    assert_rate_limited(register(client, fresh), REGISTRATION_WINDOW)
+    assert_rate_limited(register(client, taken), REGISTRATION_WINDOW)
+    assert user_by_email(db_engine, fresh) is None
+
+
+def test_registration_limit_is_per_ip(new_client: ClientFactory, app: FastAPI) -> None:
+    client = new_client()
+    for _ in range(10):
+        register(client, f"patient-{uuid.uuid4().hex}@example.com")
+    assert_rate_limited(
+        register(client, f"patient-{uuid.uuid4().hex}@example.com"), REGISTRATION_WINDOW
+    )
+
+    with TestClient(app, base_url="https://testserver", client=("10.255.255.253", 1)) as other:
+        assert register(other, f"patient-{uuid.uuid4().hex}@example.com").status_code == 202
+
+
+def test_registration_limit_ends_after_the_window(
+    client: TestClient, db_engine: Engine, client_ip: str
+) -> None:
+    for _ in range(10):
+        register(client, f"patient-{uuid.uuid4().hex}@example.com")
+    move_counter_back(db_engine, client_ip, REGISTRATION_WINDOW, RateLimitScope.REGISTRATION_IP)
+
+    assert register(client, f"patient-{uuid.uuid4().hex}@example.com").status_code == 202
+
+
+def test_registration_and_login_have_separate_counters(client: TestClient, email: str) -> None:
+    register(client, email)
+    for _ in range(9):
+        register(client, f"patient-{uuid.uuid4().hex}@example.com")
+
+    assert login(client, email).status_code == 200
+
+
+def test_rate_limited_registration_is_audited(
+    client: TestClient, db_engine: Engine, client_ip: str
+) -> None:
+    for _ in range(11):
+        register(client, f"patient-{uuid.uuid4().hex}@example.com")
+
+    with Session(db_engine) as session:
+        events = session.scalars(
+            select(AuditEvent).where(
+                AuditEvent.action == AuditAction.USER_REGISTERED,
+                AuditEvent.ip == client_ip,
+            )
+        ).all()
+    assert sorted(e.details["reason"] for e in events if e.details) == ["RATE_LIMITED"]
+    assert [e.target for e in events if e.details] == [None]
+    assert len([e for e in events if e.outcome is AuditOutcome.SUCCESS]) == 10
 
 
 # ---------- Validation ----------
