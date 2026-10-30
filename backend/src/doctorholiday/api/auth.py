@@ -1,7 +1,7 @@
 """Register, login, logout and the current session (A01, A03, A06, A22; #14).
 
-MVP subset of #14; not here yet: rate limiting and lockout (429), MFA, the first-admin bootstrap
-(#15), CSRF protection, invitations. Search for MVP-TEMP to find the temporary shortcuts.
+MVP subset of #14; not here yet: MFA, the first-admin bootstrap (#15), CSRF protection,
+invitations, rate limiting of registration. Search for MVP-TEMP to find the temporary shortcuts.
 """
 
 import logging
@@ -23,6 +23,7 @@ from doctorholiday.auth.sessions import (
     set_session_cookie,
     token_from_cookie,
 )
+from doctorholiday.auth.throttling import LoginThrottle
 from doctorholiday.config import Settings
 from doctorholiday.db import DbSession
 from doctorholiday.errors import ErrorCode, error_response
@@ -158,8 +159,30 @@ def register(body: RegisterRequest, request: Request, db: DbSession) -> Response
     dependencies=[Depends(reject_session)],
 )
 def login(body: LoginRequest, request: Request, response: Response, db: DbSession) -> object:
-    password = body.password.get_secret_value()
+    settings: Settings = request.app.state.settings
+    ip = _client_ip(request)
+    throttle = LoginThrottle(db, settings, ip=ip, email=body.email)
     user = users.get_user_by_email(db, body.email)
+    # Before the password check: a locked key gets no further guesses, not even a correct one.
+    if (retry_after := throttle.retry_after()) is not None:
+        record_event(
+            db,
+            action=AuditAction.LOGIN,
+            outcome=AuditOutcome.FAILURE,
+            target=audit_target("user", user.id) if user else None,
+            ip=ip,
+            details={"reason": "RATE_LIMITED"},
+        )
+        logger.info("login rate limited")
+        return error_response(
+            request,
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            ErrorCode.RATE_LIMITED,
+            "Too many attempts. Please try again later.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    password = body.password.get_secret_value()
     if user is None:
         verify_dummy(password)
         failure = "UNKNOWN_ACCOUNT"
@@ -177,12 +200,16 @@ def login(body: LoginRequest, request: Request, response: Response, db: DbSessio
             failure = None
 
     if failure is not None:
+        # Every cause counts, so the counters cannot tell an inactive account from a wrong
+        # password either.
+        if locked := throttle.record_failure():
+            logger.warning("login lockout started", extra={"scopes": locked})
         record_event(
             db,
             action=AuditAction.LOGIN,
             outcome=AuditOutcome.FAILURE,
             target=audit_target("user", user.id) if user else None,
-            ip=_client_ip(request),
+            ip=ip,
             details={"reason": failure},
         )
         logger.info("login failed", extra={"reason": failure})
@@ -195,12 +222,12 @@ def login(body: LoginRequest, request: Request, response: Response, db: DbSessio
             "E-mail or password is incorrect.",
         )
 
+    throttle.record_success()
     # A cookie sent along here is no valid session (reject_session), but may name an expired one.
     # It is deleted and never reused: the new session always gets a fresh token (session fixation).
     if (old_token := token_from_cookie(request)) is not None:
         sessions.delete_session(db, token_hash=hash_token(old_token))
 
-    settings: Settings = request.app.state.settings
     token = new_token()
     # MVP-TEMP: always ACTIVE. With MFA (#21), staff roles start in MFA_ENROLLMENT_REQUIRED and
     # accounts with MFA in MFA_PENDING (BR-05).
@@ -218,7 +245,7 @@ def login(body: LoginRequest, request: Request, response: Response, db: DbSessio
         outcome=AuditOutcome.SUCCESS,
         actor_id=user.id,
         target=audit_target("user", user.id),
-        ip=_client_ip(request),
+        ip=ip,
     )
     logger.info("login succeeded", extra={"userId": str(user.id)})
     set_session_cookie(response, token)

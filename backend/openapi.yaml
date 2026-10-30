@@ -182,6 +182,10 @@ paths:
         whether an MFA code (`MFA_PENDING`) or an MFA enrolment (`MFA_ENROLLMENT_REQUIRED`) is
         still needed. The first successful login while no admin exists promotes the account
         to `ADMIN` (BR-04). All failures return the same `401 INVALID_CREDENTIALS` (BR-03).
+        Failed logins are counted per e-mail address (default 5) and per client IP (default 20)
+        within 15 minutes; reaching a limit locks that e-mail or IP for 15 minutes, during which
+        every login with it returns `429 RATE_LIMITED` without checking the password. Unknown
+        e-mails are counted and locked the same way.
       x-action: [A03]
       x-roles: [ANONYMOUS]
       security: []

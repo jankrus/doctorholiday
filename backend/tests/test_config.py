@@ -26,6 +26,10 @@ def test_defaults(env: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.log_level is LogLevel.INFO
     assert settings.session_idle_timeout_minutes == 30
     assert settings.session_absolute_timeout_minutes == 480
+    assert settings.login_max_failures_per_account == 5
+    assert settings.login_max_failures_per_ip == 20
+    assert settings.login_failure_window_minutes == 15
+    assert settings.login_lockout_minutes == 15
 
 
 def test_secrets_are_masked_in_repr(env: dict[str, str]) -> None:
