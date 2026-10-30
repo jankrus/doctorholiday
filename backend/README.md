@@ -33,11 +33,9 @@ Dependencies, the virtualenv and the Python version are managed with **[uv](http
    cp .env.example .env    # .env is git-ignored; never commit it
    ```
    Replace every `CHANGE_ME`; the comments in `.env.example` show how to generate each secret. The app refuses to start with missing or invalid values.
-4. Start a PostgreSQL 16 for `/readyz` (until docker-compose lands in #29), with the same password as in `DATABASE_URL`:
+4. Start the local PostgreSQL with the schema (from the repo root, see [Database](#database)) and put the app role's password from `.secrets/db_app_password` into `DATABASE_URL`:
    ```sh
-   docker run -d --rm --name dh-postgres -p 127.0.0.1:5432:5432 \
-     -e POSTGRES_USER=doctorholiday -e POSTGRES_DB=doctorholiday -e POSTGRES_PASSWORD=<your password> \
-     postgres:16-alpine
+   make db-up
    ```
 5. Run the API on `http://localhost:8080`:
    ```sh
@@ -90,15 +88,81 @@ src/doctorholiday/
   config.py       Settings from environment variables
   logs.py         JSON logging to stdout, redaction of sensitive fields
   middleware.py   request ID (X-Request-Id), access log
-  db.py           SQLAlchemy engine, readiness check
+  db.py           SQLAlchemy engine, per-request transaction (DbSession), readiness check
+  models.py       ORM models mirroring the migrated schema, enums
+  repositories/   data access layer: the only code that builds queries
   api/health.py   GET /healthz, GET /readyz
-tests/            pytest
+tests/            pytest; tests/db/ needs a database (`make test-db`)
 ```
 
 Conventions for new code:
 
 - **Synchronous data access** ([ADR-003](../docs/architecture/adr/ADR-003-synchronous-data-access.md)): endpoints that use the database or other blocking code are `def`, not `async def`.
+- **Data access:** see [Data access layer](#data-access-layer).
 - **Logging:** use `logging.getLogger(__name__)` and pass data via `extra={...}`. Every line is JSON on stdout with the `requestId` of the current request. Never log passwords, session IDs, tokens, MFA secrets or request bodies. Fields with such names are redacted, but that is a safety net, not a licence.
 - **Request ID:** every response carries a fresh UUID in `X-Request-Id`, also available as `request.state.request_id` (used by the error responses in #13). Client-supplied IDs are ignored.
 - **Files:** the container runs with a read-only root filesystem. Write nothing to disk; if unavoidable, only below `/tmp`.
 - **No API docs at runtime:** `/docs`, `/redoc` and `/openapi.json` are disabled; the contract is `openapi.yaml`.
+
+## Database
+
+PostgreSQL 16 schema as defined in [docs/architecture/database.md](../docs/architecture/database.md) (#12).
+
+### Data access layer
+
+- **The migrations own the schema.** `models.py` mirrors the tables for SQLAlchemy and is never used to create or alter them. A new column needs a migration *and* the model change; `tests/db/test_schema.py` fails if the two drift apart (columns, nullability, defaults, foreign keys).
+- **One transaction per request.** An endpoint that needs the database takes `session: DbSession`. The transaction is committed when the endpoint returns and rolled back on any exception; repositories never commit. The commit runs before the response is sent (`Depends(..., scope="function")`), so a failed commit is never answered with a success status.
+- **Queries only in `repositories/`**, built with SQLAlchemy (bound parameters, AGENTS.md rule 4). No `text()` with values spliced in, no f-strings with SQL.
+- **The database is the final guard for conflicts.** Overlapping bookings (`appointments_no_overlap`) and duplicate e-mails (`users_email_key`) are rejected by constraints, also for concurrent requests. Repositories run such inserts in a SAVEPOINT and raise a `DataConflictError` subclass (`TimeAlreadyBookedError`, `EmailAlreadyRegisteredError`), which the API maps to 409. A check before the insert is for user feedback only.
+- **Database errors carry personal data.** The message and `DETAIL` of an `IntegrityError` contain the offending values (e.g. an e-mail address or the whole row). Never return them, and never log `str(exc)`; log the constraint name (`db.violated_constraint`) instead (rule 3, #13).
+- **No ORM relationships.** Every read is an explicit query and nothing loads lazily; in particular no attribute leads from a `User` to its `Credential`, which only the auth module reads.
+
+### Database tests
+
+```sh
+make test-db    # from the repo root
+```
+
+Starts a throwaway PostgreSQL (compose project `doctorholiday-test`, port 55432, override with `TEST_DB_PORT`), applies the migrations with the same `migrate.sh`, runs the whole backend suite with `TEST_DATABASE_URL` pointing at it as `doctorholiday_app`, and deletes the database afterwards. Running as the app role means the tests also check its grants. `make test` without a database skips `tests/db/`.
+
+Each test runs in a transaction that is rolled back. The concurrency tests in `test_concurrent_booking.py` commit for real from several connections, which is fine because the database is thrown away.
+
+### Local database
+
+```sh
+make db-up      # start PostgreSQL on 127.0.0.1:5432 and apply the migrations
+make db-down    # stop it, keep the data
+make db-reset   # delete the data and rebuild from the migrations
+```
+
+`make db-up` creates random passwords in `.secrets/` (git-ignored) on first use. The backend connects as `doctorholiday_app` with the password from `.secrets/db_app_password`; set `DB_PORT` to use another host port.
+
+The container (`compose.yaml`) runs `postgres:16-alpine`, pinned by digest, as UID 70 with a read-only root filesystem, no capabilities and `no-new-privileges`. The port is published on `127.0.0.1` only, and every connection, including the local socket, needs a SCRAM-SHA-256 password.
+
+### Migrations
+
+Plain SQL files in [`migrations/`](migrations), named `V<nnn>__<name>.sql` and applied in order by [`infrastructure/postgres/migrate.sh`](../infrastructure/postgres/migrate.sh). It runs as a separate one-off command, not at backend startup: the `migrate` service in `compose.yaml` (run by `make db-up` and `docker compose up`), later a Kubernetes Job with the same script and image (#39). The backend therefore never needs DDL rights.
+
+- Each file runs in one transaction together with its row in `schema_migrations` (version, SHA-256, time); a failing file leaves nothing behind.
+- Re-runs skip applied files, so the command is idempotent.
+- A file that was changed after it was applied stops the run. Never edit an applied migration; add a new one.
+- A migration that creates a table also grants the application role its privileges on it.
+
+### Database roles
+
+| Role | Created by | Rights |
+| --- | --- | --- |
+| `postgres` | image (first start) | Superuser. Only used by `infrastructure/postgres/init/00-roles.sh` on the first start; nothing connects with it afterwards. |
+| `doctorholiday_owner` | `00-roles.sh` | Owns the database and schema `public`, runs the migrations. Not a superuser, cannot create roles or databases; `citext` and `btree_gist` are trusted extensions it may install. |
+| `doctorholiday_app` | `00-roles.sh` | Used by the running backend. `CONNECT` on the database, `USAGE` on `public`, no `CREATE`, no DDL, no `TRUNCATE`, and only the table privileges below ([`V004__app_grants.sql`](migrations/V004__app_grants.sql)). |
+
+`PUBLIC` has no rights on the database or schema `public`. Table privileges of `doctorholiday_app`:
+
+| Table | Privileges | Why not more |
+| --- | --- | --- |
+| `users`, `appointments`, `invitations`, `admin_access_grants` | `SELECT, INSERT, UPDATE` | Never deleted (BR-11, BR-13); expired invitations and grants stay as history. |
+| `credentials`, `sessions`, `recovery_codes`, `password_reset_codes`, `working_hours` | `SELECT, INSERT, UPDATE, DELETE` | Rows are deleted by logout, account deletion, MFA reset or a new schedule. |
+| `absences` | `SELECT, INSERT, DELETE` | Absences are created and deleted, never changed (A14, A31). |
+| `practice_settings`, `admin_bootstrap` | `SELECT, UPDATE` | Single rows created by the migration; the app cannot add or remove them. |
+| `audit_events` | `SELECT, INSERT` | Append-only, the application cannot rewrite the audit log (BR-19). |
+| `schema_migrations` | none | Owned by the migration role. |

@@ -177,6 +177,7 @@ PostgreSQL has no built-in e-mail type. E-mail columns therefore use the domain 
 | `password_hash` | text | Argon2id |
 | `mfa_secret_enc` | bytes | TOTP secret, encrypted with a key from the environment; `NULL` if not enrolled |
 | `mfa_enabled` | bool | `true` only after the first valid code |
+| `totp_last_step` | bigint | time step of the last accepted TOTP code; codes with a step `<=` this value are rejected, so no code is accepted twice (RFC 6238 §5.2) |
 | `password_changed_at` | timestamptz | |
 
 **Session** – server-side session; the cookie only holds the random token. All session data, including the state, lives only in the database: the server never reads it from the request and changes it only in login, MFA verification and enrolment (A03, A04, A05). A client cannot manipulate it without write access to the database.
@@ -285,6 +286,7 @@ CHECK (
 | `ip` | inet | client IP; `NULL` for events the server writes itself (grant expiry) |
 | `timestamp` | timestamptz | |
 | `outcome` | enum | `SUCCESS`, `FAILURE`, `DENIED` |
+| `details` | jsonb | optional object with allow-listed keys only, e.g. the old and new time of a rescheduling (BR-22); no request bodies, no personal data |
 
 **AdminAccessGrant** – time-limited admin access to appointment data (BR-17).
 
@@ -294,6 +296,7 @@ CHECK (
 | `admin_id` | UUID | FK → User with role `ADMIN` |
 | `purpose` | enum | `SUPPORT_REQUEST`, `INCIDENT_RESPONSE`, `DATA_SUBJECT_REQUEST`, `AUDIT` |
 | `created_at`, `expires_at` | timestamptz | `expires_at = created_at + 30 min` |
+| `expiry_logged_at` | timestamptz | set when the `APPOINTMENT_ACCESS_EXPIRED` event is written, so it is written exactly once |
 
 **PracticeSettings** – single row (BR-18).
 
