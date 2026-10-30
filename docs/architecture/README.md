@@ -7,3 +7,4 @@ Architecture decisions (`adr/`), requirements, RBAC matrix, architecture diagram
 - [adr/ADR-001-tech-stack.md](adr/ADR-001-tech-stack.md): application stack, base images, platform tooling (#1)
 - [adr/ADR-002-python-package-manager.md](adr/ADR-002-python-package-manager.md): uv as Python package and environment manager, lockfile rules (#11)
 - [adr/ADR-003-synchronous-data-access.md](adr/ADR-003-synchronous-data-access.md): synchronous SQLAlchemy/psycopg data access in the backend (#11)
+- [adr/ADR-004-frontend-libraries.md](adr/ADR-004-frontend-libraries.md): frontend libraries (#23)
