@@ -53,6 +53,9 @@ paths:
       description: |
         Creates a `PATIENT` account. Always answers `202` without body, whether or not the e-mail
         is already taken, so the endpoint cannot be used to enumerate accounts (BR-02).
+
+        **MVP-TEMP:** the optional `role` creates accounts of every role until invitations
+        (FR-02) and the first-admin bootstrap (#15) exist. It will be removed again.
       x-action: [A01]
       x-roles: [ANONYMOUS]
       security: []
@@ -1698,6 +1701,14 @@ components:
           $ref: '#/components/schemas/NewPassword'
         displayName:
           $ref: '#/components/schemas/DisplayName'
+        role:
+          description: |
+            **MVP-TEMP**, will be removed: role of the new account, default `PATIENT`. Deviates
+            from BR-02 (registration always creates a `PATIENT`) so the MVP can be tested with
+            every role before invitations and the admin bootstrap exist.
+          allOf:
+            - $ref: '#/components/schemas/Role'
+          default: PATIENT
     InvitationAcceptRequest:
       type: object
       additionalProperties: false
@@ -1908,7 +1919,8 @@ components:
         setupRequired:
           description: |
             `ADMIN` in `ACTIVE` only: `true` while the practice settings were never saved (BR-18).
-            The client then shows the setup page; absent otherwise.
+            The client then shows the setup page; absent otherwise. **MVP-TEMP:** not returned
+            yet, because `PUT /api/v1/settings` does not exist yet.
           type: boolean
     MfaEnrollResponse:
       type: object

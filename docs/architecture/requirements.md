@@ -188,7 +188,7 @@ PostgreSQL has no built-in e-mail type. E-mail columns therefore use the domain 
 | `token_hash` | bytes | SHA-256 of the cookie value, unique; the raw token is never stored |
 | `user_id` | UUID | FK → User |
 | `state` | enum | `MFA_PENDING`, `MFA_ENROLLMENT_REQUIRED`, `ACTIVE` |
-| `created_at`, `last_seen_at`, `expires_at` | timestamptz | idle and absolute timeout, values set in #14 |
+| `created_at`, `last_seen_at`, `expires_at` | timestamptz | idle and absolute timeout; defaults 30 min and 8 h, configurable (`SESSION_*_TIMEOUT_MINUTES`, backend/README.md) |
 
 **RecoveryCode** – MFA recovery codes (BR-07).
 

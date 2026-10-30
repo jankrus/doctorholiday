@@ -24,6 +24,8 @@ def test_defaults(env: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert settings.port == 8080
     assert settings.log_level is LogLevel.INFO
+    assert settings.session_idle_timeout_minutes == 30
+    assert settings.session_absolute_timeout_minutes == 480
 
 
 def test_secrets_are_masked_in_repr(env: dict[str, str]) -> None:
@@ -62,6 +64,11 @@ def test_missing_required_variable(
         ("PORT", "80"),
         ("PORT", "invalid-secret-sentinel"),
         ("LOG_LEVEL", "TRACE"),
+        ("SESSION_IDLE_TIMEOUT_MINUTES", "0"),
+        ("SESSION_IDLE_TIMEOUT_MINUTES", "1441"),
+        ("SESSION_ABSOLUTE_TIMEOUT_MINUTES", "10081"),
+        # Shorter than the default idle timeout of 30 minutes.
+        ("SESSION_ABSOLUTE_TIMEOUT_MINUTES", "29"),
     ],
 )
 def test_invalid_value_is_named_but_not_echoed(

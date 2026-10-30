@@ -12,7 +12,7 @@ from doctorholiday.repositories.errors import EmailAlreadyRegisteredError
 
 
 def create_user(
-    session: Session, *, email: str, display_name: str, role: Role, password_hash: str
+    session: Session, *, email: str, display_name: str | None, role: Role, password_hash: str
 ) -> User:
     """Insert a user with its credentials. `password_hash` must already be an Argon2id hash."""
     user = User(email=email, display_name=display_name, role=role)
