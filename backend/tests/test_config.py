@@ -30,6 +30,8 @@ def test_defaults(env: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.login_max_failures_per_ip == 20
     assert settings.login_failure_window_minutes == 15
     assert settings.login_lockout_minutes == 15
+    assert settings.registration_max_per_ip == 10
+    assert settings.registration_window_minutes == 60
 
 
 def test_secrets_are_masked_in_repr(env: dict[str, str]) -> None:

@@ -101,9 +101,16 @@ class AuditAction(enum.StrEnum):
     ACCESS_DENIED = "ACCESS_DENIED"
 
 
-class ThrottleScope(enum.StrEnum):
-    IP = "IP"
-    ACCOUNT = "ACCOUNT"
+class RateLimitScope(enum.StrEnum):
+    """Endpoint and key of a rate limit (BR-03); the key is a client IP, e-mail or user ID."""
+
+    LOGIN_IP = "LOGIN_IP"
+    LOGIN_ACCOUNT = "LOGIN_ACCOUNT"
+    REGISTRATION_IP = "REGISTRATION_IP"
+    MFA_VERIFICATION_USER = "MFA_VERIFICATION_USER"
+    INVITATION_ACCEPTANCE_IP = "INVITATION_ACCEPTANCE_IP"
+    PASSWORD_RESET_IP = "PASSWORD_RESET_IP"  # noqa: S105  # rate limit scope, not a secret
+    REAUTHENTICATION_USER = "REAUTHENTICATION_USER"
 
 
 class AuditOutcome(enum.StrEnum):
@@ -180,15 +187,15 @@ class UserSession(Base):
     expires_at: Mapped[datetime]
 
 
-class LoginThrottle(Base):
-    """Failed logins of one client IP or e-mail address (#14); key_hash is the SHA-256 of it."""
+class RateLimit(Base):
+    """Counted attempts of one key in one scope (BR-03); key_hash is the SHA-256 of the key."""
 
-    __tablename__ = "login_throttles"
+    __tablename__ = "rate_limits"
 
-    scope: Mapped[ThrottleScope] = mapped_column(primary_key=True)
+    scope: Mapped[RateLimitScope] = mapped_column(primary_key=True)
     key_hash: Mapped[bytes] = mapped_column(primary_key=True)
     window_started_at: Mapped[datetime] = mapped_column(server_default=_DB_DEFAULT)
-    failures: Mapped[int] = mapped_column(SmallInteger, server_default=_DB_DEFAULT)
+    attempts: Mapped[int] = mapped_column(SmallInteger, server_default=_DB_DEFAULT)
     locked_until: Mapped[datetime | None]
 
 
