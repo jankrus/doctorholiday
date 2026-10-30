@@ -1,4 +1,4 @@
-.PHONY: help up down test lint package db-up db-down db-reset
+.PHONY: help up down test lint package db-up db-down db-reset test-db
 .DEFAULT_GOAL := help
 
 help: ## List available targets
@@ -40,3 +40,18 @@ db-down: ## Stop local PostgreSQL, keep its data
 db-reset: ## Delete the local database and recreate it from the migrations
 	docker compose down --volumes
 	$(MAKE) db-up
+
+# Throwaway database for the backend's database tests: same compose file, init script and
+# migrate.sh, but its own compose project, port and volume, so the dev database is never touched.
+TEST_DB := docker compose --project-name doctorholiday-test
+test-db: export DB_PORT := $(or $(TEST_DB_PORT),55432)
+
+test-db: $(DB_SECRETS) ## Run the backend tests against a fresh, migrated PostgreSQL (deleted afterwards)
+	@$(TEST_DB) down --volumes --remove-orphans 2>/dev/null
+	$(TEST_DB) up --detach --wait db
+	$(TEST_DB) run --rm migrate
+	@status=0; \
+	TEST_DATABASE_URL="postgresql+psycopg://doctorholiday_app:$$(cat .secrets/db_app_password)@127.0.0.1:$$DB_PORT/doctorholiday" \
+		$(MAKE) -C backend test || status=$$?; \
+	$(TEST_DB) down --volumes; \
+	exit $$status
