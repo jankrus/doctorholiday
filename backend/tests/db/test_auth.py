@@ -1,4 +1,4 @@
-"""Register, login, logout and /me against a real database (#14 acceptance criteria, minus 429).
+"""Register, login, logout, /me and login rate limiting against a real database (#14).
 
 The app commits for real; every test uses its own e-mail addresses, and the database is thrown
 away after `make test-db`.
@@ -7,8 +7,11 @@ away after `make test-db`.
 import hashlib
 import json
 import logging
+import random
+import threading
 import uuid
 from collections.abc import Callable, Iterator
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
 from datetime import timedelta
 
@@ -29,6 +32,7 @@ from doctorholiday.models import (
     AuditEvent,
     AuditOutcome,
     Credential,
+    LoginThrottle,
     Role,
     SessionState,
     User,
@@ -53,10 +57,19 @@ def app(env: dict[str, str], db_url: str, monkeypatch: pytest.MonkeyPatch) -> Fa
 
 
 @pytest.fixture
-def new_client(app: FastAPI) -> Iterator[ClientFactory]:
-    """Independent clients (own cookie jar), e.g. two browsers. https: the cookie is Secure."""
+def client_ip() -> str:
+    """An IP of its own per test, so failed logins of other tests never hit its IP limit."""
+    return f"10.{random.randrange(256)}.{random.randrange(256)}.{random.randrange(1, 255)}"  # noqa: S311
+
+
+@pytest.fixture
+def new_client(app: FastAPI, client_ip: str) -> Iterator[ClientFactory]:
+    """Independent clients (own cookie jar), e.g. two browsers on the same machine (one IP).
+    https: the cookie is Secure."""
     with ExitStack() as stack:
-        yield lambda: stack.enter_context(TestClient(app, base_url="https://testserver"))
+        yield lambda: stack.enter_context(
+            TestClient(app, base_url="https://testserver", client=(client_ip, 50000))
+        )
 
 
 @pytest.fixture
@@ -439,6 +452,244 @@ def test_session_before_mfa_shows_only_its_state(
 def test_malformed_cookie_is_no_session(client: TestClient, cookie: str) -> None:
     use_cookie(client, cookie)
     assert client.get("/api/v1/auth/me").status_code == 401
+
+
+# ---------- Rate limiting and lockout ----------
+
+WRONG = "wrong password, but long"
+
+
+def unknown_email() -> str:
+    return f"unknown-{uuid.uuid4().hex}@example.com"
+
+
+def throttle_row(engine: Engine, key: str) -> LoginThrottle | None:
+    with Session(engine) as session:
+        return session.scalars(
+            select(LoginThrottle).where(
+                LoginThrottle.key_hash == hashlib.sha256(key.encode()).digest()
+            )
+        ).one_or_none()
+
+
+def move_throttle_back(engine: Engine, key: str, by: timedelta) -> None:
+    """Let `by` pass for one counter, as if its failures and lockout were that much older."""
+    with Session(engine) as session, session.begin():
+        session.execute(
+            update(LoginThrottle)
+            .where(LoginThrottle.key_hash == hashlib.sha256(key.encode()).digest())
+            .values(
+                window_started_at=LoginThrottle.window_started_at - by,
+                locked_until=LoginThrottle.locked_until - by,
+            )
+        )
+
+
+def assert_rate_limited(response: Response) -> None:
+    assert response.status_code == 429
+    assert response.json()["error"]["code"] == "RATE_LIMITED"
+    assert 1 <= int(response.headers["retry-after"]) <= 15 * 60
+    assert "set-cookie" not in response.headers
+
+
+def test_sixth_rapid_failed_login_returns_429(client: TestClient, email: str) -> None:
+    register(client, email)
+    for _ in range(5):
+        assert login(client, email, WRONG).status_code == 401
+
+    assert_rate_limited(login(client, email, WRONG))
+    # Locked means locked: not even the right password is checked.
+    assert_rate_limited(login(client, email))
+
+
+def test_lockout_is_per_account_across_ips(
+    new_client: ClientFactory, app: FastAPI, email: str
+) -> None:
+    register(new_client(), email)
+    for attempt in range(5):
+        ip = f"10.1.0.{attempt}"
+        with TestClient(app, base_url="https://testserver", client=(ip, 1)) as other:
+            assert login(other, email, WRONG).status_code == 401
+
+    assert_rate_limited(login(new_client(), email))
+
+
+def test_lockout_of_unknown_and_known_emails_answers_identically(
+    client: TestClient, email: str
+) -> None:
+    register(client, email)
+    unknown = unknown_email()
+    for _ in range(5):
+        login(client, email, WRONG)
+        login(client, unknown, WRONG)
+
+    known_response = login(client, email, WRONG)
+    unknown_response = login(client, unknown, WRONG)
+    assert_rate_limited(known_response)
+    # Retry-After may differ by a second, the rest is identical.
+    known_status, known_headers, known_body = without_request_id(known_response)
+    unknown_status, unknown_headers, unknown_body = without_request_id(unknown_response)
+    assert (known_status, known_body) == (unknown_status, unknown_body)
+    assert known_headers.keys() == unknown_headers.keys()
+
+
+def test_lockout_counts_case_variants_of_an_email_together(client: TestClient, email: str) -> None:
+    register(client, email)
+    for _ in range(5):
+        login(client, email.upper(), WRONG)
+    assert_rate_limited(login(client, email))
+
+
+def test_lockout_ends_after_the_lockout_time(
+    client: TestClient, email: str, db_engine: Engine
+) -> None:
+    register(client, email)
+    for _ in range(5):
+        login(client, email, WRONG)
+    assert_rate_limited(login(client, email))
+
+    move_throttle_back(db_engine, email, timedelta(minutes=15))
+    assert login(client, email).status_code == 200
+    # A successful login resets the account counter.
+    assert throttle_row(db_engine, email) is None
+
+
+def test_failure_right_after_a_lockout_locks_again(
+    client: TestClient, email: str, db_engine: Engine
+) -> None:
+    register(client, email)
+    for _ in range(5):
+        login(client, email, WRONG)
+    # Lockout over, but the failures are still inside a (longer) window: one guess per lockout.
+    with Session(db_engine) as session, session.begin():
+        session.execute(
+            update(LoginThrottle)
+            .where(LoginThrottle.key_hash == hashlib.sha256(email.encode()).digest())
+            .values(locked_until=func.now())
+        )
+    assert login(client, email, WRONG).status_code == 401
+    assert_rate_limited(login(client, email))
+
+
+def test_failures_outside_the_window_are_forgotten(
+    client: TestClient, email: str, db_engine: Engine
+) -> None:
+    register(client, email)
+    for _ in range(4):
+        login(client, email, WRONG)
+    move_throttle_back(db_engine, email, timedelta(minutes=15))
+
+    for _ in range(4):
+        assert login(client, email, WRONG).status_code == 401
+    assert login(client, email).status_code == 200
+
+
+def test_successful_login_resets_the_account_counter(client: TestClient, email: str) -> None:
+    register(client, email)
+    for _ in range(4):
+        login(client, email, WRONG)
+    assert login(client, email).status_code == 200
+    client.post("/api/v1/auth/logout")
+
+    for _ in range(4):
+        assert login(client, email, WRONG).status_code == 401
+    assert login(client, email).status_code == 200
+
+
+def test_ip_limit_spans_accounts(new_client: ClientFactory, email: str) -> None:
+    client = new_client()
+    register(client, email)
+    # 20 failed logins from one IP, each for another e-mail: no account counter is near its limit.
+    for _ in range(20):
+        assert login(client, unknown_email(), WRONG).status_code == 401
+
+    assert_rate_limited(login(client, email))
+    # A successful login does not reset the IP counter; it never happens while locked anyway.
+    assert_rate_limited(login(new_client(), unknown_email(), WRONG))
+
+
+def test_ip_limit_does_not_touch_other_ips(
+    new_client: ClientFactory, app: FastAPI, email: str
+) -> None:
+    client = new_client()
+    register(client, email)
+    for _ in range(20):
+        login(client, unknown_email(), WRONG)
+
+    with TestClient(app, base_url="https://testserver", client=("10.255.255.254", 1)) as other:
+        assert login(other, email).status_code == 200
+
+
+def test_successful_login_does_not_reset_the_ip_counter(client: TestClient) -> None:
+    accounts = [f"patient-{uuid.uuid4().hex}@example.com" for _ in range(4)]
+    for account in accounts:
+        register(client, account)
+    # 4 failures per account, then a successful login that resets only the account counter.
+    for account in accounts:
+        for _ in range(4):
+            assert login(client, account, WRONG).status_code == 401
+        assert login(client, account).status_code == 200
+        client.post("/api/v1/auth/logout")
+    # 16 failures from this IP so far; 4 more reach the IP limit.
+    for _ in range(4):
+        assert login(client, unknown_email(), WRONG).status_code == 401
+
+    assert_rate_limited(login(client, accounts[0]))
+
+
+def test_concurrent_failed_logins_cannot_exceed_the_limit(
+    app: FastAPI, client_ip: str, email: str
+) -> None:
+    ready = threading.Barrier(10)
+
+    def attempt(_: int) -> int:
+        # No `with`: leaving it would run the lifespan shutdown while other threads still work.
+        client = TestClient(app, base_url="https://testserver", client=(client_ip, 1))
+        ready.wait(timeout=10)
+        return login(client, email, WRONG).status_code
+
+    # The outer client's lifespan closes the pooled connections once all threads are done.
+    with TestClient(app, base_url="https://testserver", client=(client_ip, 1)) as client:
+        register(client, email)
+        with ThreadPoolExecutor(max_workers=10) as pool:
+            statuses = sorted(pool.map(attempt, range(10)))
+
+    assert statuses == [401] * 5 + [429] * 5
+
+
+def test_rate_limited_login_is_audited(
+    client: TestClient, email: str, db_engine: Engine, client_ip: str
+) -> None:
+    register(client, email)
+    for _ in range(6):
+        login(client, email, WRONG)
+
+    user = user_by_email(db_engine, email)
+    assert user is not None
+    reasons = [e.details for e in audit_events(db_engine, AuditAction.LOGIN, user)]
+    assert reasons == [{"reason": "WRONG_PASSWORD"}] * 5 + [{"reason": "RATE_LIMITED"}]
+    assert {str(e.ip) for e in audit_events(db_engine, AuditAction.LOGIN, user)} == {client_ip}
+
+
+def test_counters_are_keyed_by_hashes_only(
+    client: TestClient, email: str, db_engine: Engine, client_ip: str
+) -> None:
+    login(client, email, WRONG)
+    # throttle_row looks the counters up by SHA-256; the table has no column for the clear text.
+    account = throttle_row(db_engine, email)
+    ip = throttle_row(db_engine, client_ip)
+    assert account is not None
+    assert (account.scope, account.failures) == ("ACCOUNT", 1)
+    assert ip is not None
+    assert (ip.scope, ip.failures) == ("IP", 1)
+
+
+def test_stale_counters_are_deleted(client: TestClient, email: str, db_engine: Engine) -> None:
+    login(client, email, WRONG)
+    move_throttle_back(db_engine, email, timedelta(minutes=15))
+
+    login(client, unknown_email(), WRONG)
+    assert throttle_row(db_engine, email) is None
 
 
 # ---------- Validation ----------
