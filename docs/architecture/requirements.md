@@ -32,7 +32,7 @@ Every requirement maps to at least one action of the [permission matrix](roles-a
 
 | ID | User story | Action | Endpoint | Rules |
 | --- | --- | --- | --- | --- |
-| FR-05 | As a user I want to enrol a TOTP authenticator and confirm it with a first code so that my account is protected by MFA. I receive ten recovery codes once. | A05, A04 | `POST /api/v1/auth/mfa/enroll`, then `POST /api/v1/auth/mfa/verify` | BR-06, BR-07 |
+| FR-05 | As a user I want to enrol a TOTP authenticator and confirm it with a first code so that my account is protected by MFA. I receive ten recovery codes once. | A05, A04 | `POST /api/v1/auth/mfa/enroll`, then `POST /api/v1/auth/mfa/verify` | BR-06, BR-07, BR-26 |
 | FR-06 | As a user I want to log out so that my session ends on this device. | A06 | `POST /api/v1/auth/logout` | BR-05 |
 | FR-07 | As a user I want to see my own account and session state so that the UI shows what I may do next. | A22 | `GET /api/v1/auth/me` | BR-05 |
 | FR-08 | As a user I want to change my password so that I can rotate it after a suspected leak. | A23 | `POST /api/v1/auth/password` | BR-01, BR-15 |
@@ -49,6 +49,7 @@ Every requirement maps to at least one action of the [permission matrix](roles-a
 | FR-14 | As a patient I want to cancel one of my appointments before the cancellation deadline so that the time becomes available again. | A09 | `POST /api/v1/appointments/{id}/cancel` | BR-11 |
 | FR-31 | As a patient I want to move one of my appointments to another available time before the cancellation deadline so that I do not risk losing it by cancelling first. | A30 | `POST /api/v1/appointments/{id}/reschedule` | BR-22 |
 | FR-15 | As a patient I want to delete my account so that my personal data is erased (GDPR Art. 17). | A24 | `POST /api/v1/auth/account/delete` | BR-13 |
+| FR-40 | As a patient I want to decline the optional MFA offer after login so that I am not asked again; I can still enable MFA later (FR-05). | A36 | `POST /api/v1/auth/mfa/decline` | BR-26 |
 
 ### Staff and doctors
 
@@ -95,7 +96,7 @@ Every requirement maps to at least one action of the [permission matrix](roles-a
 | BR-02 | **Registration does not reveal whether an e-mail is taken.** `POST /auth/register` always answers `202 Accepted` with no body. If the e-mail already exists, no account is created; the password is hashed anyway so response times match. Registration always creates a `PATIENT`. |
 | BR-03 | **Login errors are generic.** Wrong e-mail, wrong password and deactivated account all return `401 INVALID_CREDENTIALS`. Login, registration, MFA verification, invitation acceptance, password reset and re-authentication are rate limited (`429`, details in #14). |
 | BR-04 | **First-admin bootstrap** as defined in [roles-and-permissions.md](roles-and-permissions.md#bootstrapping-the-first-admin): the first successful login while no admin exists promotes that account to `ADMIN`, atomically under a row lock. |
-| BR-05 | **Session states.** After a correct password the server creates a session in one of three states: `MFA_PENDING` (MFA enrolled, code still missing), `MFA_ENROLLMENT_REQUIRED` (role `STAFF`/`DOCTOR`/`ADMIN` without MFA) or `ACTIVE`. In `MFA_PENDING` only A04, A06 and A22 are allowed; in `MFA_ENROLLMENT_REQUIRED` only A04, A05, A06 and A22. Every other request returns `403 MFA_REQUIRED`. `GET /auth/me` returns the account only in `ACTIVE`; before that it returns the session state alone. The session ID is rotated on every state change and on password change (session fixation). |
+| BR-05 | **Session states.** After a correct password the server creates a session in one of three states: `MFA_PENDING` (MFA enrolled, code still missing), `MFA_ENROLLMENT_REQUIRED` (role `STAFF`/`DOCTOR`/`ADMIN` without MFA; MFA is mandatory for them, optional for `PATIENT`, see BR-26) or `ACTIVE`. In `MFA_PENDING` only A04, A06 and A22 are allowed; in `MFA_ENROLLMENT_REQUIRED` only A04, A05, A06 and A22. Every other request returns `403 MFA_REQUIRED`. `GET /auth/me` returns the account only in `ACTIVE`; before that it returns the session state alone. The session ID is rotated on every state change and on password change (session fixation). |
 | BR-06 | **MFA enrolment.** `POST /auth/mfa/enroll` creates a new TOTP secret (RFC 6238, SHA-1, 6 digits, 30 s) and returns it once with an `otpauth://` URI. MFA counts as enabled only after the first valid code was sent to `/auth/mfa/verify`. Calling enroll again before confirmation replaces the unconfirmed secret; calling it with MFA already enabled returns `409 MFA_ALREADY_ENABLED`. Sending a code to `/auth/mfa/verify` while the account has neither MFA nor an unconfirmed secret returns `409 MFA_NOT_ENABLED`; in practice this concerns patients, who use MFA voluntarily, and staff roles only if they call verify before enroll. The secret is stored encrypted (#21, #30). |
 | BR-07 | **Recovery codes.** Confirming the enrolment returns ten single-use recovery codes, exactly once. They are stored only as hashes. A recovery code can replace the TOTP code in `/auth/mfa/verify` during login and is used up afterwards. |
 | BR-08 | **Working hours** are a weekly schedule per doctor: entries of weekday (1 = Monday … 7 = Sunday), start and end time as local time in the practice time zone (`Europe/Berlin`), on full 5 minutes, `endTime > startTime`. A weekday may have up to 5 entries (e.g. 08:00–12:00 and 14:00–18:00); entries of the same weekday must not overlap (`409 WORKING_HOURS_OVERLAP`). `PUT` replaces the whole schedule in one transaction. Changing working hours never touches booked appointments; times outside the new hours are simply no longer offered. The doctor must be an active `DOCTOR`; a `DOCTOR` sets only their own hours. |
@@ -116,6 +117,7 @@ Every requirement maps to at least one action of the [permission matrix](roles-a
 | BR-23 | **Availability** is computed, never stored. For each doctor and each local date in the requested range, every working-hours entry of that weekday is cut into consecutive start times of `appointmentMinutes` from its start; a remainder shorter than one appointment is dropped. A start time is available if it lies in the future and at most 365 days ahead, and the appointment would overlap neither an absence nor a `BOOKED` appointment of the doctor. Local times are converted to UTC per date, so daylight-saving changes are handled. `from` and `to` are required and span at most 31 days (`422`), which bounds the work per request. |
 | BR-24 | **Guest appointments** are for people who do not want an account. Only `STAFF` books them, with `guest.name` (1–100 characters) and `guest.phone` (E.164, e.g. `+4971112345678`) instead of `patientEmail`. A guest has no account, no login and no online access; cancelling and rescheduling go through the practice (A10, A30), and the cancellation deadline does not apply. At most 5 open appointments per guest phone number (`409 APPOINTMENT_LIMIT_REACHED`). Guest name and phone are erased by a daily cleanup job 30 days after the appointment ended or was cancelled; the job sets `guest_erased_at`, and the appointment then keeps only doctor, time, reason and status. Audit events reference only the appointment ID, never guest data. |
 | BR-25 | **Password reset without e-mail.** A user who forgot their password asks the practice. The issuer verifies the person's identity out of band (in person, or by calling back a known phone number); this is an organisational measure, and the remaining social-engineering risk is listed among the non-secure parts (brief §5e). `STAFF` issues codes only for active `PATIENT` accounts, `ADMIN` for any active account except their own (`403`); any other e-mail returns `404`. The code has the format `xxxxx-xxxxx` (10 random base32 characters, 50 bits), is returned once to the issuer, stored only as a hash, single use and valid for 15 minutes; issuing a new code replaces an unused one. The user sends e-mail, code and new password to `POST /auth/password-reset`. Every failure (unknown e-mail, wrong, expired or used code, deactivated account) returns the same `400 INVALID_RESET_CODE`, and the server does the same work in every case so response times match. After 5 failed attempts the code is invalidated. A successful reset stores the new password, uses up the code and deletes all sessions of the user; it does not log in. MFA stays unchanged, so a user with MFA still needs a TOTP or recovery code; if the device is lost too, the admin also resets the MFA (A25). |
+| BR-26 | **Optional MFA for patients.** A `PATIENT` without MFA is offered the enrolment once: while `user.mfa_offer_declined_at` is `NULL` and MFA is not enabled, `GET /auth/me` returns `mfaOfferPending: true` and the UI shows the offer after login. The patient either enrols (A05, A04) or declines (A36, sets `mfa_offer_declined_at`); either way the offer is not shown again. Declining does not block a later enrolment. Practice roles cannot decline (`403 FORBIDDEN`). |
 
 ## API conventions
 
@@ -168,6 +170,7 @@ PostgreSQL has no built-in e-mail type. E-mail columns therefore use the domain 
 | `is_active` | bool | `false` after deactivation or deletion |
 | `created_at` | timestamptz | |
 | `deleted_at` | timestamptz | set by account deletion (BR-13) |
+| `mfa_offer_declined_at` | timestamptz | `PATIENT` only: set when the optional MFA offer is declined (BR-26); not a secret, so it lives here and not in Credential |
 
 **Credential** – the secrets of an account, 1:1 with User. They live in their own table so that user lists, joins and serialisation of `User` never load them; only the authentication module reads this table, and the database role of the app could restrict it further (#12).
 
@@ -342,6 +345,7 @@ erDiagram
         bool is_active
         timestamptz created_at
         timestamptz deleted_at
+        timestamptz mfa_offer_declined_at
     }
     CREDENTIAL {
         uuid user_id PK, FK
@@ -507,6 +511,7 @@ Each row of the permission matrix maps to exactly one operation in the spec; eac
 | A33 | `POST /api/v1/users/{id}/reactivate` | `reactivateUser` | FR-36 |
 | A34 | `POST /api/v1/users/password-reset-codes` | `issuePasswordResetCode` | FR-37, FR-38 |
 | A35 | `POST /api/v1/auth/password-reset` | `resetPassword` | FR-39 |
+| A36 | `POST /api/v1/auth/mfa/decline` | `declineMfaOffer` | FR-40 |
 
 ## Validating the spec
 

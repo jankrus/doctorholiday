@@ -4,6 +4,8 @@ import type { components, paths } from './schema';
 export type Role = components['schemas']['Role'];
 export type SessionInfo = components['schemas']['SessionInfo'];
 export type ApiError = components['schemas']['Error'];
+export type MfaEnrollment = components['schemas']['MfaEnrollResponse'];
+export type PracticeSettings = components['schemas']['PracticeSettings'];
 
 /**
  * Typed client for the API contract in `backend/openapi.yaml` (regenerate with `npm run gen:api`).

@@ -10,7 +10,7 @@ export function ErrorPage() {
           <Callout.Text>{GENERIC_ERROR_MESSAGE}</Callout.Text>
         </Callout.Root>
         <Button asChild variant="soft">
-          <a href="/">Back to start</a>
+          <a href="/">Zur Startseite</a>
         </Button>
       </Flex>
     </Container>
