@@ -15,7 +15,7 @@ The default branch, `main`, serves as the reference for release-ready code. To p
 | **Review Hygiene** | `dismiss_stale_reviews_on_push: true`<br>`required_review_thread_resolution: true` | New pushes invalidate existing approvals; all review comments must be explicitly resolved before merging. |
 | **Block Force Pushes** | Enabled (`type: non_fast_forward`) | Prevents the Git history from being overwritten or destroyed. |
 | **Restrict Deletions** | Enabled (`type: deletion`) | Protects against accidental or malicious deletion of the main branch. |
-| **Status Checks** | Required (CI pipeline) | Merges are permitted only after tests, linting, and security gates (Gitleaks, container scans) have completed successfully. |
+| **Status Checks** | **Not configured yet** (planned) | The ruleset currently contains only the rules `pull_request`, `non_fast_forward` and `deletion`. No required status checks exist because no pipeline exists yet. Once the pipeline lands (#31, #36), add its checks (tests, lint, Gitleaks, scans) as required status checks. |
 
 ---
 
@@ -38,13 +38,13 @@ Before the submission deadline, the lecturer will be invited to the repository a
 
 ### A. Repository Visibility & Container Registry (GHCR)
 
-The repository is designated as **Private**. This private visibility has the following technical implications:
+The exam brief asks for a private repository. **Current state: the repository is public** (the decision is open, see [deviations.md](deviations.md) D-04). If it is made private, the following technical implications apply:
 
 * **Image Pull Secrets:** When deploying the containerized application to the local Kubernetes cluster (`kind`), images can no longer be pulled publicly from the GitHub Container Registry (GHCR). An `imagePullSecret` with the appropriate read permissions (a GitHub Personal Access Token) is required in the cluster.
 * **Evidence Commits:** Automated commits by CI runners (e.g., `github-actions[bot]` for audit trails and evidence artifacts) require dedicated write permissions or must be stored in separate evidence branches.
 
 ### B. Note on GitHub Free Tier (Enforcement Limitation)
 
-For private repositories under personal GitHub user accounts, active enforcement of rulesets requires a GitHub Team or Enterprise plan.
+While the repository is **public**, the ruleset `protect-main` is enforced (`enforcement: active`). For **private** repositories under personal GitHub accounts, active enforcement of rulesets requires a GitHub Team or Enterprise plan.
 
-* **Documented deviation:** The ruleset was fully configured via the GitHub API and added to the repository. The team’s internal process policies make compliance with the requirements (PRs, reviews, status checks) mandatory, even though GitHub restricts enforcement on the Free tier to organization accounts.
+* **If the repository becomes private:** the ruleset stays configured but is no longer enforced on the Free tier. The team's process policy (pull requests, one review, no direct pushes to `main`) stays mandatory and is recorded as a deviation in [deviations.md](deviations.md).

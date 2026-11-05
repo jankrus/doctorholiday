@@ -8,3 +8,4 @@ Architecture decisions (`adr/`), requirements, RBAC matrix, architecture diagram
 - [adr/ADR-002-python-package-manager.md](adr/ADR-002-python-package-manager.md): uv as Python package and environment manager, lockfile rules (#11)
 - [adr/ADR-003-synchronous-data-access.md](adr/ADR-003-synchronous-data-access.md): synchronous SQLAlchemy/psycopg data access in the backend (#11)
 - [adr/ADR-004-frontend-libraries.md](adr/ADR-004-frontend-libraries.md): frontend libraries (#23)
+- [security-requirements.md](security-requirements.md): mandatory, testable security requirements SR-01 to SR-11 with verification and implementing issues (#5)
