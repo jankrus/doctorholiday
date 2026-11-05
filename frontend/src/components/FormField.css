@@ -1,0 +1,9 @@
+.form-field__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.form-field__error > svg {
+  flex-shrink: 0;
+}

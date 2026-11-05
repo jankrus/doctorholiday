@@ -13,11 +13,38 @@ export function activeSession(role: Role): SessionInfo {
   };
 }
 
-/** Stubs `fetch` so `GET /api/v1/auth/me` returns `session`, or 401 for `null`. */
-export function stubSession(session: SessionInfo | null) {
+/** A patient who has neither enabled MFA nor declined the offer yet (BR-26). */
+export function patientWithOffer(): SessionInfo {
+  const session = activeSession('PATIENT');
+  return { ...session, user: session.user && { ...session.user, mfaOfferPending: true } };
+}
+
+export const apiError = (code: string, status: number) =>
+  Response.json(
+    { error: { code, message: 'Server text.', requestId: '00000000-0000-4000-8000-000000000003' } },
+    { status },
+  );
+
+type Handler = (
+  request: Request,
+  setSession: (next: SessionInfo | null) => void,
+) => Response | Promise<Response>;
+
+/**
+ * Stubs `fetch` so `GET /api/v1/auth/me` returns `session`, or 401 for `null`. Other requests go
+ * to `handlers` by `METHOD /path` or `/path` (e.g. `{ 'PUT /api/v1/settings': ... }`), or get
+ * 404. A handler can change the session, as the backend does on login, MFA or logout.
+ */
+export function stubSession(initial: SessionInfo | null, handlers: Record<string, Handler> = {}) {
+  let session = initial;
+  const setSession = (next: SessionInfo | null) => {
+    session = next;
+  };
   const fetchMock = vi.fn(async (request: Request) => {
-    if (new URL(request.url).pathname !== '/api/v1/auth/me') {
-      return new Response(null, { status: 404 });
+    const { pathname } = new URL(request.url);
+    if (pathname !== '/api/v1/auth/me') {
+      const handler = handlers[`${request.method} ${pathname}`] ?? handlers[pathname];
+      return handler?.(request, setSession) ?? new Response(null, { status: 404 });
     }
     return session
       ? Response.json(session)

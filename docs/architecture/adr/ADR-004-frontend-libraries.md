@@ -34,6 +34,23 @@ set should stay small.
         flashing protected screens. Supports React 18.
     *   *Cons:* React Router 8 already requires React 19, so a React upgrade will bring a router migration.
 
+### 2.4. QR code for MFA enrolment (added with #24)
+The `otpauth://` URI contains the TOTP secret, so the QR code must be generated in the browser; a QR web
+service would receive the secret.
+*   **Option A: `uqr`**
+    *   *Pros:* No dependencies, MIT, about 80 kB unpacked, TypeScript types. `encode()` returns the module
+        matrix, which React renders as an SVG `<path>`: no `innerHTML`, no canvas, no data URL.
+    *   *Cons:* Version 0.x from a small maintainer group (unjs).
+*   **Option B: `qrcode` (node-qrcode)**
+    *   *Pros:* Most widely used.
+    *   *Cons:* Pulls in `pngjs`, `yargs` and `dijkstrajs` (CLI and PNG support the browser does not need).
+*   **Option C: `qrcode-generator`**
+    *   *Pros:* No dependencies, mature.
+    *   *Cons:* About 550 kB unpacked, no own types.
+*   **Option D: Own encoder**
+    *   *Pros:* No dependency.
+    *   *Cons:* Reed-Solomon coding and masking are easy to get subtly wrong; a broken code locks users out.
+
 ## 3. Decision Outcome
 *   **UI:** Radix Themes (`@radix-ui/themes`), no Tailwind.
 *   **Routing:** React Router 7 in data mode (`createBrowserRouter`); guards are loaders based on
@@ -41,6 +58,7 @@ set should stay small.
 *   **API client:** `openapi-typescript` (dev) generates `frontend/src/api/schema.d.ts`; `openapi-fetch` sends
     same-origin requests with `credentials: 'include'`. Error texts shown to users come from a fixed local map,
     never from the server's `message`.
+*   **QR code:** `uqr`, pinned like every package; rendered as SVG in `frontend/src/components/QrCode.tsx`.
 *   **Tooling:** TypeScript 5, ESLint 8 (flat config) with `typescript-eslint` and `eslint-plugin-react-hooks`,
     Prettier, Vitest with jsdom and Testing Library.
 
@@ -53,9 +71,9 @@ vulnerable tooling contradicts the quality gate's intent (CVSS ≥ 7.0 blocks), 
 `@vitejs/plugin-react` 6 and Vitest 5. React stays at 18 and ESLint at 8 as decided in ADR-001.
 
 ## 4. Consequences
-*   **Security (Pros):** `npm audit` is clean at the time of writing. Only five direct runtime packages
-    (`react`, `react-dom`, `react-router`, `@radix-ui/themes`, `openapi-fetch` and their transitive deps) end up
-    in the bundle. ESLint forbids `dangerouslySetInnerHTML`, `eval` and similar escape hatches. No secrets or
+*   **Security (Pros):** `npm audit` is clean at the time of writing. Only six direct runtime packages
+    (`react`, `react-dom`, `react-router`, `@radix-ui/themes`, `openapi-fetch`, `uqr` and their transitive deps)
+    end up in the bundle. ESLint forbids `dangerouslySetInnerHTML`, `eval` and similar escape hatches. No secrets or
     API keys exist in the frontend; the build reads no `VITE_*` variables.
 *   **Development (Cons):** Node.js ≥ 22.13 is required (Vitest 5, jsdom 29). ESLint 8 is end of life; moving to
     ESLint 9+ needs a follow-up decision. The Radix Themes stylesheet is large; it can be split into its token,

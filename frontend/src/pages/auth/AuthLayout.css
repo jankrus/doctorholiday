@@ -1,0 +1,126 @@
+/* Auth screens: see docs/architecture/ui-design.md (layout "split screen"). */
+
+.auth-layout {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+  background-color: var(--color-background);
+}
+
+.auth-layout__brand {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-8);
+  padding: var(--space-5);
+  background: linear-gradient(160deg, var(--accent-2) 0%, var(--accent-4) 100%);
+  border-bottom: 1px solid var(--accent-a5);
+}
+
+/* Two soft, overlapping circles: an organic shape instead of a stock photo. */
+.auth-layout__brand::before,
+.auth-layout__brand::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.auth-layout__brand::before {
+  width: 520px;
+  height: 520px;
+  right: -220px;
+  bottom: -200px;
+  background: radial-gradient(circle, var(--accent-a5) 0%, transparent 70%);
+}
+
+.auth-layout__brand::after {
+  width: 320px;
+  height: 320px;
+  right: -120px;
+  bottom: -150px;
+  border: 1px solid var(--accent-a6);
+}
+
+.auth-layout__brand > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Only the logo is shown above the form on small screens. */
+.auth-layout__intro {
+  display: none;
+}
+
+.auth-layout__claim {
+  color: var(--accent-12);
+  max-width: 18ch;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.auth-layout__highlights {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 36ch;
+}
+
+.auth-layout__highlight-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-4);
+  background-color: var(--color-panel-solid);
+  color: var(--accent-11);
+  box-shadow: var(--shadow-2);
+}
+
+.auth-layout__ink {
+  color: var(--accent-12);
+}
+
+/* Gray 11 stays above 4.5:1 on every step of the tinted gradient; accent 11 does not. */
+.auth-layout__muted {
+  color: var(--gray-11);
+}
+
+.auth-layout__main {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) var(--space-5) var(--space-8);
+}
+
+.auth-layout__form {
+  width: 100%;
+  max-width: 420px;
+}
+
+@media (min-width: 900px) {
+  .auth-layout {
+    grid-template-rows: none;
+    grid-template-columns: minmax(380px, 5fr) minmax(0, 7fr);
+  }
+
+  .auth-layout__brand {
+    padding: var(--space-8);
+    border-bottom: none;
+    border-right: 1px solid var(--accent-a5);
+  }
+
+  .auth-layout__intro {
+    display: flex;
+    margin-bottom: var(--space-6);
+  }
+
+  .auth-layout__main {
+    align-items: center;
+    padding: var(--space-8);
+  }
+}
