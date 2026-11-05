@@ -17,21 +17,10 @@ Brief §5e ("Erklärung aller nicht-sicheren Parts mit Begründung") draws on th
 - **Why:** `passlib` is unmaintained (last release 2020) and imports the deprecated `crypt` module. Argon2id stays the hashing algorithm; only the wrapper library is dropped (fewer dependencies, smaller SCA surface).
 - **Consequence:** none for the security properties. ADR-001 and AGENTS.md must be updated when #73 merges.
 
-## D-03: Group size
-
-- **Brief:** "Entwickelt in einer 2er-Gruppe" (the file itself is named `…_3er.pdf`).
-- **Fact:** three people commit to this repository.
-- **Status:** **to be confirmed with the lecturer.** Record the agreed group size here. If three people are approved, state who owns which area.
-
-## D-04: Repository visibility
-
-- **Brief §7a:** repository "am besten privat" with the lecturer as maintainer.
-- **Status:** the repository is currently **public**. Decision and consequences (GHCR `imagePullSecret`, ruleset enforcement) are described in [repository_configuration.md](repository_configuration.md). Fill in the final decision here.
-
 ## Planned or likely deviations (not decided yet)
 
 | ID | Topic | Note |
 | :--- | :--- | :--- |
-| D-05 | Signature verification at cluster admission (#45) | Stretch goal. If skipped, signatures are verified only in the pipeline quality gate; the brief asks for exactly that. |
-| D-06 | Self-signed TLS certificate on the kind ingress (#40) | No public CA for a local cluster. Clients must trust the certificate manually. |
-| D-07 | First-admin bootstrap without a setup token | Brief §4 demands that the first login becomes admin. Residual risk is documented in roles-and-permissions.md. |
+| D-03 | Signature verification at cluster admission (#45) | Stretch goal. If skipped, signatures are verified only in the pipeline quality gate; the brief asks for exactly that. |
+| D-04 | Self-signed TLS certificate on the kind ingress (#40) | No public CA for a local cluster. Clients must trust the certificate manually. |
+| D-05 | First-admin bootstrap without a setup token | Brief §4 demands that the first login becomes admin. Residual risk is documented in roles-and-permissions.md. |

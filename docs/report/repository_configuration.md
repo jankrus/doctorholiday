@@ -30,7 +30,7 @@ The following native GitHub security features have been enabled in the repositor
 
 ## 3. Lecturer Access (§7a)
 
-Before the submission deadline, the lecturer will be invited to the repository as a collaborator with the **Maintain** role, providing access to the code, CI/CD pipelines, test reports, and evidence.
+Shortly before the submission deadline, the lecturer will be invited to the repository as a collaborator with the **Maintain** role, providing access to the code, CI/CD pipelines, test reports, and evidence.
 
 ---
 
@@ -38,13 +38,13 @@ Before the submission deadline, the lecturer will be invited to the repository a
 
 ### A. Repository Visibility & Container Registry (GHCR)
 
-The exam brief asks for a private repository. **Current state: the repository is public** (the decision is open, see [deviations.md](deviations.md) D-04). If it is made private, the following technical implications apply:
+The repository is **Private**, as the exam brief asks. This has the following technical implications:
 
 * **Image Pull Secrets:** When deploying the containerized application to the local Kubernetes cluster (`kind`), images can no longer be pulled publicly from the GitHub Container Registry (GHCR). An `imagePullSecret` with the appropriate read permissions (a GitHub Personal Access Token) is required in the cluster.
 * **Evidence Commits:** Automated commits by CI runners (e.g., `github-actions[bot]` for audit trails and evidence artifacts) require dedicated write permissions or must be stored in separate evidence branches.
 
 ### B. Note on GitHub Free Tier (Enforcement Limitation)
 
-While the repository is **public**, the ruleset `protect-main` is enforced (`enforcement: active`). For **private** repositories under personal GitHub accounts, active enforcement of rulesets requires a GitHub Team or Enterprise plan.
+For private repositories under personal GitHub user accounts, active enforcement of rulesets requires a GitHub Team or Enterprise plan.
 
-* **If the repository becomes private:** the ruleset stays configured but is no longer enforced on the Free tier. The team's process policy (pull requests, one review, no direct pushes to `main`) stays mandatory and is recorded as a deviation in [deviations.md](deviations.md).
+* **Documented limitation:** The ruleset `protect-main` is configured via the GitHub API, but GitHub does not enforce it for a private repository on the Free tier. The team's process policy makes compliance mandatory anyway: pull requests, one review, no direct pushes to `main`, and (once the pipeline exists) green status checks.
