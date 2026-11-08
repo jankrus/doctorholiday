@@ -3,8 +3,7 @@
 This document and the diagram [`database-erm.drawio`](database-erm.drawio) define the PostgreSQL 16 schema that the migrations of [#12](https://github.com/jankrus/doctorholiday/issues/12) create. The logical model (entities, fields, meaning) stays in [requirements.md](requirements.md#domain-model); this is its physical form: column types, nullability, defaults, keys, constraints and indexes.
 
 - **Diagram:** open `database-erm.drawio` in draw.io (desktop, web or the VS Code extension). Each table shows its columns; the dashed box below a table lists its constraints and indexes.
-- **Builds on:** [requirements.md](requirements.md) (domain model, BR-01–BR-25), [roles-and-permissions.md](roles-and-permissions.md), [ADR-001](adr/ADR-001-tech-stack.md) (PostgreSQL 16, SQLAlchemy 2).
-- **Open PR included:** the model already contains the schema change of an open PR, marked yellow in the diagram: `users.mfa_offer_declined_at` (#67, optional MFA for patients). If that PR is dropped, its column is dropped here too.
+- **Builds on:** [requirements.md](requirements.md) (domain model, BR-01–BR-26), [roles-and-permissions.md](roles-and-permissions.md), [ADR-001](adr/ADR-001-tech-stack.md) (PostgreSQL 16, SQLAlchemy 2).
 
 ## Conventions
 
