@@ -6,7 +6,7 @@ System landscape of Doctor Holiday, from the users through every runtime compone
 - **Grading:** Anforderungen & Architektur → *Architektur(-diagramm)* (5 points) and *Konsistenz Architektur/Umsetzung* (5 points); exam brief §1, §5a, §5b.
 - **Builds on:** [ADR-001](adr/ADR-001-tech-stack.md) (stack), [roles-and-permissions.md](roles-and-permissions.md), [requirements.md](requirements.md), [security-requirements.md](security-requirements.md).
 - **Feeds:** the system model and DFD ([#7](https://github.com/jankrus/doctorholiday/issues/7)): the zones below are its trust boundaries.
-- **Diagram source:** [`architecture.mmd`](architecture.mmd) (Mermaid). The diagram below is a copy of it; if you change one, change the other. GitHub renders both.
+- **Diagram source:** [`architecture.mmd`](architecture.mmd) (Mermaid). Exports: [`architecture.svg`](architecture.svg), [`architecture.png`](architecture.png). The diagram below is a copy of the source; if you change it, change `architecture.mmd`, embed it here and re-export (see [Re-rendering](#re-rendering)).
 
 > **Status of the diagram.** It shows the target architecture. Elements are marked *implemented*, *in review* or *planned* in the [component catalogue](#component-catalogue). Re-check the diagram against the manifests and the workflow when [#38](https://github.com/jankrus/doctorholiday/issues/38) and [#43](https://github.com/jankrus/doctorholiday/issues/43) are done (consistency criterion).
 
@@ -30,7 +30,7 @@ Doctor Holiday is a booking system for **one** medical practice (patients, staff
 ## Diagram
 
 ```mermaid
-flowchart LR
+flowchart TB
     classDef actor fill:#fff7e6,stroke:#b7791f,color:#1a202c
     classDef app fill:#e6f4ea,stroke:#2f855a,color:#1a202c
     classDef data fill:#e8f0fe,stroke:#2b6cb0,color:#1a202c
@@ -96,6 +96,13 @@ flowchart LR
     DEPLOY -. "kubectl apply, image digests" .-> KIND
     GHCR -. "pull by digest (OCI)<br/>cosign verify first" .-> KIND
     EVID -. "commit evidence/" .-> REPO
+
+    style ZU fill:#fffaf0,stroke:#b7791f
+    style ZH fill:#f8fafc,stroke:#475569
+    style KIND fill:#f1f5f9,stroke:#475569
+    style NS fill:#f0fff4,stroke:#2f855a
+    style ZG fill:#fff5f5,stroke:#c53030
+    style PIPE fill:#ffffff,stroke:#c53030
 ```
 
 Legend: solid arrows are runtime data flow, dashed arrows are supply chain or control flow; dashed boxes hold secrets or identities.
@@ -196,6 +203,15 @@ Update this table and the diagram whenever one of these rows changes.
 
 ## Open points
 
-- The exported `architecture.svg` and `architecture.png` are missing. Render them from `architecture.mmd` (for example with the pinned `@mermaid-js/mermaid-cli`) and commit them next to it.
 - Whether the deploy job runs on GitHub Actions against an ephemeral kind cluster (option A in [#43](https://github.com/jankrus/doctorholiday/issues/43)) or only locally through `make up` is decided in #43; the diagram shows the pipeline path.
 - GHCR package visibility is private; `imagePullSecret` handling is part of [#34](https://github.com/jankrus/doctorholiday/issues/34) and [#42](https://github.com/jankrus/doctorholiday/issues/42).
+
+## Re-rendering
+
+The exports are produced from `architecture.mmd` with the pinned Mermaid CLI (needs Node.js and a headless Chrome that puppeteer installs):
+
+```sh
+echo '{"args":["--no-sandbox"]}' > /tmp/puppeteer.json
+npx @mermaid-js/mermaid-cli@11.4.2 -i docs/architecture/architecture.mmd -o docs/architecture/architecture.svg -p /tmp/puppeteer.json
+npx @mermaid-js/mermaid-cli@11.4.2 -i docs/architecture/architecture.mmd -o docs/architecture/architecture.png -p /tmp/puppeteer.json -s 2 -b white
+```

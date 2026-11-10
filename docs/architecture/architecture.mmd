@@ -1,7 +1,7 @@
 %% Doctor Holiday: system landscape from users to the CI/CD pipeline (issue #6).
 %% Rendered to architecture.svg / architecture.png; described in architecture.md.
 %% Solid arrows = runtime data flow, dashed = supply chain / control flow.
-flowchart LR
+flowchart TB
     classDef actor fill:#fff7e6,stroke:#b7791f,color:#1a202c
     classDef app fill:#e6f4ea,stroke:#2f855a,color:#1a202c
     classDef data fill:#e8f0fe,stroke:#2b6cb0,color:#1a202c
@@ -67,3 +67,10 @@ flowchart LR
     DEPLOY -. "kubectl apply, image digests" .-> KIND
     GHCR -. "pull by digest (OCI)<br/>cosign verify first" .-> KIND
     EVID -. "commit evidence/" .-> REPO
+
+    style ZU fill:#fffaf0,stroke:#b7791f
+    style ZH fill:#f8fafc,stroke:#475569
+    style KIND fill:#f1f5f9,stroke:#475569
+    style NS fill:#f0fff4,stroke:#2f855a
+    style ZG fill:#fff5f5,stroke:#c53030
+    style PIPE fill:#ffffff,stroke:#c53030
