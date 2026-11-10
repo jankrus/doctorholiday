@@ -15,7 +15,7 @@ The default branch, `main`, serves as the reference for release-ready code. To p
 | **Review Hygiene** | `dismiss_stale_reviews_on_push: true`<br>`required_review_thread_resolution: true` | New pushes invalidate existing approvals; all review comments must be explicitly resolved before merging. |
 | **Block Force Pushes** | Enabled (`type: non_fast_forward`) | Prevents the Git history from being overwritten or destroyed. |
 | **Restrict Deletions** | Enabled (`type: deletion`) | Protects against accidental or malicious deletion of the main branch. |
-| **Status Checks** | Required (CI pipeline) | Merges are permitted only after tests, linting, and security gates (Gitleaks, container scans) have completed successfully. |
+| **Status Checks** | **Not configured yet** (planned) | The ruleset currently contains only the rules `pull_request`, `non_fast_forward` and `deletion`. No required status checks exist because no pipeline exists yet. Once the pipeline lands (#31, #36), add its checks (tests, lint, Gitleaks, scans) as required status checks. |
 
 ---
 
@@ -30,7 +30,7 @@ The following native GitHub security features have been enabled in the repositor
 
 ## 3. Lecturer Access (§7a)
 
-Before the submission deadline, the lecturer will be invited to the repository as a collaborator with the **Maintain** role, providing access to the code, CI/CD pipelines, test reports, and evidence.
+Shortly before the submission deadline, the lecturer will be invited to the repository as a collaborator with the **Maintain** role, providing access to the code, CI/CD pipelines, test reports, and evidence.
 
 ---
 
@@ -38,7 +38,7 @@ Before the submission deadline, the lecturer will be invited to the repository a
 
 ### A. Repository Visibility & Container Registry (GHCR)
 
-The repository is designated as **Private**. This private visibility has the following technical implications:
+The repository is **Private**, as the exam brief asks. This has the following technical implications:
 
 * **Image Pull Secrets:** When deploying the containerized application to the local Kubernetes cluster (`kind`), images can no longer be pulled publicly from the GitHub Container Registry (GHCR). An `imagePullSecret` with the appropriate read permissions (a GitHub Personal Access Token) is required in the cluster.
 * **Evidence Commits:** Automated commits by CI runners (e.g., `github-actions[bot]` for audit trails and evidence artifacts) require dedicated write permissions or must be stored in separate evidence branches.
@@ -47,4 +47,4 @@ The repository is designated as **Private**. This private visibility has the fol
 
 For private repositories under personal GitHub user accounts, active enforcement of rulesets requires a GitHub Team or Enterprise plan.
 
-* **Documented deviation:** The ruleset was fully configured via the GitHub API and added to the repository. The team’s internal process policies make compliance with the requirements (PRs, reviews, status checks) mandatory, even though GitHub restricts enforcement on the Free tier to organization accounts.
+* **Documented limitation:** The ruleset `protect-main` is configured via the GitHub API, but GitHub does not enforce it for a private repository on the Free tier. The team's process policy makes compliance mandatory anyway: pull requests, one review, no direct pushes to `main`, and (once the pipeline exists) green status checks.
