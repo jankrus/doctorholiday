@@ -9,7 +9,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from doctorholiday.db import violated_constraint
-from doctorholiday.models import Appointment, AppointmentReason, AppointmentStatus
+from doctorholiday.models import Appointment, AppointmentReason, AppointmentStatus, User
 from doctorholiday.repositories.errors import TimeAlreadyBookedError
 
 
@@ -28,9 +28,16 @@ def book_appointment(
     """Book for a patient or a guest (exactly one; the database checks the shape).
 
     Two concurrent bookings of overlapping times for the same doctor cannot both succeed: the
-    exclusion constraint makes the second insert wait for the first transaction and fail once it
-    commits. Availability checks before the insert are for user feedback only.
+    exclusion constraint rejects the second once the first commits. Availability checks before
+    the insert are for user feedback only.
+
+    Bookings of one doctor are serialised by a lock on the doctor's row, held until the
+    transaction ends. Without it, concurrent inserts that conflict on the exclusion constraint
+    each wait for the other's uncommitted row, and PostgreSQL aborts one of them with a deadlock
+    error instead of the constraint violation (a 500 instead of a 409). `FOR NO KEY UPDATE` does
+    not block the `FOR KEY SHARE` locks that foreign key checks take on the same row.
     """
+    session.execute(select(User.id).where(User.id == doctor_id).with_for_update(key_share=True))
     appointment = Appointment(
         doctor_id=doctor_id,
         starts_at=starts_at,

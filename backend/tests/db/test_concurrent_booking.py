@@ -7,6 +7,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
+from itertools import repeat
 
 import pytest
 from sqlalchemy import Engine, select, text
@@ -19,6 +20,7 @@ from tests.db.conftest import UserFactory
 
 NINE = datetime(2030, 1, 7, 9, 0, tzinfo=UTC)
 SLOT = timedelta(minutes=15)
+ROUNDS = 40
 
 
 def _book_and_commit(
@@ -85,6 +87,34 @@ def test_only_one_of_several_concurrent_overlapping_bookings_succeeds(
 
     assert sorted(results) == ["booked"] + ["conflict"] * (attempts - 1)
     assert _booked_count(db_engine, doctor) == 1
+
+
+def test_concurrent_overlapping_bookings_never_deadlock(
+    db_engine: Engine, make_committed_user: UserFactory
+) -> None:
+    """Without the lock on the doctor's row, conflicting inserts wait for each other and
+    PostgreSQL aborts one with DeadlockDetected instead of the exclusion violation (500, not 409).
+    A single race rarely shows it, so this runs many, each for a new doctor."""
+    patients = [make_committed_user() for _ in range(5)]
+    # Every pair overlaps: the starts differ by less than one slot.
+    starts = [NINE + timedelta(minutes=i) for i in range(len(patients))]
+
+    with ThreadPoolExecutor(max_workers=len(patients)) as pool:
+        for _ in range(ROUNDS):
+            doctor = make_committed_user(Role.DOCTOR)
+            ready = threading.Barrier(len(patients))
+            results = list(
+                pool.map(
+                    _book_and_commit,
+                    repeat(db_engine),
+                    repeat(doctor),
+                    patients,
+                    starts,
+                    repeat(ready),
+                )
+            )
+            assert sorted(results) == ["booked"] + ["conflict"] * (len(patients) - 1)
+            assert _booked_count(db_engine, doctor) == 1
 
 
 @pytest.mark.parametrize(
