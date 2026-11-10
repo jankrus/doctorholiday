@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeSession } from '../test/session';
+import { activeSession, patientWithOffer } from '../test/session';
 import { homePath, protectedRedirect } from './guards';
 
 describe('homePath', () => {
@@ -22,6 +22,10 @@ describe('homePath', () => {
 
   it('sends an admin to /setup until the practice settings are saved', () => {
     expect(homePath({ ...activeSession('ADMIN'), setupRequired: true })).toBe('/setup');
+  });
+
+  it('sends a patient to /mfa until the optional MFA offer is answered', () => {
+    expect(homePath(patientWithOffer())).toBe('/mfa');
   });
 });
 
@@ -46,5 +50,9 @@ describe('protectedRedirect', () => {
     expect(protectedRedirect({ ...activeSession('ADMIN'), setupRequired: true }, ['ADMIN'])).toBe(
       '/setup',
     );
+  });
+
+  it('redirects a patient to /mfa while the MFA offer is pending', () => {
+    expect(protectedRedirect(patientWithOffer(), ['PATIENT'])).toBe('/mfa');
   });
 });

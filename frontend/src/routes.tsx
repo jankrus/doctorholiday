@@ -1,17 +1,23 @@
 import { Flex, Spinner } from '@radix-ui/themes';
 import type { RouteObject } from 'react-router';
-import { guestOnly, mfaPending, requireRole, setupPending, toHome } from './auth/guards';
+import { guestOnly, mfaPending, requireRole, toHome } from './auth/guards';
+import { logoutAction } from './auth/logout';
 import { loadSession } from './auth/session';
+import { AppLayout } from './pages/AppLayout';
+import { AuthLayout } from './pages/auth/AuthLayout';
+import { LoginPage, loginAction } from './pages/auth/LoginPage';
+import { MfaPage, mfaAction, mfaShouldRevalidate } from './pages/auth/MfaPage';
+import { RegisterPage, registerAction } from './pages/auth/RegisterPage';
+import { SetupPage, setupAction, setupLoader } from './pages/auth/SetupPage';
 import { ErrorPage } from './pages/ErrorPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
-import { RootLayout } from './pages/RootLayout';
 
 export const routes: RouteObject[] = [
   {
+    id: 'root',
     path: '/',
     loader: () => loadSession(),
-    element: <RootLayout />,
     errorElement: <ErrorPage />,
     hydrateFallbackElement: (
       <Flex justify="center" p="9">
@@ -21,41 +27,48 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, loader: toHome },
       {
-        path: 'login',
-        loader: guestOnly,
-        element: <PlaceholderPage title="Log in" ticket="#24" />,
+        element: <AuthLayout />,
+        children: [
+          { path: 'login', loader: guestOnly, action: loginAction, element: <LoginPage /> },
+          {
+            path: 'register',
+            loader: guestOnly,
+            action: registerAction,
+            element: <RegisterPage />,
+          },
+          {
+            path: 'mfa',
+            loader: mfaPending,
+            action: mfaAction,
+            shouldRevalidate: mfaShouldRevalidate,
+            element: <MfaPage />,
+          },
+          { path: 'setup', loader: setupLoader, action: setupAction, element: <SetupPage /> },
+        ],
       },
+      // Form target only; a direct visit goes to the start page.
+      { path: 'logout', loader: toHome, action: logoutAction },
       {
-        path: 'register',
-        loader: guestOnly,
-        element: <PlaceholderPage title="Register" ticket="#24" />,
+        element: <AppLayout />,
+        children: [
+          {
+            path: 'appointments',
+            loader: requireRole(['PATIENT']),
+            element: <PlaceholderPage title="Meine Termine" ticket="#25" />,
+          },
+          {
+            path: 'staff',
+            loader: requireRole(['STAFF', 'DOCTOR']),
+            element: <PlaceholderPage title="Praxis" ticket="#26" />,
+          },
+          {
+            path: 'admin',
+            loader: requireRole(['ADMIN']),
+            element: <PlaceholderPage title="Verwaltung" ticket="#26" />,
+          },
+          { path: '*', element: <NotFoundPage /> },
+        ],
       },
-      {
-        path: 'mfa',
-        loader: mfaPending,
-        element: <PlaceholderPage title="Two-factor authentication" ticket="#24" />,
-      },
-      {
-        path: 'setup',
-        loader: setupPending,
-        element: <PlaceholderPage title="Practice setup" ticket="#24" />,
-      },
-      {
-        path: 'appointments',
-        loader: requireRole(['PATIENT']),
-        element: <PlaceholderPage title="My appointments" ticket="#25" />,
-      },
-      {
-        path: 'staff',
-        loader: requireRole(['STAFF', 'DOCTOR']),
-        element: <PlaceholderPage title="Practice" ticket="#26" />,
-      },
-      {
-        path: 'admin',
-        loader: requireRole(['ADMIN']),
-        element: <PlaceholderPage title="Administration" ticket="#26" />,
-      },
-      { path: '*', element: <NotFoundPage /> },
     ],
   },
 ];

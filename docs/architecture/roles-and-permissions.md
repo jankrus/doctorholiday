@@ -64,6 +64,7 @@ Values: **allow**, **own only** (only resources of the logged-in user), **deny**
 | A33 | Reactivate user | deny | deny | deny | deny | allow ⁷ | `POST /api/v1/users/{id}/reactivate` |
 | A34 | Issue password reset code | deny | deny | allow ¹¹ | deny | allow ¹¹ | `POST /api/v1/users/password-reset-codes` |
 | A35 | Reset password with code | allow ¹² | deny | deny | deny | deny | `POST /api/v1/auth/password-reset` |
+| A36 | Decline optional MFA offer ([BR-26](requirements.md#business-rules)) | deny | own only | deny | deny | deny | `POST /api/v1/auth/mfa/decline` |
 
 1. Only with a valid invitation token from A16. The token is single-use, expires after 72 hours, is stored only as a hash and is sent in the request body, never in the URL. The role comes from the invitation, never from the request.
 2. Also allowed before MFA is verified. After a correct password (A03) the session already belongs to an account and therefore to its role, so the role columns apply; `ANONYMOUS` means no session at all. What the session may do is restricted by its state instead ([BR-05](requirements.md#business-rules)): in `MFA_PENDING` only A04, A06 and A22, in `MFA_ENROLLMENT_REQUIRED` additionally A05. Until the session is `ACTIVE`, A22 returns only the session state, not the account.

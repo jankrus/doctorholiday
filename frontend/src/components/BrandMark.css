@@ -1,0 +1,16 @@
+.brand-mark__logo {
+  flex-shrink: 0;
+}
+
+.brand-mark__tile {
+  fill: var(--accent-9);
+}
+
+.brand-mark__cross {
+  fill: var(--accent-contrast);
+}
+
+.brand-mark__name {
+  color: var(--accent-12);
+  letter-spacing: -0.01em;
+}
