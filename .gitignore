@@ -5,6 +5,7 @@
 *.key
 cosign.key
 *.pem
+.secrets/
 
 # Node / frontend
 node_modules/

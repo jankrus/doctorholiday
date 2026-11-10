@@ -7,7 +7,7 @@ from fastapi import FastAPI
 
 from doctorholiday.api import health
 from doctorholiday.config import Settings
-from doctorholiday.db import create_db_engine
+from doctorholiday.db import create_db_engine, create_session_factory
 from doctorholiday.middleware import RequestContextMiddleware
 
 
@@ -30,6 +30,7 @@ def create_app(settings: Settings) -> FastAPI:
     )
     app.state.settings = settings
     app.state.engine = engine
+    app.state.session_factory = create_session_factory(engine)
     app.add_middleware(RequestContextMiddleware)
     app.include_router(health.router)
     return app

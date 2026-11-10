@@ -3,8 +3,7 @@
 This document and the diagram [`database-erm.drawio`](database-erm.drawio) define the PostgreSQL 16 schema that the migrations of [#12](https://github.com/jankrus/doctorholiday/issues/12) create. The logical model (entities, fields, meaning) stays in [requirements.md](requirements.md#domain-model); this is its physical form: column types, nullability, defaults, keys, constraints and indexes.
 
 - **Diagram:** open `database-erm.drawio` in draw.io (desktop, web or the VS Code extension). Each table shows its columns; the dashed box below a table lists its constraints and indexes.
-- **Builds on:** [requirements.md](requirements.md) (domain model, BR-01–BR-25), [roles-and-permissions.md](roles-and-permissions.md), [ADR-001](adr/ADR-001-tech-stack.md) (PostgreSQL 16, SQLAlchemy 2).
-- **Open PR included:** the model already contains the schema change of an open PR, marked yellow in the diagram: `users.mfa_offer_declined_at` (#67, optional MFA for patients). If that PR is dropped, its column is dropped here too.
+- **Builds on:** [requirements.md](requirements.md) (domain model, BR-01–BR-26), [roles-and-permissions.md](roles-and-permissions.md), [ADR-001](adr/ADR-001-tech-stack.md) (PostgreSQL 16, SQLAlchemy 2).
 
 ## Conventions
 
@@ -21,7 +20,7 @@ This document and the diagram [`database-erm.drawio`](database-erm.drawio) defin
 
 ## Additions to the logical model
 
-The physical model needs four things the domain model in requirements.md does not have yet. They should be added to the domain model in the PR that implements #12.
+The physical model needed four things the first version of the domain model did not have. The three columns are now part of the domain model in requirements.md; the exclusion constraints are physical only.
 
 | Addition | Why |
 | --- | --- |
@@ -49,7 +48,7 @@ Both single-row tables are filled by the migration, not by dev seed data, so a f
 
 ## Database roles and grants
 
-Least privilege, details and the exact `GRANT` statements go to `backend/README.md` with #12:
+Least privilege; the roles, the exact privileges per table and how migrations run are documented in [`backend/README.md`](../../backend/README.md#database), the statements are in `infrastructure/postgres/init/00-roles.sh` and `backend/migrations/V004__app_grants.sql`:
 
-- **Owner/migration role** owns the schema and runs the migrations. It is not a superuser: `citext` and `btree_gist` are trusted extensions (PostgreSQL 13+), so a role with `CREATE` on the database can install them.
-- **Application role** (used by the running backend) gets `SELECT, INSERT, UPDATE, DELETE` on the tables it needs, but on `audit_events` only `SELECT, INSERT`, so the application cannot rewrite the audit log. It has no `CREATE` on the schema and no DDL rights.
+- **Owner/migration role** (`doctorholiday_owner`) owns the database and schema and runs the migrations. It is not a superuser: `citext` and `btree_gist` are trusted extensions (PostgreSQL 13+), so a role with `CREATE` on the database can install them.
+- **Application role** (`doctorholiday_app`, used by the running backend) has no `CREATE` on the schema and no DDL rights. It gets `DELETE` only on tables whose rows the domain deletes, no `INSERT`/`DELETE` on the two single-row tables, and on `audit_events` only `SELECT, INSERT`, so the application cannot rewrite the audit log.

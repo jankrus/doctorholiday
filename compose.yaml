@@ -1,0 +1,61 @@
+# Local PostgreSQL 16 for development (#12). `make db-up` starts it and applies the migrations.
+# The cluster runs its own PostgreSQL (#39); this file is not used there.
+name: doctorholiday
+
+x-postgres: &postgres
+  image: postgres:16.15-alpine3.24@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+  user: "70:70" # postgres user of the alpine image, never root
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+
+services:
+  db:
+    <<: *postgres
+    environment:
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_superuser_password
+      POSTGRES_INITDB_ARGS: --auth-local=scram-sha-256 --auth-host=scram-sha-256
+    secrets: [db_superuser_password, db_owner_password, db_app_password]
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init:/docker-entrypoint-initdb.d:ro
+    tmpfs:
+      - /var/run/postgresql
+      - /tmp
+    ports:
+      - "127.0.0.1:${DB_PORT:-5432}:5432" # reachable from this machine only
+    healthcheck:
+      # TCP, not the socket: the temporary server during first-start init listens on the socket only
+      test: ["CMD", "pg_isready", "--host=127.0.0.1", "--dbname=doctorholiday", "--username=postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+
+  migrate:
+    <<: *postgres
+    entrypoint: ["/bin/sh", "/opt/migrate.sh"]
+    environment:
+      PGHOST: db
+      PGDATABASE: doctorholiday
+      PGUSER: doctorholiday_owner
+      PGPASSWORD_FILE: /run/secrets/db_owner_password
+    secrets: [db_owner_password]
+    volumes:
+      - ./infrastructure/postgres/migrate.sh:/opt/migrate.sh:ro
+      - ./backend/migrations:/migrations:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+secrets: # created by `make db-up`, git-ignored
+  db_superuser_password:
+    file: .secrets/db_superuser_password
+  db_owner_password:
+    file: .secrets/db_owner_password
+  db_app_password:
+    file: .secrets/db_app_password
+
+volumes:
+  db-data:
