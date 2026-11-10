@@ -19,6 +19,7 @@ class ErrorCode(enum.StrEnum):
     """The codes in use so far; values from `ErrorCode` in backend/openapi.yaml."""
 
     VALIDATION_ERROR = "VALIDATION_ERROR"
+    PASSWORD_TOO_COMMON = "PASSWORD_TOO_COMMON"  # noqa: S105  # an error code, not a password
     UNAUTHENTICATED = "UNAUTHENTICATED"
     INVALID_CREDENTIALS = "INVALID_CREDENTIALS"
     MFA_REQUIRED = "MFA_REQUIRED"

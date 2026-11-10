@@ -802,6 +802,54 @@ def test_password_length_bounds(client: TestClient) -> None:
         assert client.post("/api/v1/auth/logout").status_code == 204
 
 
+@pytest.mark.parametrize(
+    "password",
+    [
+        "qwerty123456",  # on the blocklist
+        "Password1234",  # on the blocklist, in another case
+        "my doctor holiday password",  # the service name
+        "{email} is mine",  # the account's e-mail address
+    ],
+)
+def test_common_password_is_rejected(
+    client: TestClient,
+    email: str,
+    db_engine: Engine,
+    password: str,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    password = password.format(email=email.upper())
+    with caplog.at_level(logging.DEBUG):
+        response = register(client, email, password)
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "error": {
+            "code": "PASSWORD_TOO_COMMON",
+            "message": "This password is too common. Please choose another one.",
+            "requestId": response.headers["x-request-id"],
+        }
+    }
+    assert user_by_email(db_engine, email) is None
+    assert password not in caplog.text
+
+
+def test_common_password_is_rejected_for_a_taken_email_too(client: TestClient, email: str) -> None:
+    # The answer does not depend on the e-mail, so it reveals no accounts.
+    assert register(client, email).status_code == 202
+    assert register(client, email, "qwerty123456").status_code == 422
+
+
+def test_rejected_common_passwords_count_against_the_registration_limit(
+    client: TestClient,
+) -> None:
+    for _ in range(10):
+        register(client, f"patient-{uuid.uuid4().hex}@example.com", "qwerty123456")
+    assert_rate_limited(
+        register(client, f"patient-{uuid.uuid4().hex}@example.com"), REGISTRATION_WINDOW
+    )
+
+
 # ---------- Audit and logs ----------
 
 

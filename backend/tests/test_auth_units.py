@@ -7,7 +7,12 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from doctorholiday.auth.passwords import hash_password, verify_password
+from doctorholiday.auth.passwords import (
+    _common_passwords,
+    hash_password,
+    is_common_password,
+    verify_password,
+)
 from doctorholiday.auth.rate_limiting import account_key, ip_key
 from doctorholiday.auth.sessions import hash_token, new_token
 
@@ -96,3 +101,29 @@ def test_ip_key_without_a_client_address() -> None:
 
 def test_account_key_ignores_case() -> None:
     assert account_key("Patient@Example.COM") == account_key("patient@example.com")
+
+
+def test_blocklist_holds_only_entries_the_length_policy_allows() -> None:
+    blocklist = _common_passwords()
+
+    assert len(blocklist) > 40_000
+    assert all(12 <= len(entry) <= 128 for entry in blocklist)
+    assert all(entry == entry.casefold() for entry in blocklist)
+
+
+@pytest.mark.parametrize(
+    ("password", "common"),
+    [
+        ("qwerty123456", True),
+        ("QWERTY123456", True),
+        ("1q2w3e4r5t6y", True),
+        ("Doctor Holiday 2026!", True),
+        ("my-doctor.holiday_pw", True),
+        ("PATIENT@EXAMPLE.COM-2026", True),
+        (PASSWORD, False),
+        ("qwerty123456 but longer", False),
+        ("patient@example.org-2026", False),
+    ],
+)
+def test_common_passwords(password: str, common: bool) -> None:
+    assert is_common_password(password, email="patient@example.com") is common

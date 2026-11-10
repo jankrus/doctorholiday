@@ -15,7 +15,12 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
 from sqlalchemy.orm import Session
 
 from doctorholiday.auth.dependencies import CurrentSession, reject_session
-from doctorholiday.auth.passwords import hash_password, verify_dummy, verify_password
+from doctorholiday.auth.passwords import (
+    hash_password,
+    is_common_password,
+    verify_dummy,
+    verify_password,
+)
 from doctorholiday.auth.rate_limiting import (
     RateLimiter,
     account_key,
@@ -159,8 +164,20 @@ def register(body: RegisterRequest, request: Request, db: DbSession) -> Response
     if limiter.count():
         logger.warning("registration lockout started")
 
+    password = body.password.get_secret_value()
+    # Returned, not raised, so the attempt still counts against the limit. Independent of whether
+    # the e-mail is taken, so it reveals no accounts.
+    if is_common_password(password, email=body.email):
+        logger.info("registration with a common password rejected")
+        return error_response(
+            request,
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            ErrorCode.PASSWORD_TOO_COMMON,
+            "This password is too common. Please choose another one.",
+        )
+
     # Hashed before the insert, so a taken e-mail costs the same time as a new account (BR-02).
-    password_hash = hash_password(body.password.get_secret_value())
+    password_hash = hash_password(password)
     try:
         user = users.create_user(
             db,

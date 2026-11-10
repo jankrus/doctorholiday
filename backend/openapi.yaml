@@ -79,7 +79,13 @@ paths:
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
         '422':
-          $ref: '#/components/responses/ValidationError'
+          description: |
+            Request does not match the schema (`VALIDATION_ERROR`), or the password is too common
+            (`PASSWORD_TOO_COMMON`, BR-01).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '429':
           $ref: '#/components/responses/RateLimited'
         '500':
@@ -1553,7 +1559,9 @@ components:
       type: string
       minLength: 12
       maxLength: 128
-      description: BR-01. Not trimmed; any Unicode characters allowed.
+      description: |
+        BR-01. Not trimmed; any Unicode characters allowed. Common passwords, the service name and
+        the account's e-mail address are rejected with `422 PASSWORD_TOO_COMMON`.
     Password:
       type: string
       minLength: 1
@@ -1672,6 +1680,7 @@ components:
       type: string
       enum:
         - VALIDATION_ERROR
+        - PASSWORD_TOO_COMMON
         - UNAUTHENTICATED
         - INVALID_CREDENTIALS
         - MFA_REQUIRED
