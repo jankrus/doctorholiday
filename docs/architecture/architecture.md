@@ -46,6 +46,7 @@ flowchart TB
     end
 
     DEV["Developer<br/>git push / pull request"]:::actor
+    OPS["Operator<br/>make up, kubectl"]:::actor
 
     subgraph ZG["Zone 4: GitHub (supply chain, private repository)"]
         direction TB
@@ -96,6 +97,7 @@ flowchart TB
     DEPLOY -. "kubectl apply, image digests" .-> KIND
     GHCR -. "pull by digest (OCI)<br/>cosign verify first" .-> KIND
     EVID -. "commit evidence/" .-> REPO
+    OPS -. "make up: kind create, secrets,<br/>kubectl apply" .-> KIND
 
     style ZU fill:#fffaf0,stroke:#b7791f
     style ZH fill:#f8fafc,stroke:#475569
@@ -132,6 +134,7 @@ The zones are the trust boundaries of the threat model; every arrow that crosses
 | F8 | GHCR → kind cluster | HTTPS (OCI) | Images pulled by digest | 4 → 2 | Digest pinning, `cosign verify` before loading, `imagePullSecret` (private repository) |
 | F9 | Pipeline deploy job → cluster | Kubernetes API | Manifests with image digests | 4 → 2 | Quality gate must pass, signature verified again in the job |
 | F10 | Pipeline → repository | HTTPS (git) | Evidence reports under `evidence/` | inside 4 | `contents: write` on the evidence job only, `paths-ignore` avoids loops |
+| F11 | Operator → cluster | Kubernetes API (HTTPS), local | `make up`: cluster creation, manifests, generated secrets | inside 2 | Local-only API server, secrets generated at deploy time and never committed |
 
 ## Component catalogue
 
@@ -144,6 +147,8 @@ Each element of the diagram: purpose, technology, ports, credentials it holds an
 **Staff / Doctor.** Invited by an admin. Staff manage working hours and absences of all doctors and book on behalf of patients; doctors manage only their own schedule. Both MUST use MFA ([SR-09](security-requirements.md#sr-09-multi-factor-authentication-with-totp)).
 
 **Admin.** The first user who logs in becomes admin; manages accounts, settings and audit log. MUST use MFA. Access to appointment data only through a time-limited grant (TBAC). Residual risk of the first-login rule: [roles-and-permissions.md](roles-and-permissions.md#bootstrapping-the-first-admin).
+
+**Operator.** Runs `make up` on the local machine: creates the kind cluster, generates the secrets and applies the manifests. Trusted by assumption (the machine itself is out of scope of the threat model, see [system-model.md](../threat-model/system-model.md)). Holds admin rights on the local cluster.
 
 **Developer.** Pushes branches and opens pull requests; never pushes to `main` directly (AGENTS.md). Holds GitHub credentials; no deployment credentials.
 

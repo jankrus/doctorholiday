@@ -1,0 +1,71 @@
+%% Doctor Holiday DFD level 1 (runtime and delivery), issue #7.
+%% Notation: rectangle = external entity, circle = process, cylinder = data store,
+%% dashed box = trust boundary. DFn = data flow, TBn = trust boundary (see system-model.md).
+%% Rendered to dfd.svg / dfd.png.
+flowchart TB
+    classDef ext fill:#fff7e6,stroke:#b7791f,color:#1a202c
+    classDef proc fill:#e6f4ea,stroke:#2f855a,color:#1a202c
+    classDef store fill:#e8f0fe,stroke:#2b6cb0,color:#1a202c
+
+    subgraph TBU["TB1 side: untrusted, users' browsers"]
+        direction LR
+        E1["E1 Patient"]:::ext
+        E2["E2 Staff / Doctor"]:::ext
+        E3["E3 Admin"]:::ext
+    end
+    subgraph TBD["Developer workstation"]
+        E4["E4 Developer"]:::ext
+    end
+    subgraph TBO["Operator workstation"]
+        E5["E5 Operator"]:::ext
+    end
+
+    subgraph GH["GitHub"]
+        DS3[("DS3 Git repository<br/>code, evidence")]:::store
+        DS5[("DS5 GitHub secrets<br/>cosign key, token")]:::store
+        DS4[("DS4 GHCR<br/>images, signatures")]:::store
+        subgraph RUN["Ephemeral Actions runner"]
+            P4(("P4<br/>Pipeline")):::proc
+        end
+    end
+
+    subgraph KIND["kind cluster on the operator machine"]
+        subgraph CP["Control plane and node"]
+            P5(("P5<br/>API server<br/>+ kubelet")):::proc
+            DS2[("DS2 Kubernetes<br/>Secrets")]:::store
+        end
+        P1(("P1<br/>ingress-nginx")):::proc
+        subgraph NSAPP["namespace doctorholiday"]
+            P2(("P2<br/>Frontend<br/>nginx")):::proc
+            P3(("P3<br/>Backend API")):::proc
+            DS1[("DS1<br/>PostgreSQL")]:::store
+        end
+    end
+
+    E1 & E2 & E3 -- "DF1 HTTPS 443<br/>credentials, cookie, PHI" --> P1
+    P1 -- "DF2 HTTP 8080<br/>SPA files" --> P2
+    P1 -- "DF3 HTTP 8080 /api<br/>JSON, cookie, PHI" --> P3
+    P3 -- "DF4 PostgreSQL 5432<br/>SQL, hashes, PHI" --> DS1
+    DS2 -- "DF5 env<br/>DB URL, MFA key" --> P3
+    DS2 -- "DF6 env<br/>DB password" --> DS1
+    P5 -- "DF16 probes<br/>/healthz /readyz" --> P3
+    P3 -- "DF17 stdout<br/>JSON logs" --> P5
+
+    E4 -- "DF7 HTTPS git<br/>code, PR" --> DS3
+    DS3 -- "DF8 trigger, checkout<br/>source" --> P4
+    DS5 -- "DF9 secrets<br/>sign key, token" --> P4
+    P4 -- "DF10 HTTPS OCI<br/>images, signatures, SBOM" --> DS4
+    P4 -- "DF13 git push<br/>evidence reports" --> DS3
+    DS4 -- "DF11 HTTPS OCI<br/>image by digest" --> P5
+    P4 -- "DF12 kube API<br/>manifests, digests" --> P5
+    E5 -- "DF14 make up, kubectl<br/>kind config, manifests" --> P5
+    E5 -- "DF15 kubectl<br/>generated secret values" --> DS2
+
+    style TBU fill:#fffaf0,stroke:#b7791f,stroke-dasharray: 6 4
+    style TBD fill:#fffaf0,stroke:#b7791f,stroke-dasharray: 6 4
+    style TBO fill:#fffaf0,stroke:#b7791f,stroke-dasharray: 6 4
+    style GH fill:#fff5f5,stroke:#c53030,stroke-dasharray: 6 4
+    style RUN fill:#ffffff,stroke:#c53030,stroke-dasharray: 6 4
+    style KIND fill:#f8fafc,stroke:#475569,stroke-dasharray: 6 4
+    style CP fill:#f1f5f9,stroke:#475569,stroke-dasharray: 6 4
+    style NSAPP fill:#f0fff4,stroke:#2f855a,stroke-dasharray: 6 4

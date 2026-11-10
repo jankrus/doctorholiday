@@ -1,0 +1,34 @@
+%% Doctor Holiday DFD level 0 (context diagram), issue #7.
+%% Notation: rectangle = external entity, circle = process, dashed box = trust boundary.
+%% Rendered to dfd-level0.svg / dfd-level0.png; explained in system-model.md.
+flowchart LR
+    classDef ext fill:#fff7e6,stroke:#b7791f,color:#1a202c
+    classDef proc fill:#e6f4ea,stroke:#2f855a,color:#1a202c
+
+    subgraph TBU["Untrusted: users' browsers"]
+        direction TB
+        E1["E1 Patient"]:::ext
+        E2["E2 Staff / Doctor"]:::ext
+        E3["E3 Admin"]:::ext
+    end
+    subgraph TBD["Developer workstation"]
+        E4["E4 Developer"]:::ext
+    end
+    subgraph TBO["Operator workstation"]
+        E5["E5 Operator"]:::ext
+    end
+
+    subgraph TBS["System boundary"]
+        P0(("P0<br/>Doctor Holiday<br/>runtime + delivery")):::proc
+    end
+
+    E1 & E2 & E3 -- "requests: credentials, session cookie,<br/>MFA codes, appointment data" --> P0
+    P0 -- "SPA files, API responses<br/>(appointment data, session state)" --> E1 & E2 & E3
+    E4 -- "source code, pull requests" --> P0
+    E5 -- "make up, kubectl,<br/>generated secrets" --> P0
+    P0 -- "status, logs, reports" --> E5
+
+    style TBU fill:#fffaf0,stroke:#b7791f,stroke-dasharray: 6 4
+    style TBD fill:#fffaf0,stroke:#b7791f,stroke-dasharray: 6 4
+    style TBO fill:#fffaf0,stroke:#b7791f,stroke-dasharray: 6 4
+    style TBS fill:#f0fff4,stroke:#2f855a,stroke-dasharray: 6 4
