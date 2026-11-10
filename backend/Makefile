@@ -1,4 +1,4 @@
-.PHONY: help install test lint format run lock
+.PHONY: help install test lint format run seed lock
 .DEFAULT_GOAL := help
 
 # --locked fails if uv.lock does not match pyproject.toml instead of silently updating it.
@@ -23,6 +23,9 @@ format: ## Fix lint findings where safe and format the code
 
 run: ## Start the API with the variables from .env
 	$(UV_RUN) --env-file .env python -m doctorholiday
+
+seed: ## Fill the local database with dev accounts and appointments (needs SEED_DEV_DATA=true in .env)
+	$(UV_RUN) --env-file .env python -m doctorholiday.seed
 
 lock: ## Re-resolve uv.lock after editing pyproject.toml
 	uv lock

@@ -11,7 +11,7 @@ from enum import StrEnum
 from typing import Annotated
 from urllib.parse import urlsplit
 
-from pydantic import Field, SecretStr, ValidationError, field_validator
+from pydantic import Field, SecretStr, ValidationError, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 _FERNET_KEY = re.compile(r"^[A-Za-z0-9_-]{43}=$")
@@ -36,6 +36,21 @@ class Settings(BaseSettings):
     allowed_origins: Annotated[list[str], NoDecode]
     port: int = Field(default=8080, ge=1024, le=65535)
     log_level: LogLevel = LogLevel.INFO
+    # Login sessions (#14): ended after this long without a request (idle) and at the latest this
+    # long after the login (absolute), whatever the activity.
+    session_idle_timeout_minutes: int = Field(default=30, ge=1, le=1440)
+    session_absolute_timeout_minutes: int = Field(default=480, ge=1, le=10080)
+    # Rate limiting (BR-03, auth/rate_limiting.py). Login: this many failed logins per e-mail
+    # address or per client IP within the window lock that key for the lockout time. The IP limit
+    # is higher because a practice or household shares one IP behind NAT.
+    login_max_failures_per_account: int = Field(default=5, ge=1, le=100)
+    login_max_failures_per_ip: int = Field(default=20, ge=1, le=1000)
+    login_failure_window_minutes: int = Field(default=15, ge=1, le=1440)
+    login_lockout_minutes: int = Field(default=15, ge=1, le=1440)
+    # Registration: this many requests per client IP within the window lock that IP until the
+    # window has passed once more.
+    registration_max_per_ip: int = Field(default=10, ge=1, le=1000)
+    registration_window_minutes: int = Field(default=60, ge=1, le=1440)
 
     @field_validator("database_url")
     @classmethod
@@ -61,6 +76,14 @@ class Settings(BaseSettings):
             valid = False
         if not valid:
             raise ValueError("must be 32 random bytes, base64url-encoded with padding (44 chars)")
+        return value
+
+    @field_validator("session_absolute_timeout_minutes")
+    @classmethod
+    def _check_absolute_timeout(cls, value: int, info: ValidationInfo) -> int:
+        idle = info.data.get("session_idle_timeout_minutes")  # absent if itself invalid
+        if idle is not None and value < idle:
+            raise ValueError("must not be shorter than SESSION_IDLE_TIMEOUT_MINUTES")
         return value
 
     @field_validator("allowed_origins", mode="before")

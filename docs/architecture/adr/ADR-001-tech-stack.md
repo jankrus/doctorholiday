@@ -57,9 +57,9 @@ For authentication, we will use **Server-Side Sessions with a strict HttpOnly, S
     *   Language: Python 3.12
     *   Framework: FastAPI v0.110+
     *   ORM / Query Layer: SQLAlchemy v2 (using parameterized queries to prevent SQL injection); synchronous API, see [ADR-003](ADR-003-synchronous-data-access.md)
-    *   Validation: Pydantic v2
-    *   Auth / Session: Custom implementation based on FastAPI dependencies and `itsdangerous` or `fastapi-users`.
-    *   Password Hashing: `passlib` (with `argon2-cffi` v23)
+    *   Validation: Pydantic v2 (e-mail addresses with `email-validator`)
+    *   Auth / Session: Custom implementation based on FastAPI dependencies. Implemented (#14) with an opaque random token whose SHA-256 is stored server-side, so neither `itsdangerous` nor `fastapi-users` is used.
+    *   Password Hashing: `argon2-cffi` (Argon2id), used directly. Originally `passlib` on top of it; dropped in #14 because `passlib` is unmaintained (last release 1.7.4 in 2020) and still imports the `crypt` module, which Python 3.12 deprecates and 3.13 removes.
     *   TOTP (MFA): `pyotp` v2.9
     *   Linter / Formatter: `ruff`
     *   Testing: `pytest`
