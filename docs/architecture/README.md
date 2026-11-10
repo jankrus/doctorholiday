@@ -11,3 +11,4 @@ Architecture decisions (`adr/`), requirements, RBAC matrix, architecture diagram
 - [adr/ADR-004-frontend-libraries.md](adr/ADR-004-frontend-libraries.md): frontend libraries (#23)
 - [security-requirements.md](security-requirements.md): mandatory, testable security requirements SR-01 to SR-11 with verification and implementing issues (#5)
 - [ui-design.md](ui-design.md): UI design guide: colour, typography, layout and form patterns, security-driven design rules (#24)
+- [architecture.md](architecture.md) + [architecture.mmd](architecture.mmd): system landscape diagram (users to CI/CD), trust zones, data flows and component catalogue (#6)
