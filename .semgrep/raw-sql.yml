@@ -1,0 +1,28 @@
+# Project rules: SQL must never be built from strings (AGENTS.md rule 4, #12).
+# Run locally with `make sast-sql` (repo root); the pipeline adds this directory to its Semgrep
+# configs (#33). Values go in as bound parameters through SQLAlchemy expressions instead.
+rules:
+  - id: doctorholiday-sql-built-from-strings
+    languages: [python]
+    severity: ERROR
+    message: >-
+      SQL is built from a string with interpolated or concatenated parts. Use SQLAlchemy
+      expressions or bound parameters (text("... :name").bindparams(name=value)) instead.
+    metadata:
+      cwe: "CWE-89: Improper Neutralization of Special Elements used in an SQL Command"
+      owasp: "A03:2021 - Injection"
+    patterns:
+      - pattern-either:
+          - pattern: sqlalchemy.text($SQL, ...)
+          - pattern: sqlalchemy.sql.text($SQL, ...)
+          - pattern: $X.execute($SQL, ...)
+          - pattern: $X.exec_driver_sql($SQL, ...)
+          - pattern: $X.executemany($SQL, ...)
+      - metavariable-pattern:
+          metavariable: $SQL
+          pattern-either:
+            - pattern: f"..."
+            - pattern: '"..." % ...'
+            - pattern: '"...".format(...)'
+            - pattern: '"..." + ...'
+            - pattern: '... + "..."'

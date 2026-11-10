@@ -1,4 +1,4 @@
-.PHONY: help up down test lint package db-up db-down db-reset test-db
+.PHONY: help up down test lint package db-up db-down db-reset test-db sast-sql
 .DEFAULT_GOAL := help
 
 help: ## List available targets
@@ -17,6 +17,14 @@ test: ## Run backend and frontend tests
 lint: ## Run linters
 	$(MAKE) -C backend lint
 	cd frontend && npm run lint
+
+# Pinned by digest (AGENTS.md rule 7). Only the project rules in .semgrep/, so no network access
+# to the Semgrep registry is needed; the pipeline runs the full rule packs (#33).
+SEMGREP_IMAGE := semgrep/semgrep:1.140.0@sha256:4372a1de903521f9f10f877b6caf15d150d17e1ca592582682c8d02b77cbd4f6
+
+sast-sql: ## Check the backend for SQL built from strings with Semgrep (#12)
+	docker run --rm --network none -v "$(CURDIR):/src:ro" -w /src $(SEMGREP_IMAGE) \
+		semgrep scan --metrics off --disable-version-check --error --config .semgrep/ backend/src
 
 package: ## Build the team-<nr>.zip submission (#51)
 	@echo "TODO: package"
