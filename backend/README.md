@@ -178,6 +178,16 @@ make db-reset   # delete the data and rebuild from the migrations
 
 The container (`compose.yaml`) runs `postgres:16-alpine`, pinned by digest, as UID 70 with a read-only root filesystem, no capabilities and `no-new-privileges`. The port is published on `127.0.0.1` only, and every connection, including the local socket, needs a SCRAM-SHA-256 password.
 
+### Seed data
+
+```sh
+make -C backend seed   # after make db-up; needs SEED_DEV_DATA=true and SEED_PASSWORD in backend/.env
+```
+
+For local development only (#12). Creates `dev-admin@example.com`, `dev-staff@example.com`, `dev-doctor-1@example.com`, `dev-doctor-2@example.com`, `dev-patient-1@example.com` and `dev-patient-2@example.com`, all with the password from `SEED_PASSWORD`. The doctors get working hours Monday to Friday 08:00-12:00 and 14:00-17:00, and each patient one booked appointment next week. The seeded admin is recorded in `admin_bootstrap`, so the first-login bootstrap (#15) promotes no one else; the practice setup stays pending.
+
+Guards (`doctorholiday/seed.py`): it is a one-off command, never part of the app's startup; it refuses to run unless `SEED_DEV_DATA=true` and `DATABASE_URL` points at `localhost`, `127.0.0.1` or `::1`, so it cannot run against the cluster database; `SEED_PASSWORD` must pass the registration policy (BR-01) and is never printed. Seeding twice changes nothing. To start over: `make db-reset` (repo root), then seed again.
+
 ### Migrations
 
 Plain SQL files in [`migrations/`](migrations), named `V<nnn>__<name>.sql` and applied in order by [`infrastructure/postgres/migrate.sh`](../infrastructure/postgres/migrate.sh). It runs as a separate one-off command, not at backend startup: the `migrate` service in `compose.yaml` (run by `make db-up` and `docker compose up`), later a Kubernetes Job with the same script and image (#39). The backend therefore never needs DDL rights.

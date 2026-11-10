@@ -68,6 +68,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | Backend tests with database | `make test-db` (throwaway migrated PostgreSQL, deleted afterwards) |
 | Backend lint | `make -C backend lint` (= `uv run --locked ruff check . && uv run --locked ruff format --check .`) |
 | Backend run | `make -C backend run` (reads `backend/.env`, copy from `.env.example`) |
+| Backend dev seed data | `make -C backend seed` (local DB only, needs `SEED_DEV_DATA=true` and `SEED_PASSWORD` in `backend/.env`) |
 | SQL-from-strings check | `make sast-sql` (Semgrep rule in `.semgrep/`, needs Docker) |
 | API contract lint | `cd backend && npx @redocly/cli@2.60.0 lint openapi.yaml` |
 | Frontend tests | `cd frontend && npm ci && npm test` |
