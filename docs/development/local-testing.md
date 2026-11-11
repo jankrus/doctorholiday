@@ -154,7 +154,7 @@ Start: any database state, real backend.
 | A5 | Register an e-mail that already exists | Same success message as A1; nothing changes (no account enumeration). The old password still works. |
 | A6 | Fail the login of one e-mail 5 times, then try the correct password | The 6th attempt shows "Zu viele Versuche. …" (`429`, header `Retry-After`) and the correct password is refused too, for 15 minutes. |
 | A7 | Register with an 11-character password | The form shows "Bitte verwenden Sie mindestens 12 Zeichen." and sends nothing. The API rejects it too: `reg x@example.com` with `PW='short pass1'` gives `422`. 12 characters work. |
-| A8 | Register with a common password, e.g. `passwordpassword` | API: `422 PASSWORD_TOO_COMMON`. **Known gap:** the frontend has no text for this code yet and shows the generic "Etwas ist schiefgelaufen." |
+| A8 | Register with a common password, e.g. `passwordpassword` | API: `422 PASSWORD_TOO_COMMON`. **Known gap:** the frontend has no text for this code yet and shows the generic "Etwas ist schiefgelaufen." ([#90](https://github.com/jankrus/doctorholiday/issues/90)) |
 | A9 | `docker compose exec … psql` (section 4): `SELECT action, outcome, details FROM audit_events ORDER BY timestamp DESC LIMIT 10;` | `USER_REGISTERED`, `LOGIN` (`SUCCESS`, or `FAILURE` with `reason`), `LOGOUT`; never an e-mail address or password. |
 
 ### First-admin bootstrap (#15)
@@ -198,4 +198,5 @@ Start with `curl -s http://localhost:8080/readyz`: `{"status":"ready"}` means ba
 
 **Network exposure:** the backend listens on all interfaces (it is built for the container, where the pod network
 is the boundary), so on your laptop other devices in the same network can reach port 8080. Use a trusted network or
-your firewall while it runs, and never put real data into the local database.
+your firewall while it runs, and never put real data into the local database. A configurable bind address with a
+loopback default is planned in [#91](https://github.com/jankrus/doctorholiday/issues/91).
