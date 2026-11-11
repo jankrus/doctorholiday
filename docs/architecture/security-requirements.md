@@ -21,8 +21,8 @@ This document lists the security requirements that Doctor Holiday **must** imple
 | --- | --- | --- | --- | --- |
 | [SR-01](#sr-01-strong-authentication-and-session-management) | Strong authentication and session management | App | MUST | In progress ([#73](https://github.com/jankrus/doctorholiday/pull/73) open) |
 | [SR-02](#sr-02-authorisation-with-default-deny-and-object-level-checks) | Authorisation with default deny and object-level checks | App | MUST | Open |
-| [SR-03](#sr-03-server-side-input-validation-and-safe-data-access) | Server-side input validation and safe data access | App | MUST | Partly ([#69](https://github.com/jankrus/doctorholiday/pull/69) open) |
-| [SR-04](#sr-04-error-handling-and-logging-without-information-leaks) | Error handling and logging without information leaks | App | MUST | Partly (health, config, logging done) |
+| [SR-03](#sr-03-server-side-input-validation-and-safe-data-access) | Server-side input validation and safe data access | App | MUST | Done for the current endpoints (schema [#69](https://github.com/jankrus/doctorholiday/pull/69), validation layer [#13](https://github.com/jankrus/doctorholiday/issues/13)); new routes are checked by test |
+| [SR-04](#sr-04-error-handling-and-logging-without-information-leaks) | Error handling and logging without information leaks | App | MUST | Mostly done (health, config, logging [#11](https://github.com/jankrus/doctorholiday/issues/11), error handling [#13](https://github.com/jankrus/doctorholiday/issues/13)); [#22](https://github.com/jankrus/doctorholiday/issues/22) open |
 | [SR-05](#sr-05-no-secrets-in-the-repository-or-in-images) | No secrets in the repository or in images | App, CI, K8s | MUST | Open |
 | [SR-06](#sr-06-sbom-and-vulnerability-scanning-with-a-blocking-quality-gate) | SBOM and vulnerability scanning with a blocking quality gate | CI/CD | MUST | Open |
 | [SR-07](#sr-07-signed-images-verified-before-deployment) | Signed images, verified before deployment | CI/CD | MUST | Open |
@@ -63,7 +63,8 @@ This document lists the security requirements that Doctor Holiday **must** imple
 - **ASVS:** V5 Validation, Sanitization and Encoding, V8 Data Protection.
 - **Business rules:** BR-09, BR-10, BR-12, BR-20.
 - **Verification:**
-  - Tests send unknown fields, over-long strings, wrong types and oversized bodies and expect `422` / `413`.
+  - Tests send malformed JSON, unknown fields, over-long strings, wrong types, undeclared query parameters, oversized and non-JSON bodies and expect `422` / `413` / `415` (`backend/tests/test_errors.py`).
+  - `backend/tests/test_validation.py` fails for any route whose body, path, query, header or cookie parameters are unbounded or allow unknown fields.
   - Semgrep (SAST) reports no raw-SQL-concatenation pattern.
   - A concurrency test shows that only one of several overlapping bookings succeeds.
   - `redocly lint` passes for `openapi.yaml`.
@@ -76,7 +77,8 @@ This document lists the security requirements that Doctor Holiday **must** imple
 - **ASVS:** V7 Error Handling and Logging, V14 Configuration.
 - **Business rules:** BR-21; error conventions in [requirements.md](requirements.md#api-conventions).
 - **Verification:**
-  - Tests trigger `500` paths (e.g. database down) and assert the generic body and the `requestId`; tests assert the log contains no secrets.
+  - Tests trigger `500` paths (forced exception) and assert the generic body only, with `requestId` equal to `X-Request-Id`, and the stack trace in the log; tests assert the log contains no secrets or submitted values (`backend/tests/test_errors.py`).
+  - Unknown paths, wrong methods and framework errors answer in the `Error` schema, never with the framework's `detail`.
   - A test asserts `/docs`, `/redoc` and `/openapi.json` return `404`.
   - Startup test: an invalid configuration logs variable names, never values, and exits with code 1.
 - **Issues:** [#11](https://github.com/jankrus/doctorholiday/issues/11) (done), [#13](https://github.com/jankrus/doctorholiday/issues/13), [#22](https://github.com/jankrus/doctorholiday/issues/22).
