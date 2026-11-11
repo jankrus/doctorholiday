@@ -1,0 +1,2 @@
+# Trivy ignore list (issue #33). Each entry needs a justification comment and an entry in
+# docs/report/deviations.md. An empty list means no vulnerability is ignored.

@@ -1,0 +1,16 @@
+# Semgrep ignore list (issue #33). Each entry has a justification and is listed in
+# docs/report/deviations.md. Anything not listed here is scanned.
+
+# Tests: they contain fixed dummy values (TOTP secrets, one-time codes, passwords) that the
+# generic-secret rule flags, and test-only constructs (default arguments with dummy passwords,
+# `len(list)` in assertions, local URL checks) that the Python packs flag. None of them is a real
+# credential or runs in production, and test files are not part of any image (the Dockerfiles
+# copy only the sources). A custom .semgrepignore replaces Semgrep's built-in default list,
+# so tests/ has to be named here.
+**/*.test.ts
+**/*.test.tsx
+backend/tests/
+
+# Development mock of the API: only loaded by the Vite dev server (vite.config.ts), never built
+# into the image. Its demo TOTP secret is a fixed dummy value.
+frontend/dev-mock-api.ts

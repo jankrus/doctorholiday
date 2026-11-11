@@ -161,7 +161,9 @@ jobs:
         run: npm run build
 
   # ---------------------------------------------------------------------------------------------
-  # (a) SBOM, (b) scans. Stubs; the tools and reports follow in #32 and #33.
+  # (a) SBOM and (b) scans, all through scripts/scan.sh so every report can be reproduced with
+  # Docker on a laptop. The scans report findings and succeed; the quality gate (#36) decides what
+  # blocks. SBOM and Trivy of the built images follow with #34 and #35.
   # ---------------------------------------------------------------------------------------------
   sbom:
     name: sbom
@@ -170,31 +172,106 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+    outputs:
+      components: ${{ steps.sbom.outputs.components }}
     steps:
-      - name: SBOM per image with Syft (CycloneDX)
-        run: 'echo "stub: SBOM generation is implemented in #32"'
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # CycloneDX per component (Syft), validated with the CycloneDX CLI. #32
+      - name: Generate and validate the SBOMs
+        id: sbom
+        env:
+          VERSION: ${{ needs.meta.outputs.version }}
+          SHORT_SHA: ${{ needs.meta.outputs.short_sha }}
+        run: scripts/scan.sh sbom
+
+      - name: Upload the reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sbom
+          path: reports/sbom/
+          if-no-files-found: error
+          retention-days: 90
 
   sast:
     name: scan (SAST)
     needs: sbom
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: read
+      security-events: write  # SARIF upload to code scanning, only when the repository has it (#33)
+    outputs:
+      findings: ${{ steps.semgrep.outputs.findings }}
     steps:
-      - name: SAST with Semgrep
-        run: 'echo "stub: Semgrep is implemented in #33 (project rules in .semgrep/ already exist)"'
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Semgrep with the registry packs and our own rules in .semgrep/. #33
+      - name: Semgrep
+        id: semgrep
+        run: scripts/scan.sh sast
+
+      - name: Upload the reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sast
+          path: reports/sast/
+          if-no-files-found: error
+          retention-days: 90
+
+      # Code scanning needs GitHub Code Security, which a private repository on a personal plan
+      # does not have. Set the repository variable CODE_SCANNING to "true" when it is available
+      # (public repository or an upgraded plan). Until then the SARIF files stay in the artifact.
+      - name: Upload the frontend SARIF to code scanning
+        if: ${{ !cancelled() && github.event_name == 'push' && vars.CODE_SCANNING == 'true' }}
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: reports/sast/semgrep-frontend.sarif
+          category: semgrep-frontend
+
+      - name: Upload the backend SARIF to code scanning
+        if: ${{ !cancelled() && github.event_name == 'push' && vars.CODE_SCANNING == 'true' }}
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: reports/sast/semgrep-backend.sarif
+          category: semgrep-backend
 
   sca:
     name: scan (SCA)
     needs: sbom
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     permissions:
       contents: read
+    outputs:
+      findings: ${{ steps.trivy.outputs.findings }}
     steps:
-      - name: SCA with Trivy
-        run: 'echo "stub: Trivy is implemented in #33"'
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Trivy on the lockfiles: full report, the gate counts HIGH and CRITICAL. #33
+      - name: Trivy (lockfiles)
+        id: trivy
+        run: scripts/scan.sh sca
+
+      - name: Upload the reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: sca
+          path: reports/sca/
+          if-no-files-found: error
+          retention-days: 90
 
   secrets:
     name: scan (secrets)
@@ -203,9 +280,28 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+    outputs:
+      findings: ${{ steps.gitleaks.outputs.findings }}
     steps:
-      - name: Secret scan with Gitleaks
-        run: 'echo "stub: Gitleaks over the full history is implemented in #33"'
+      - name: Check out the full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # Gitleaks over the full history with .gitleaks.toml; values are redacted in the report. #33
+      - name: Gitleaks
+        id: gitleaks
+        run: scripts/scan.sh secrets
+
+      - name: Upload the reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: secrets
+          path: reports/secrets/
+          if-no-files-found: error
+          retention-days: 90
 
   # ---------------------------------------------------------------------------------------------
   # (c) Build and container build. Not on pull requests.
