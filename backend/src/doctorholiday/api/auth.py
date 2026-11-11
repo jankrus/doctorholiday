@@ -1,7 +1,7 @@
 """Register, login, logout and the current session (A01, A03, A06, A22; #14).
 
-MVP subset of #14; not here yet: MFA, the first-admin bootstrap (#15), CSRF protection,
-invitations. Search for MVP-TEMP to find the temporary shortcuts.
+The first successful login while no admin exists becomes ADMIN (#15). Not here yet: MFA, CSRF
+protection, invitations. Search for MVP-TEMP to find the temporary shortcuts.
 """
 
 import logging
@@ -47,7 +47,7 @@ from doctorholiday.models import (
     SessionState,
     User,
 )
-from doctorholiday.repositories import sessions, users
+from doctorholiday.repositories import admin_bootstrap, sessions, users
 from doctorholiday.repositories.audit import audit_target, record_event
 from doctorholiday.repositories.errors import EmailAlreadyRegisteredError
 
@@ -71,10 +71,6 @@ class RegisterRequest(_Request):
     email: Email
     password: NewPassword
     display_name: DisplayName | None = Field(default=None, alias="displayName")
-    # MVP-TEMP: lets testers create every role until invitations (FR-02) and the admin bootstrap
-    # (#15) exist. Remove together with `role` in RegisterRequest in openapi.yaml; registration
-    # then always creates a PATIENT again (BR-02).
-    role: Role = Role.PATIENT
 
 
 class LoginRequest(_Request):
@@ -183,7 +179,8 @@ def register(body: RegisterRequest, request: Request, db: DbSession) -> Response
             db,
             email=body.email,
             display_name=body.display_name,
-            role=body.role,
+            # Always a patient (BR-02); a `role` in the request is rejected by extra="forbid".
+            role=Role.PATIENT,
             password_hash=password_hash,
         )
     except EmailAlreadyRegisteredError:
@@ -283,6 +280,21 @@ def login(body: LoginRequest, request: Request, response: Response, db: DbSessio
     # It is deleted and never reused: the new session always gets a fresh token (session fixation).
     if (old_token := token_from_cookie(request)) is not None:
         sessions.delete_session(db, token_hash=hash_token(old_token))
+
+    # Only here, after every check passed: a failed, inactive or rate-limited login never
+    # bootstraps. Before the session is created, so it already carries the new role.
+    if admin_bootstrap.promote_if_first_admin(db, user):
+        record_event(
+            db,
+            action=AuditAction.ADMIN_BOOTSTRAPPED,
+            outcome=AuditOutcome.SUCCESS,
+            actor_id=user.id,
+            target=audit_target("user", user.id),
+            ip=ip,
+        )
+        logger.warning("first admin bootstrapped", extra={"userId": str(user.id)})
+        # TODO(#21): the new admin must enrol MFA before any other action, i.e. this session
+        # starts in MFA_ENROLLMENT_REQUIRED instead of ACTIVE.
 
     token = new_token()
     # MVP-TEMP: always ACTIVE. With MFA (#21), staff roles start in MFA_ENROLLMENT_REQUIRED and
