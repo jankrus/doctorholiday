@@ -17,6 +17,7 @@ flowchart TB
     end
 
     DEV["Developer<br/>git push / pull request"]:::actor
+    OPS["Operator<br/>make up, kubectl"]:::actor
 
     subgraph ZG["Zone 4: GitHub (supply chain, private repository)"]
         direction TB
@@ -67,6 +68,7 @@ flowchart TB
     DEPLOY -. "kubectl apply, image digests" .-> KIND
     GHCR -. "pull by digest (OCI)<br/>cosign verify first" .-> KIND
     EVID -. "commit evidence/" .-> REPO
+    OPS -. "make up: kind create, secrets,<br/>kubectl apply" .-> KIND
 
     style ZU fill:#fffaf0,stroke:#b7791f
     style ZH fill:#f8fafc,stroke:#475569
