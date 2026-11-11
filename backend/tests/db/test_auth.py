@@ -208,6 +208,27 @@ def test_email_is_case_insensitive(client: TestClient, email: str) -> None:
     assert login(client, email.upper()).status_code == 200
 
 
+def test_email_is_stored_trimmed_and_lowercased(
+    client: TestClient, email: str, db_engine: Engine
+) -> None:
+    assert register(client, f"  {email.upper()} ").status_code == 202
+
+    user = user_by_email(db_engine, email)
+    assert user is not None
+    assert user.email == email
+    assert login(client, f" {email} ").status_code == 200
+    assert client.get("/api/v1/auth/me").json()["user"]["email"] == email
+
+
+def test_unknown_field_in_login_is_rejected(client: TestClient, email: str) -> None:
+    response = client.post(
+        "/api/v1/auth/login", json={"email": email, "password": PASSWORD, "isAdmin": True}
+    )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+
+
 def test_password_is_not_trimmed(client: TestClient, email: str) -> None:
     padded = f"  {PASSWORD}  "
     assert register(client, email, padded).status_code == 202

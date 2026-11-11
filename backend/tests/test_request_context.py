@@ -26,13 +26,19 @@ def test_client_supplied_request_id_is_ignored(client: TestClient) -> None:
     assert uuid.UUID(response.headers["X-Request-Id"])
 
 
-def test_access_log_entry(client: TestClient, caplog: pytest.LogCaptureFixture) -> None:
+def test_access_log_entry(
+    app: FastAPI, client: TestClient, caplog: pytest.LogCaptureFixture
+) -> None:
+    @app.get("/probe-search")
+    def probe_search(email: str | None = None) -> dict[str, str]:
+        return {}
+
     with caplog.at_level(logging.DEBUG, logger="doctorholiday.access"):
-        response = client.get("/healthz?email=patient@example.org")
+        response = client.get("/probe-search?email=patient@example.org")
 
     (record,) = [r for r in caplog.records if r.name == "doctorholiday.access"]
     assert record.method == "GET"
-    assert record.path == "/healthz"
+    assert record.path == "/probe-search"
     assert record.status == 200
     assert record.durationMs >= 0
     assert "patient@example.org" not in caplog.text

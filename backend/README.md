@@ -97,8 +97,9 @@ src/doctorholiday/
   main.py         create_app(): FastAPI app, middleware, routers
   config.py       Settings from environment variables
   errors.py       error responses in the contract's Error shape, exception handlers
+  validation.py   RequestModel, shared field types, rejection of unknown query parameters
   logs.py         JSON logging to stdout, redaction of sensitive fields
-  middleware.py   request ID (X-Request-Id), access log
+  middleware.py   request ID (X-Request-Id), access log, generic 500, body size and JSON checks
   db.py           SQLAlchemy engine, per-request transaction (DbSession), readiness check
   models.py       ORM models mirroring the migrated schema, enums
   repositories/   data access layer: the only code that builds queries
@@ -116,7 +117,19 @@ Conventions for new code:
 - **Logging:** use `logging.getLogger(__name__)` and pass data via `extra={...}`. Every line is JSON on stdout with the `requestId` of the current request. Never log passwords, session IDs, tokens, MFA secrets or request bodies. Fields with such names are redacted, but that is a safety net, not a licence.
 - **Request ID:** every response carries a fresh UUID in `X-Request-Id`, also available as `request.state.request_id` (used in the `requestId` of every error body). Client-supplied IDs are ignored.
 - **Files:** the container runs with a read-only root filesystem. Write nothing to disk; if unavoidable, only below `/tmp`.
-- **Errors:** raise `ApiError(status, ErrorCode.X, "generic message")`; the handler in `errors.py` answers with `{"error": {"code", "message", "requestId"}}`. Pydantic validation errors become `422 VALIDATION_ERROR`, unhandled exceptions `500 INTERNAL_ERROR`; neither returns or logs the submitted values. Raising rolls back the request transaction, so an endpoint that must keep its writes (e.g. the audit event of a failed login) returns `error_response(...)` instead.
+- **Errors** (#13): raise `ApiError(status, ErrorCode.X, "generic message")`; the handler in `errors.py` answers with `{"error": {"code", "message", "requestId"}}`. Raising rolls back the request transaction, so an endpoint that must keep its writes (e.g. the audit event of a failed login) returns `error_response(...)` instead. Every other error gets the same shape, a generic message and `X-Request-Id` = `requestId`:
+
+  | Cause | Answer | Where |
+  | :--- | :--- | :--- |
+  | Invalid JSON, schema violation, unknown body field or query parameter | `422 VALIDATION_ERROR` | `errors.py`, `validation.py` |
+  | Body over 16 KiB (`MAX_BODY_BYTES`) | `413 PAYLOAD_TOO_LARGE` | `RequestBodyMiddleware` |
+  | Non-empty body that is not `application/json` | `415 UNSUPPORTED_MEDIA_TYPE` | `RequestBodyMiddleware` |
+  | Unknown path / unsupported method | `404 NOT_FOUND` / `405 METHOD_NOT_ALLOWED` with `Allow` | `errors.py` |
+  | `DataConflictError` not caught by the endpoint | `409 TIME_ALREADY_BOOKED` or `409 CONFLICT` | `errors.py` |
+  | Any other exception | `500 INTERNAL_ERROR`; traceback in the log (`unhandled exception`) | `RequestContextMiddleware` |
+
+  Responses never contain the submitted values, parser messages, the framework's `detail`, stack traces or file paths; the validation log has field locations and error types only. The `500` is answered in `RequestContextMiddleware`, not by an exception handler, because Starlette runs those outside every middleware, so the response would lack `X-Request-Id`. New error codes go into `ErrorCode` in `openapi.yaml` first; `tests/test_errors.py` fails otherwise.
+- **Validation** (#13, SR-03): request bodies subclass `RequestModel` (`extra="forbid"`) and use the field types in `validation.py` (`Email`, `Password`, `NewPassword`, `DisplayName`) or give every string and every list a `max_length`. Query parameters a route does not declare are rejected. `tests/test_validation.py` fails for any route whose body, path, query, header or cookie parameters are unbounded or whose body is not a `RequestModel`, and for any endpoint that reads the raw body (`request.json()` etc.). E-mail addresses are trimmed and lowercased, display names trimmed; passwords are never changed.
 - **No API docs at runtime:** `/docs`, `/redoc` and `/openapi.json` are disabled; the contract is `openapi.yaml`.
 
 ## Authentication

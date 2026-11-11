@@ -8,10 +8,9 @@ import logging
 import uuid
 from datetime import timedelta
 from ipaddress import ip_address
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response, status
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from doctorholiday.auth.dependencies import CurrentSession, reject_session
@@ -50,24 +49,14 @@ from doctorholiday.models import (
 from doctorholiday.repositories import sessions, users
 from doctorholiday.repositories.audit import audit_target, record_event
 from doctorholiday.repositories.errors import EmailAlreadyRegisteredError
+from doctorholiday.validation import DisplayName, Email, NewPassword, Password, RequestModel
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
-# Field types as in backend/openapi.yaml. Passwords are SecretStr so they never show up in a repr
-# or traceback, and they are not trimmed (BR-01).
-Email = Annotated[EmailStr, Field(min_length=3, max_length=254)]
-NewPassword = Annotated[SecretStr, Field(min_length=12, max_length=128)]
-Password = Annotated[SecretStr, Field(min_length=1, max_length=128)]
-DisplayName = Annotated[str, Field(min_length=1, max_length=100, pattern=r"^[^\x00-\x1F\x7F<>]+$")]
 
-
-class _Request(BaseModel):
-    model_config = ConfigDict(extra="forbid")  # additionalProperties: false
-
-
-class RegisterRequest(_Request):
+class RegisterRequest(RequestModel):
     email: Email
     password: NewPassword
     display_name: DisplayName | None = Field(default=None, alias="displayName")
@@ -77,7 +66,7 @@ class RegisterRequest(_Request):
     role: Role = Role.PATIENT
 
 
-class LoginRequest(_Request):
+class LoginRequest(RequestModel):
     email: Email
     password: Password
 
