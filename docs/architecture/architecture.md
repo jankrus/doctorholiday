@@ -23,7 +23,7 @@ Doctor Holiday is a booking system for **one** medical practice (patients, staff
 | Python tooling | `uv` with `uv.lock` | [ADR-002](adr/ADR-002-python-package-manager.md) |
 | Database | PostgreSQL 16 | ADR-001, [database.md](database.md) |
 | Session | Server-side session, cookie `__Host-dh_session` (`HttpOnly; Secure; SameSite=Strict`) | ADR-001 |
-| Container images | distroless or Chainguard (backend), `nginx-unprivileged:alpine` (frontend), `postgres:16-alpine`, all pinned by digest | ADR-001 §3.2 |
+| Container images | `python:3.12-alpine` (backend, [D-03](../report/deviations.md)), `nginx-unprivileged:alpine` (frontend), `postgres:16-alpine`, all pinned by digest | ADR-001 §3.2 |
 | Pipeline | GitHub Actions, Syft, Semgrep, Trivy, Gitleaks, cosign, GHCR | ADR-001 §3.3 |
 | Runtime | local `kind` cluster with `ingress-nginx` and an enforcing CNI (Calico), driven by the Makefile | ADR-001, [#40](https://github.com/jankrus/doctorholiday/issues/40), [#41](https://github.com/jankrus/doctorholiday/issues/41) |
 

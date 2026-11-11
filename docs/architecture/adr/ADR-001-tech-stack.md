@@ -72,7 +72,7 @@ For authentication, we will use **Server-Side Sessions with a strict HttpOnly, S
 | Component | Language / Tool | Framework | Base Image (to be pinned by digest) |
 | :--- | :--- | :--- | :--- |
 | **Frontend** | TypeScript / HTML | React / Nginx | `nginxinc/nginx-unprivileged:alpine` |
-| **Backend** | Python 3.12 | FastAPI | `cgr.dev/chainguard/python` (or `gcr.io/distroless/python3`) |
+| **Backend** | Python 3.12 | FastAPI | `python:3.12-alpine` (decided in #28, replaces `cgr.dev/chainguard/python` / `gcr.io/distroless/python3`, which do not offer Python 3.12 for free; see [deviations.md](../../report/deviations.md) D-03) |
 | **Database** | SQL | PostgreSQL | `postgres:16-alpine` |
 
 ### 3.3. DevSecOps Platform Tooling (Pre-decided)
