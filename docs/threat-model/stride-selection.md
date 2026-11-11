@@ -10,12 +10,12 @@ The exam brief (§2) asks that only **three** of the six STRIDE categories are i
 
 | Category | Decision | One-line reason |
 | --- | --- | --- |
-| **S**poofing | **Selected** | Login is mandatory in the brief; stolen identities are the entry point to everything else. |
-| **E**levation of privilege | **Selected** | Role model, object-level checks and Kubernetes least privilege are mandatory in the brief and carry the most severe impact. |
-| **I**nformation disclosure | **Selected** | Appointment data is health data; the brief names error handling without leaks and no hard-coded secrets. |
-| **T**ampering | Not selected | See [section 3](#3-justification-for-the-three-other-categories). |
-| **R**epudiation | Not selected | See section 3. |
-| **D**enial of service | Not selected | See section 3. |
+| **S**poofing | **Selected**, see [section 2.1](#21-spoofing-s) | Login is mandatory in the brief; stolen identities are the entry point to everything else. |
+| **E**levation of privilege | **Selected**, see [section 2.2](#22-elevation-of-privilege-e) | Role model, object-level checks and Kubernetes least privilege are mandatory in the brief and carry the most severe impact. |
+| **I**nformation disclosure | **Selected**, see [section 2.3](#23-information-disclosure-i) | Appointment data is health data; the brief names error handling without leaks and no hard-coded secrets. |
+| **T**ampering | Not selected, see [section 3.1](#31-tampering-t) | Largest number of threats, but the strong controls belong to other requirements (SR-03, SR-06, SR-07). |
+| **R**epudiation | Not selected, see [section 3.2](#32-repudiation-r) | No High-rated threat; only a basic audit log is needed. |
+| **D**enial of service | Not selected, see [section 3.3](#33-denial-of-service-d) | Local single-node cluster without internet exposure; real flood protection needs infrastructure out of scope. |
 
 **What "selected" and "not selected" mean here.** *Selected* categories get threat-driven mitigations with a verification method per threat. *Not selected* categories get no dedicated countermeasure beyond what the project builds anyway for other requirements. These controls are honestly named in section 3 and they reduce the risk, but they are not implemented because of this analysis. The residual risk is accepted and explained.
 
@@ -25,7 +25,7 @@ The numbers: 45 of the 88 threats belong to the selected categories and 43 to th
 
 For every selected category: threats, implementing issues, how to verify them, and the state today. *Merged* means the issue is closed on `main`; everything else is open or in review.
 
-### 2.1 Spoofing
+### 2.1 Spoofing (S)
 
 **Threats:** TH-01, TH-03, TH-05, TH-07, TH-11, TH-23, TH-24, TH-35 are the active ones; TH-09, TH-17 and TH-41 are accepted (operator machine and local scope).
 
@@ -40,7 +40,7 @@ For every selected category: threats, implementing issues, how to verify them, a
 
 **Merged issues for this category:** [#24](https://github.com/jankrus/doctorholiday/issues/24) (auth screens in the frontend) and [#48](https://github.com/jankrus/doctorholiday/issues/48) (ruleset). The backend issues are not merged yet.
 
-### 2.2 Elevation of privilege
+### 2.2 Elevation of privilege (E)
 
 **Threats:** TH-16 (accepted), TH-22, TH-32, TH-33, TH-34, TH-40, TH-46.
 
@@ -55,7 +55,7 @@ For every selected category: threats, implementing issues, how to verify them, a
 
 **Merged issues for this category: none yet.** [#15](https://github.com/jankrus/doctorholiday/issues/15), [#16](https://github.com/jankrus/doctorholiday/issues/16) and the Kubernetes issues are open. The acceptance criterion "at least one merged implementation issue" is therefore open for this category (see [section 5](#5-open-points)).
 
-### 2.3 Information disclosure
+### 2.3 Information disclosure (I)
 
 **Threats:** TH-14, TH-20, TH-28, TH-29, TH-38, TH-44, TH-49, TH-53, TH-57, TH-61, TH-65, TH-67, TH-71, TH-74 and the flows that carry secrets, logs or artefacts (TH-67, TH-71, TH-74, TH-76 … TH-88).
 
