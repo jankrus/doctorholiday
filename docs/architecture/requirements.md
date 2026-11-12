@@ -141,10 +141,12 @@ These conventions apply to every endpoint in [`backend/openapi.yaml`](../../back
   | `400` | Semantically invalid credential material: `INVALID_MFA_CODE`, `INVALID_INVITATION`, `INVALID_RESET_CODE` |
   | `401` | No valid session (`UNAUTHENTICATED`) or failed login (`INVALID_CREDENTIALS`) |
   | `403` | Role or session state not allowed (`FORBIDDEN`, `MFA_REQUIRED`, `ACCESS_GRANT_REQUIRED`, `REAUTHENTICATION_FAILED`) |
-  | `404` | Resource does not exist **or** belongs to someone else (`NOT_FOUND`) |
+  | `404` | Resource does not exist **or** belongs to someone else, or unknown path (`NOT_FOUND`) |
+  | `405` | Method not supported by the path (`METHOD_NOT_ALLOWED`, with `Allow`) |
   | `409` | Business rule conflict (codes listed in the BR table) |
-  | `413` | Request body too large (`PAYLOAD_TOO_LARGE`); checked before the body is parsed, limit set in #13 |
-  | `422` | Schema validation failed (`VALIDATION_ERROR`) |
+  | `413` | Request body over 16 KiB (`PAYLOAD_TOO_LARGE`); checked before the body is parsed |
+  | `415` | Non-empty request body that is not `application/json` (`UNSUPPORTED_MEDIA_TYPE`); checked before the body is parsed |
+  | `422` | Schema validation failed, including malformed JSON, unknown fields and undeclared query parameters (`VALIDATION_ERROR`) |
   | `429` | Rate limit hit (`RATE_LIMITED`, with `Retry-After`) |
   | `500` | `INTERNAL_ERROR`, details only in the log |
   | `503` | Only from `/readyz` (BR-21); while no pod is ready, ingress-nginx answers itself |

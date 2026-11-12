@@ -20,6 +20,16 @@ info:
     - `x-session-states`: session states in which the operation is allowed (BR-05). Absent on public operations.
 
     Anything not listed is denied. Every response carries `X-Request-Id`; errors use the `Error` schema.
+
+    **Applies to every path** (#13), so these responses are not repeated per operation unless the
+    operation has a request body:
+    - Unknown path: `404 NOT_FOUND`. Method the path does not support: `405 METHOD_NOT_ALLOWED`
+      with `Allow`.
+    - Query parameter the operation does not declare: `422 VALIDATION_ERROR`, like an unknown
+      body field.
+    - Request body over 16 KiB: `413 PAYLOAD_TOO_LARGE`; non-empty body that is not
+      `application/json`: `415 UNSUPPORTED_MEDIA_TYPE`. Both before the body is parsed.
+    - Unexpected error: `500 INTERNAL_ERROR`, with `requestId` equal to `X-Request-Id`.
   license:
     name: Proprietary – exam project, all rights reserved
     identifier: LicenseRef-Proprietary
@@ -78,6 +88,8 @@ paths:
                 $ref: '#/components/schemas/Error'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           description: |
             Request does not match the schema (`VALIDATION_ERROR`), or the password is too common
@@ -131,6 +143,8 @@ paths:
                 $ref: '#/components/schemas/Error'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '429':
@@ -173,6 +187,8 @@ paths:
                 $ref: '#/components/schemas/Error'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '429':
@@ -225,6 +241,8 @@ paths:
                 $ref: '#/components/schemas/Error'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '429':
@@ -312,6 +330,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '429':
@@ -425,6 +445,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '429':
@@ -462,6 +484,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '429':
@@ -542,6 +566,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -652,6 +678,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -773,6 +801,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -881,6 +911,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -962,6 +994,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -1006,6 +1040,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -1120,6 +1156,8 @@ paths:
           $ref: '#/components/responses/NotFound'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -1185,6 +1223,8 @@ paths:
           $ref: '#/components/responses/Conflict'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -1240,6 +1280,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '413':
           $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
         '422':
           $ref: '#/components/responses/ValidationError'
         '500':
@@ -1445,7 +1487,7 @@ components:
               message: The request is invalid.
               requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
     PayloadTooLarge:
-      description: Request body exceeds the size limit; rejected before parsing (`PAYLOAD_TOO_LARGE`).
+      description: Request body exceeds 16 KiB; rejected before parsing (`PAYLOAD_TOO_LARGE`).
       content:
         application/json:
           schema:
@@ -1454,6 +1496,19 @@ components:
             error:
               code: PAYLOAD_TOO_LARGE
               message: The request is too large.
+              requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
+    UnsupportedMediaType:
+      description: |
+        Non-empty request body whose `Content-Type` is not `application/json` (optionally with
+        `charset=utf-8`); rejected before parsing (`UNSUPPORTED_MEDIA_TYPE`).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              code: UNSUPPORTED_MEDIA_TYPE
+              message: The request body must be JSON (application/json).
               requestId: 3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f
     InvalidCredentials:
       description: Login failed; deliberately the same for every cause (`INVALID_CREDENTIALS`).
@@ -1691,6 +1746,7 @@ components:
         - INVALID_INVITATION
         - INVALID_RESET_CODE
         - NOT_FOUND
+        - METHOD_NOT_ALLOWED
         - CONFLICT
         - MFA_ALREADY_ENABLED
         - MFA_NOT_ENABLED
@@ -1706,6 +1762,7 @@ components:
         - ROLE_CHANGE_NOT_ALLOWED
         - ACCESS_GRANT_ACTIVE
         - PAYLOAD_TOO_LARGE
+        - UNSUPPORTED_MEDIA_TYPE
         - RATE_LIMITED
         - INTERNAL_ERROR
 
