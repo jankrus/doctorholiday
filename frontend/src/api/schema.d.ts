@@ -791,7 +791,7 @@ export interface components {
         /** @enum {string} */
         AuditOutcome: "SUCCESS" | "FAILURE" | "DENIED";
         /** @enum {string} */
-        ErrorCode: "VALIDATION_ERROR" | "PASSWORD_TOO_COMMON" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "MFA_REQUIRED" | "FORBIDDEN" | "ACCESS_GRANT_REQUIRED" | "REAUTHENTICATION_FAILED" | "INVALID_MFA_CODE" | "INVALID_INVITATION" | "INVALID_RESET_CODE" | "NOT_FOUND" | "CONFLICT" | "MFA_ALREADY_ENABLED" | "MFA_NOT_ENABLED" | "WORKING_HOURS_OVERLAP" | "TIME_NOT_AVAILABLE" | "TIME_ALREADY_BOOKED" | "ABSENCE_HAS_APPOINTMENTS" | "APPOINTMENT_LIMIT_REACHED" | "APPOINTMENT_NOT_CANCELLABLE" | "APPOINTMENT_NOT_RESCHEDULABLE" | "CANCELLATION_DEADLINE_PASSED" | "LAST_ADMIN" | "ROLE_CHANGE_NOT_ALLOWED" | "ACCESS_GRANT_ACTIVE" | "PAYLOAD_TOO_LARGE" | "RATE_LIMITED" | "INTERNAL_ERROR";
+        ErrorCode: "VALIDATION_ERROR" | "PASSWORD_TOO_COMMON" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "MFA_REQUIRED" | "FORBIDDEN" | "ACCESS_GRANT_REQUIRED" | "REAUTHENTICATION_FAILED" | "INVALID_MFA_CODE" | "INVALID_INVITATION" | "INVALID_RESET_CODE" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "CONFLICT" | "MFA_ALREADY_ENABLED" | "MFA_NOT_ENABLED" | "WORKING_HOURS_OVERLAP" | "TIME_NOT_AVAILABLE" | "TIME_ALREADY_BOOKED" | "ABSENCE_HAS_APPOINTMENTS" | "APPOINTMENT_LIMIT_REACHED" | "APPOINTMENT_NOT_CANCELLABLE" | "APPOINTMENT_NOT_RESCHEDULABLE" | "CANCELLATION_DEADLINE_PASSED" | "LAST_ADMIN" | "ROLE_CHANGE_NOT_ALLOWED" | "ACCESS_GRANT_ACTIVE" | "PAYLOAD_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "RATE_LIMITED" | "INTERNAL_ERROR";
         Error: {
             error: {
                 code: components["schemas"]["ErrorCode"];
@@ -1057,7 +1057,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description Request body exceeds the size limit; rejected before parsing (`PAYLOAD_TOO_LARGE`). */
+        /** @description Request body exceeds 16 KiB; rejected before parsing (`PAYLOAD_TOO_LARGE`). */
         PayloadTooLarge: {
             headers: {
                 [name: string]: unknown;
@@ -1068,6 +1068,27 @@ export interface components {
                  *       "error": {
                  *         "code": "PAYLOAD_TOO_LARGE",
                  *         "message": "The request is too large.",
+                 *         "requestId": "3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f"
+                 *       }
+                 *     }
+                 */
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /**
+         * @description Non-empty request body whose `Content-Type` is not `application/json` (optionally with
+         *     `charset=utf-8`); rejected before parsing (`UNSUPPORTED_MEDIA_TYPE`).
+         */
+        UnsupportedMediaType: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "error": {
+                 *         "code": "UNSUPPORTED_MEDIA_TYPE",
+                 *         "message": "The request body must be JSON (application/json).",
                  *         "requestId": "3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f"
                  *       }
                  *     }
@@ -1266,6 +1287,7 @@ export interface operations {
                 };
             };
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             /**
              * @description Request does not match the schema (`VALIDATION_ERROR`), or the password is too common
              *     (`PASSWORD_TOO_COMMON`, BR-01).
@@ -1330,6 +1352,7 @@ export interface operations {
                 };
             };
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1374,6 +1397,7 @@ export interface operations {
                 };
             };
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1414,6 +1438,7 @@ export interface operations {
                 };
             };
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1480,6 +1505,7 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1575,6 +1601,7 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1604,6 +1631,7 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1669,6 +1697,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1760,6 +1789,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1856,6 +1886,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1945,6 +1976,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -2006,6 +2038,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -2040,6 +2073,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -2129,6 +2163,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -2185,6 +2220,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -2237,6 +2273,7 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };

@@ -1,0 +1,77 @@
+%% Doctor Holiday attack tree (issue #10): worst case "exfiltrate the health data of many patients".
+%% Hexagon = gate (OR: any child is enough, AND: all children are needed), rounded = goal,
+%% rectangle = leaf (concrete attacker step), leaf colour = state of the countermeasure.
+%% Rendered to attack-tree.svg / attack-tree.png; explained in attack-tree.md.
+flowchart LR
+    classDef goal fill:#e8f0fe,stroke:#2b6cb0,color:#1a202c
+    classDef root fill:#fde8e8,stroke:#c53030,color:#1a202c,stroke-width:3px
+    classDef gor fill:#ffffff,stroke:#2b6cb0,color:#1a202c
+    classDef gand fill:#fff7e6,stroke:#b7791f,color:#1a202c
+    classDef mit fill:#e6f4ea,stroke:#2f855a,color:#1a202c
+    classDef plan fill:#fffbea,stroke:#d69e2e,color:#1a202c
+    classDef acc fill:#edf2f7,stroke:#718096,color:#1a202c,stroke-dasharray: 4 3
+
+    R("0 Exfiltrate the health data<br/>of many patients"):::root --> GR{{OR}}:::gor
+
+    %% Branch 1: privileged session
+    GR --> N1("1 Read data through<br/>a privileged session"):::goal --> G1{{AND}}:::gand
+    G1 --> N11("1.1 Obtain a privileged<br/>session"):::goal --> G11{{OR}}:::gor
+    G11 --> L111["1.1.1 Steal the active<br/>session cookie"]:::mit
+    G11 --> N112("1.1.2 Log in with<br/>password and MFA"):::goal --> G112{{AND}}:::gand
+    G112 --> N1121("1.1.2.1 Get the password"):::goal --> G1121{{OR}}:::gor
+    G1121 --> L11211["1.1.2.1.1 Credential stuffing<br/>or password reuse"]:::mit
+    G1121 --> L11212["1.1.2.1.2 Phish the password"]:::plan
+    G112 --> N1122("1.1.2.2 Pass the second factor"):::goal --> G1122{{OR}}:::gor
+    G1122 --> L11221["1.1.2.2.1 Real-time phishing<br/>of the TOTP code"]:::acc
+    G1122 --> L11222["1.1.2.2.2 Steal or guess<br/>a recovery code"]:::plan
+    G1122 --> L11223["1.1.2.2.3 Brute-force<br/>the 6-digit TOTP"]:::plan
+    G11 --> N113("1.1.3 Become the first admin"):::goal --> G113{{AND}}:::gand
+    G113 --> L1131["1.1.3.1 Fresh deployment<br/>or database reset"]:::acc
+    G113 --> L1132["1.1.3.2 Register and log in<br/>before the operator"]:::plan
+    G1 --> N12("1.2 Reach appointment data"):::goal --> G12{{OR}}:::gor
+    G12 --> L121["1.2.1 Staff or doctor lists<br/>all appointments"]:::plan
+    G12 --> L122["1.2.2 Admin grants itself<br/>30 minutes of access"]:::plan
+
+    %% Branch 2: backend API
+    GR --> N2("2 Exploit the backend API"):::goal --> G2{{OR}}:::gor
+    G2 --> N21("2.1 SQL injection"):::goal --> G21{{AND}}:::gand
+    G21 --> L211["2.1.1 A query is built<br/>from user input"]:::mit
+    G21 --> L212["2.1.2 DB role can read<br/>all tables"]:::mit
+    G2 --> N22("2.2 Broken object-level<br/>authorisation"):::goal --> G22{{AND}}:::gand
+    G22 --> L221["2.2.1 Valid patient session"]:::acc
+    G22 --> L222["2.2.2 Endpoint lacks<br/>an ownership check"]:::plan
+    G22 --> L223["2.2.3 Know a foreign<br/>appointment ID"]:::mit
+    G2 --> N23("2.3 Escalate through<br/>a request field"):::goal --> G23{{AND}}:::gand
+    G23 --> L231["2.3.1 Self-register"]:::acc
+    G23 --> L232["2.3.2 Server accepts<br/>a role field"]:::mit
+    G2 --> N24("2.4 Cross-site scripting"):::goal --> G24{{AND}}:::gand
+    G24 --> L241["2.4.1 Unescaped output"]:::mit
+    G24 --> L242["2.4.2 No content<br/>security policy"]:::plan
+
+    %% Branch 3: cluster
+    GR --> N3("3 Reach the database or<br/>its secrets in the cluster"):::goal --> G3{{OR}}:::gor
+    G3 --> N31("3.1 Steal secrets from<br/>a compromised pod"):::goal --> G31{{AND}}:::gand
+    G31 --> L311["3.1.1 Code execution<br/>in a pod"]:::plan
+    G31 --> L312["3.1.2 Mounted token can<br/>read secrets"]:::plan
+    G3 --> N32("3.2 Find the DB password<br/>outside the cluster"):::goal --> G32{{OR}}:::gor
+    G32 --> L321["3.2.1 Secret committed<br/>to the repository"]:::mit
+    G32 --> L322["3.2.2 Secret printed in<br/>a log or error"]:::mit
+    G3 --> L33["3.3 Copy the database volume<br/>from the host"]:::acc
+
+    %% Branch 4: malicious image (perfect attack)
+    GR --> N4("4 Run a malicious image in<br/>production (perfect attack)"):::root --> G4{{AND}}:::gand
+    G4 --> N41("4.1 Get malicious code<br/>into an image"):::goal --> G41{{OR}}:::gor
+    G41 --> L411["4.1.1 Compromised<br/>GitHub Action"]:::plan
+    G41 --> L412["4.1.2 Malicious dependency"]:::mit
+    G41 --> L413["4.1.3 Unreviewed commit with a<br/>stolen developer account"]:::mit
+    G4 --> N42("4.2 Get the image deployed"):::goal --> G42{{OR}}:::gor
+    G42 --> L421["4.2.1 Weaken the<br/>quality gate"]:::plan
+    G42 --> N422("4.2.2 Sign with the<br/>stolen cosign key"):::goal --> G422{{AND}}:::gand
+    G422 --> L4221["4.2.2.1 Steal the key through<br/>a changed workflow"]:::plan
+    G422 --> L4222["4.2.2.2 Push the signed<br/>image to GHCR"]:::plan
+    G42 --> L423["4.2.3 Swap the image behind<br/>a tag the cluster pulls"]:::plan
+    G4 --> N43("4.3 Exfiltrate from the pod"):::goal --> G43{{AND}}:::gand
+    G43 --> L431["4.3.1 Image receives<br/>the DB credentials"]:::acc
+    G43 --> N432("4.3.2 Open an outbound<br/>channel"):::goal --> G432{{OR}}:::gor
+    G432 --> L4321["4.3.2.1 Direct connection<br/>to the attacker"]:::plan
+    G432 --> L4322["4.3.2.2 DNS tunnelling"]:::acc
