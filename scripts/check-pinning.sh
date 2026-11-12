@@ -3,8 +3,16 @@
 #
 #   - every third-party GitHub Action in .github/workflows/ is pinned by a full 40-character
 #     commit SHA and carries its version in a comment (`uses: owner/repo@<sha> # v1.2.3`);
-#   - every external image in a Dockerfile (FROM, COPY --from) and in compose.yaml is pinned by a
-#     sha256 digest.
+#   - every external container image is pinned by a sha256 digest, in
+#       * Dockerfiles (`Dockerfile`, `Dockerfile.prod`, `app.Dockerfile`, `Containerfile`):
+#         `FROM` and `COPY --from`,
+#       * YAML files (`image:` keys: compose.yaml, Kubernetes manifests, the kind config,
+#         workflow containers and services),
+#       * image variables in the Makefile, in `*.mk` and in shell scripts (`FOO_IMAGE=...`,
+#         `FOO_IMAGE := ...`).
+#
+# What it does NOT see (listed in .github/workflows/README.md): images that are only named inside
+# a command line (`docker run <image> ...`), and Kustomize `images:` entries (#38).
 #
 # Exit code 0 = all pinned, 1 = at least one mutable reference. Run from anywhere: `make
 # check-pinning`, and in the `meta` job of the pipeline.
@@ -45,11 +53,16 @@ digest='@sha256:[0-9a-f]{64}'
 check_image() { # file line_no image
   local file="$1" line_no="$2" image="$3"
   [[ "$image" == "scratch" ]] && return 0
+  # A value built from a variable (`${IMAGE}`, `$(IMAGE)`) is checked where the variable is set.
+  [[ "$image" == *'$'* ]] && return 0
+  # `image: [frontend, backend]` is a build matrix, not an image reference.
+  [[ "$image" == '['* || "$image" == '{'* ]] && return 0
   if ! [[ "$image" =~ $digest ]]; then
     fail "$file:$line_no: image '$image' is not pinned by a sha256 digest"
   fi
 }
 
+# Dockerfiles: Dockerfile, Dockerfile.*, *.Dockerfile, Containerfile, Containerfile.*
 while IFS= read -r file; do
   declare -A stages=()
   line_no=0
@@ -71,17 +84,31 @@ while IFS= read -r file; do
     fi
   done < "$file"
   unset stages
-done < <(git ls-files '*Dockerfile' '**/Dockerfile' | sort -u)
+done < <(git ls-files | grep -E '(^|/)(Dockerfile|Containerfile)([.][^/]*)?$|[.]Dockerfile$' | sort -u)
 
-if [[ -f compose.yaml ]]; then
+# YAML files: every `image:` key (compose, Kubernetes manifests, kind config, workflow containers).
+while IFS= read -r file; do
   line_no=0
   while IFS= read -r line; do
     line_no=$((line_no + 1))
-    if [[ "$line" =~ ^[[:space:]]*image:[[:space:]]*([^[:space:]#]+) ]]; then
-      check_image compose.yaml "$line_no" "${BASH_REMATCH[1]}"
+    if [[ "$line" =~ ^[[:space:]]*-?[[:space:]]*image:[[:space:]]*[\"\']?([^\"\'[:space:]#]+) ]]; then
+      check_image "$file" "$line_no" "${BASH_REMATCH[1]}"
     fi
-  done < compose.yaml
-fi
+  done < "$file"
+done < <(git ls-files '*.yaml' '*.yml' | sort -u)
+
+# Makefile, *.mk and shell scripts: variables named ...IMAGE that hold an image reference.
+while IFS= read -r file; do
+  line_no=0
+  while IFS= read -r line; do
+    line_no=$((line_no + 1))
+    if [[ "$line" =~ ^[[:space:]]*([A-Z0-9_]*IMAGE)[[:space:]]*:?=[[:space:]]*[\"\']?([^\"\'[:space:]#]+) ]]; then
+      value="${BASH_REMATCH[2]}"
+      # Only values that look like an image reference (registry path or tag), not flags or names.
+      [[ "$value" =~ [:/] ]] && check_image "$file" "$line_no" "$value"
+    fi
+  done < "$file"
+done < <(git ls-files 'Makefile' '*/Makefile' '*.mk' 'scripts/*.sh' | sort -u)
 
 if ((failures > 0)); then
   echo "$failures mutable reference(s) found. Pin actions by commit SHA and images by digest." >&2

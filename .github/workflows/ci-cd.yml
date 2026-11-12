@@ -4,15 +4,19 @@
 #
 # Job graph (an arrow is a `needs:`; a failed job stops everything behind it):
 #
-#   meta ─┬─ test-backend ──┐
-#         ├─ test-frontend ─┤
+#   context ─────────────────────────────────────────────┐  (is this a release run? see below)
+#   meta ─┬─ test-backend ──┐                            │
+#         ├─ test-frontend ─┤                            ▼
 #         └─ sbom ─┬─ sast ─┤
 #                  ├─ sca ──┼─ build (frontend, backend) ─ sign ─ quality-gate ─ deploy ─ evidence
 #                  └─ secrets ┘
 #
-# Pull requests run only meta, the tests, the SBOM and the three scans. Build, sign, gate, deploy
-# and evidence run on pushes to main (and manual runs) only: no signing, no registry write and no
-# deployment from a pull request.
+# A *release run* is a push to main or a manual run on main (`context` job, output `release`).
+# Build, sign, gate, deploy and evidence run only then: no signing, no registry write and no
+# deployment from a pull request or from a manual run on another branch. One expression, one
+# place: every release job asks `needs.context.outputs.release == 'true'`.
+#
+# Pull requests and manual runs on other branches run meta, the tests, the SBOM and the scans.
 #
 # The stage jobs are stubs that name the issue that fills them in. Each stub already carries the
 # permissions its final version needs, so the least-privilege layout is reviewed once, here.
@@ -28,20 +32,21 @@ name: ci-cd
 on:
   push:
     branches: [main]
-    # The evidence job commits reports back (#44); ignoring them avoids a loop. Docs-only changes
-    # build nothing.
-    paths-ignore: ["evidence/**", "docs/**"]
+    # The evidence job commits reports back (#44); ignoring them avoids a loop. Nothing else is
+    # ignored, so every other change to main (also documentation) triggers a run (brief §3).
+    paths-ignore: ["evidence/**"]
   pull_request:
     branches: [main]
-    paths-ignore: ["evidence/**", "docs/**"]
   workflow_dispatch:
 
 permissions: {}
 
-# One run per ref at a time: a deployment is never overtaken by a newer run of the same branch.
-# Newer pull request pushes cancel the older scan; runs on main are never cancelled.
+# One group per commit, so every push to main gets its own run and its own evidence. (A group per
+# branch would keep only one running and one waiting run and cancel the older waiting one.) A newer
+# push to a pull request cancels the older scan of that pull request. Deployments are serialised
+# separately, by the concurrency of the deploy job.
 concurrency:
-  group: ci-cd-${{ github.ref }}
+  group: ci-cd-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
@@ -49,6 +54,32 @@ defaults:
     shell: bash
 
 jobs:
+  # ---------------------------------------------------------------------------------------------
+  # context: is this a release run (push or manual run on main, never a pull request)? Computed
+  # once and reused by every job that builds, signs, deploys or writes evidence. No checkout, no
+  # permissions, nothing that can fail.
+  # ---------------------------------------------------------------------------------------------
+  context:
+    name: context
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    outputs:
+      release: ${{ steps.release.outputs.release }}
+    steps:
+      - name: Decide whether this is a release run
+        id: release
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          release=false
+          if [[ "$EVENT" != "pull_request" && "$REF" == "refs/heads/main" ]]; then
+            release=true
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "Release run: $release (event $EVENT, ref $REF)" >> "$GITHUB_STEP_SUMMARY"
+
   # ---------------------------------------------------------------------------------------------
   # meta: pinning check and the version that every later job uses (VERSION.txt, brief §7a).
   # ---------------------------------------------------------------------------------------------
@@ -212,8 +243,8 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   build:
     name: build (${{ matrix.image }})
-    needs: [meta, test-backend, test-frontend, sast, sca, secrets]
-    if: github.event_name != 'pull_request'
+    needs: [context, meta, test-backend, test-frontend, sast, sca, secrets]
+    if: needs.context.outputs.release == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     # packages: write is the only write permission of the image push (#34).
@@ -236,8 +267,8 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   sign:
     name: sign (${{ matrix.image }})
-    needs: [meta, build]
-    if: github.event_name != 'pull_request'
+    needs: [context, meta, build]
+    if: needs.context.outputs.release == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # packages: write attaches signature and attestation to the image in GHCR (#35).
@@ -260,8 +291,8 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   quality-gate:
     name: quality gate
-    needs: [meta, sast, sca, secrets, sign]
-    if: github.event_name != 'pull_request'
+    needs: [context, meta, sast, sca, secrets, sign]
+    if: needs.context.outputs.release == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
@@ -276,10 +307,15 @@ jobs:
   # ---------------------------------------------------------------------------------------------
   deploy:
     name: deploy
-    needs: [meta, quality-gate]
-    if: github.event_name != 'pull_request'
+    needs: [context, meta, quality-gate]
+    if: needs.context.outputs.release == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # One deployment at a time. A deploy that is still waiting is replaced by a newer one, which is
+    # fine: the newer commit contains the older one. Every run keeps its own evidence.
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
     permissions:
       contents: read
       packages: read  # pull the verified images (#43)
@@ -289,13 +325,14 @@ jobs:
 
   # ---------------------------------------------------------------------------------------------
   # Evidence of every run (#44): run log, SAST, SBOM, SCA, secrets and signing reports.
-  # Runs also when an earlier job failed, because a blocked run is evidence too. Committing to
-  # main needs a way around the branch ruleset (evidence branch or app token), decided in #44.
+  # Runs also when an earlier job failed (even `meta`), because a blocked run is evidence too, but
+  # not when the run was cancelled by hand. Committing to main needs a way around the branch
+  # ruleset (evidence branch or app token), decided in #44.
   # ---------------------------------------------------------------------------------------------
   evidence:
     name: evidence
-    needs: [meta, sbom, sast, sca, secrets, build, sign, quality-gate, deploy]
-    if: ${{ always() && github.event_name != 'pull_request' && needs.meta.result == 'success' }}
+    needs: [context, meta, sbom, sast, sca, secrets, build, sign, quality-gate, deploy]
+    if: ${{ !cancelled() && needs.context.outputs.release == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
