@@ -16,7 +16,7 @@ As part of the "Security by Design" exam, a secure appointment booking system fo
 ### 2.2. Backend
 *   **Option A: Python (FastAPI)**
     *   *Pros:* Rapid development, native and strict input validation via Pydantic (prevents injection attacks early). Excellent cryptographic ecosystem (Argon2, TOTP). Distroless images for Python are well-established.
-    *   *Cons:* Not a compiled language (unlike Go), which slightly increases the container size even when using distroless images.
+    *   *Cons:* Not a compiled language (unlike Go), which slightly increases the container size even with minimal images.
 *   **Option B: C# (ASP.NET Core Web API)**
     *   *Pros:* Strong out-of-the-box security mechanisms, type safety, excellent *chiseled* images provided by Microsoft for minimal attack surfaces.
     *   *Cons:* Slightly higher boilerplate overhead compared to FastAPI.
@@ -44,7 +44,7 @@ As part of the "Security by Design" exam, a secure appointment booking system fo
 ## 3. Decision Outcome
 
 We have decided to use the combination of **React** (Frontend), **Python/FastAPI** (Backend), and **PostgreSQL** (Database). 
-For authentication, we will use **Server-Side Sessions with a strict HttpOnly, Secure, SameSite=Strict cookie** to structurally eliminate token theft via XSS. Passwords will be hashed using **Argon2id**. All Docker images will be based on hardened minimal images (`distroless` or `alpine` / `unprivileged`) and will be strictly pinned by digest (SHA-256) in the pipeline to prevent supply chain attacks.
+For authentication, we will use **Server-Side Sessions with a strict HttpOnly, Secure, SameSite=Strict cookie** to structurally eliminate token theft via XSS. Passwords will be hashed using **Argon2id**. All Docker images will be based on hardened minimal images (`alpine` / `unprivileged`; the backend uses `python:3.12-alpine`, see [deviations.md](../../report/deviations.md) D-03) and will be strictly pinned by digest (SHA-256) in the pipeline to prevent supply chain attacks.
 
 ### 3.1. Libraries and Versions
 
@@ -88,5 +88,5 @@ All components will pass through the strictly defined CI/CD pipeline:
 
 ## 4. Consequences (Pros & Cons)
 
-*   **Security (Pros):** Using FastAPI combined with Pydantic automatically validates payloads at the type level, strongly supporting the secure coding requirements. HttpOnly cookies dramatically minimize the client-side attack surface. Distroless or Alpine images reduce the container attack surface to an absolute minimum (no shell, no unnecessary binaries), which will lead to an SCA report with nearly zero vulnerabilities in Trivy.
-*   **Development (Cons):** Properly configuring CORS and SameSite cookies for local development environments (between frontend and backend ports) is often error-prone and requires clean environment variables. The lack of a shell in distroless images (backend) makes debugging inside a running pod in the Kubernetes cluster more difficult.
+*   **Security (Pros):** Using FastAPI combined with Pydantic automatically validates payloads at the type level, strongly supporting the secure coding requirements. HttpOnly cookies dramatically minimize the client-side attack surface. Minimal Alpine images reduce the container attack surface (non-root user, no `pip` in the backend image, no compiler); they keep a shell and `apk` (D-03). Together with `apk upgrade` at build time (D-04) the Trivy report of the final images shows no HIGH or CRITICAL finding.
+*   **Development (Cons):** Properly configuring CORS and SameSite cookies for local development environments (between frontend and backend ports) is often error-prone and requires clean environment variables. Because the Alpine images have a shell, debugging inside a running pod is easy; the same shell is a convenience for an attacker who already has code execution in the pod (residual risk, accepted in D-03, see TH-22 and TH-46 in the threat model).

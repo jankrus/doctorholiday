@@ -104,7 +104,7 @@ every route forwards the admin to `/setup` until the practice settings are saved
 
 ## Container image
 
-`frontend/Dockerfile` builds the static SPA with Node (`npm ci --ignore-scripts`, then `npm run build`) and serves it with `nginx-unprivileged` (issue #28). The runtime image has no Node and no sources. It runs as UID 101 on port 8080 with a read-only root filesystem; pid file and temporary files go to `/tmp`. `nginx.conf` answers `GET /healthz` for the Kubernetes probes, falls back to `index.html` for client-side routes and sets security headers (`security-headers.conf`; the CSP follows in #27). The API is not served here: ingress-nginx routes `/api` to the backend (#40).
+`frontend/Dockerfile` builds the static SPA with Node (`npm ci --ignore-scripts`, then `npm run build`) and serves it with `nginx-unprivileged` (issue #28). The runtime image has no Node and no sources. It runs as UID 101 on port 8080 with a read-only root filesystem (it also starts under another numeric UID, for example `--user 10001` as the issue lists, so Kubernetes may set one common `runAsUser`); pid file and temporary files go to `/tmp`. `nginx.conf` answers `GET /healthz` for the Kubernetes probes, falls back to `index.html` for client-side routes and sets security headers (`security-headers.conf`; the CSP follows in #27). The API is not served here: ingress-nginx routes `/api` to the backend (#40).
 
 ```sh
 docker build -t doctorholiday-frontend frontend --build-arg VERSION="$(cat VERSION.txt)" --build-arg REVISION="$(git rev-parse HEAD)"
