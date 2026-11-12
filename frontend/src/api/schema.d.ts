@@ -19,9 +19,7 @@ export interface paths {
          *     is already taken, so the endpoint cannot be used to enumerate accounts (BR-02).
          *     Every request counts against a limit per client IP (default 10 within 60 minutes);
          *     reaching it locks the IP for 60 minutes with `429 RATE_LIMITED` (BR-03).
-         *
-         *     **MVP-TEMP:** the optional `role` creates accounts of every role until invitations
-         *     (FR-02) and the first-admin bootstrap (#15) exist. It will be removed again.
+         *     A `role` field is rejected with `422 VALIDATION_ERROR`, like any unknown field.
          */
         post: operations["register"];
         delete?: never;
@@ -806,13 +804,6 @@ export interface components {
             email: components["schemas"]["Email"];
             password: components["schemas"]["NewPassword"];
             displayName?: components["schemas"]["DisplayName"];
-            /**
-             * @description **MVP-TEMP**, will be removed: role of the new account, default `PATIENT`. Deviates
-             *     from BR-02 (registration always creates a `PATIENT`) so the MVP can be tested with
-             *     every role before invitations and the admin bootstrap exist.
-             * @default PATIENT
-             */
-            role: components["schemas"]["Role"];
         };
         InvitationAcceptRequest: {
             token: components["schemas"]["InvitationToken"];
