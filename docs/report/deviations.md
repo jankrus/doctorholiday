@@ -29,12 +29,6 @@ Findings are never hidden silently. Every ignore entry lives in one of the files
 | Trivy | none | `.trivyignore` (empty) | No vulnerability is ignored. |
 | Gitleaks | none | `.gitleaks.toml` (default rules, no allowlist) | No leak is ignored. |
 
-## Code scanning (SARIF upload) is optional
-
-- **Decided in:** [#33](https://github.com/jankrus/doctorholiday/issues/33), which asks that Semgrep results appear in GitHub code scanning.
-- **Why optional:** Code scanning needs GitHub Code Security. A private repository on a personal plan does not have it, so the upload would fail on every run. The pipeline uploads the SARIF files as run artifacts always and to code scanning only when the repository variable `CODE_SCANNING` is `true`.
-- **Consequence:** while the repository is private on the current plan, findings are visible in the run summary and in the artifacts, not in the *Security* tab. Setting `CODE_SCANNING=true` turns the upload on without a code change (for example if the repository is made public after the exam or the plan is upgraded).
-
 ## Planned or likely deviations (not decided yet)
 
 | ID | Topic | Note |

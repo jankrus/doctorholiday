@@ -95,9 +95,9 @@ sbom() {
 
 sast() {
   mkdir -p "$REPORTS/sast"
-  local component total=0 count
-  summary "| Component | Semgrep findings |"
-  summary "| --- | --- |"
+  local component total=0 errors=0 count error_count
+  summary "| Component | Findings (all) | Severity ERROR |"
+  summary "| --- | --- | --- |"
   for component in "${COMPONENTS[@]}"; do
     local packs=(--config p/default --config p/owasp-top-ten --config p/secrets)
     case "$component" in
@@ -117,11 +117,16 @@ sast() {
       --sarif-output "$REPORTS/sast/semgrep-$component.sarif" \
       "$component"
     count="$(stats semgrep "$REPORTS/sast/semgrep-$component.json")"
+    error_count="$(stats semgrep-error "$REPORTS/sast/semgrep-$component.json")"
     total=$((total + count))
-    echo "semgrep $component: $count findings"
-    summary "| $component | $count |"
+    errors=$((errors + error_count))
+    echo "semgrep $component: $count findings, $error_count of severity ERROR"
+    summary "| $component | $count | $error_count |"
   done
-  output findings "$total"
+  # `findings` is what the quality gate counts: Semgrep has no CVSS score, so severity ERROR
+  # stands for HIGH or CRITICAL (#36). The total is kept for the report.
+  output findings "$errors"
+  output findings_all "$total"
 }
 
 sca() {

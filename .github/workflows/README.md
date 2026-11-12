@@ -35,7 +35,7 @@ meta ─┬─ test-backend ──┐
 | `test-backend` | – | **real:** `make -C backend lint`, `make test-db` (throwaway PostgreSQL, real migrations) | #31 |
 | `test-frontend` | – | **real:** `npm ci --ignore-scripts`, lint, tests, build | #31 |
 | `sbom` | (a) | **real:** CycloneDX SBOM of `frontend/` and `backend/` (Syft), validated with the CycloneDX CLI, artifact `sbom`. SBOM per built image follows with #34/#35 | #32 |
-| `sast` | (b) | **real:** Semgrep (registry packs + `.semgrep/`), JSON and SARIF per component, artifact `sast`; SARIF to code scanning if `CODE_SCANNING=true` | #33 |
+| `sast` | (b) | **real:** Semgrep (registry packs + `.semgrep/`), JSON and SARIF per component, artifact `sast` | #33 |
 | `sca` | (b) | **real:** Trivy on the lockfiles (`package-lock.json`, `uv.lock`), full report, the gate counts HIGH and CRITICAL, artifact `sca`. `trivy image` follows with #34 | #33 |
 | `secrets` | (b) | **real:** Gitleaks over the full history with `.gitleaks.toml`, values redacted, artifact `secrets` | #33 |
 | `build` | (c) | stub, matrix `frontend` / `backend` | #34 |
@@ -62,7 +62,7 @@ A failed job stops everything behind it through `needs:`. Only `evidence` uses `
 | Kind | Tool | Files in `reports/` | Job output |
 | :--- | :--- | :--- | :--- |
 | `sbom` | Syft 1.57.1, CycloneDX CLI 0.33.1 | `sbom/sbom-<component>-<version>-<shortsha>.cdx.json` | `components` |
-| `sast` | Semgrep 1.185.0 | `sast/semgrep-<component>.json`, `.sarif` | `findings` |
+| `sast` | Semgrep 1.185.0 | `sast/semgrep-<component>.json`, `.sarif` | `findings` (severity ERROR, what the gate counts), `findings_all` |
 | `sca` | Trivy 0.76.2 | `sca/trivy-fs-<component>.json`, `.sarif` | `findings` (HIGH + CRITICAL) |
 | `secrets` | Gitleaks 8.30.1 | `secrets/gitleaks.json`, `.sarif` | `findings` |
 
@@ -89,7 +89,6 @@ make lint-actions    # check-pinning + actionlint + zizmor (needs Docker; tool i
 | `actions/setup-python` | v7.1.0 | `6d4fd22b20465ccc0f7354476588e8df7c9ca0e0` |
 | `astral-sh/setup-uv` | v10.3.3 | `68559e99cc807c1eb7e9238fd43a15bba460eec2` |
 | `actions/upload-artifact` | v7.0.2 | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` |
-| `github/codeql-action/upload-sarif` | v4.39.3 | `33d7b85da1a04171e211befe2c739303b9a4c066` |
 
 Updates come as Dependabot pull requests (#46), which keep the SHA and the comment together.
 

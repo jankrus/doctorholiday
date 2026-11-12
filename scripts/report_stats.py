@@ -2,7 +2,8 @@
 """Count findings in the scan reports of scripts/scan.sh (issues #32, #33).
 
     report_stats.py sbom <file>          validates a CycloneDX SBOM, prints the number of components
-    report_stats.py semgrep <file>       prints the number of Semgrep results
+    report_stats.py semgrep <file>       prints the number of Semgrep results (every severity)
+    report_stats.py semgrep-error <file> prints the number of Semgrep results of severity ERROR
     report_stats.py trivy <file>         prints the number of HIGH or CRITICAL vulnerabilities
     report_stats.py trivy-all <file>     prints the number of vulnerabilities of every severity
     report_stats.py gitleaks <file>      prints the number of leaks
@@ -46,11 +47,17 @@ def count_sbom(path: str) -> int:
     return len(components)
 
 
-def count_semgrep(path: str) -> int:
+def semgrep_results(path: str) -> list[dict]:
     data = load(path)
     if not isinstance(data, dict) or "results" not in data:
         fail(f"{path} is not a Semgrep report")
-    return len(data["results"])
+    return data["results"]
+
+
+def count_semgrep_errors(path: str) -> int:
+    # Semgrep has no CVSS score. For the quality gate (#36) its severity ERROR counts as HIGH or
+    # CRITICAL; WARNING and INFO findings (and the MEDIUM hygiene hints) are reported only.
+    return sum(1 for r in semgrep_results(path) if r.get("extra", {}).get("severity") == "ERROR")
 
 
 def trivy_vulnerabilities(path: str) -> list[dict]:
@@ -78,7 +85,9 @@ def main(argv: list[str]) -> None:
     if kind == "sbom":
         print(count_sbom(path))
     elif kind == "semgrep":
-        print(count_semgrep(path))
+        print(len(semgrep_results(path)))
+    elif kind == "semgrep-error":
+        print(count_semgrep_errors(path))
     elif kind == "trivy":
         print(sum(1 for v in trivy_vulnerabilities(path) if v.get("Severity") in GATE_SEVERITIES))
     elif kind == "trivy-all":

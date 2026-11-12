@@ -230,14 +230,14 @@ jobs:
 
   sast:
     name: scan (SAST)
-    needs: [context, sbom]
+    needs: sbom
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: read
-      security-events: write  # SARIF upload to code scanning, only when the repository has it (#33)
     outputs:
-      findings: ${{ steps.semgrep.outputs.findings }}
+      findings: ${{ steps.semgrep.outputs.findings }} # severity ERROR, counted by the quality gate (#36)
+      findings_all: ${{ steps.semgrep.outputs.findings_all }}
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -257,23 +257,6 @@ jobs:
           path: reports/sast/
           if-no-files-found: error
           retention-days: 90
-
-      # Code scanning needs GitHub Code Security, which a private repository on a personal plan
-      # does not have. Set the repository variable CODE_SCANNING to "true" when it is available
-      # (public repository or an upgraded plan). Until then the SARIF files stay in the artifact.
-      - name: Upload the frontend SARIF to code scanning
-        if: ${{ !cancelled() && needs.context.outputs.release == 'true' && vars.CODE_SCANNING == 'true' }}
-        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
-        with:
-          sarif_file: reports/sast/semgrep-frontend.sarif
-          category: semgrep-frontend
-
-      - name: Upload the backend SARIF to code scanning
-        if: ${{ !cancelled() && needs.context.outputs.release == 'true' && vars.CODE_SCANNING == 'true' }}
-        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
-        with:
-          sarif_file: reports/sast/semgrep-backend.sarif
-          category: semgrep-backend
 
   sca:
     name: scan (SCA)
