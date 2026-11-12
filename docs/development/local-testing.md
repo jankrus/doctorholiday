@@ -20,12 +20,13 @@ Contents: [1. Requirements](#1-requirements) · [2. One-time setup](#2-one-time-
 | Docker with Compose v2 (Docker Desktop, OrbStack, or Docker Engine) | running | `docker compose version` |
 | GNU make | 3.81+ | `make --version` |
 | [uv](https://docs.astral.sh/uv/) | 0.12.23 to < 0.13 (`backend/pyproject.toml`) | `uv --version` |
-| Node.js | 22.13+ (`frontend/.nvmrc`) | `node --version` |
+| Node.js | 22.13+ (`engines` in `frontend/package.json`; `frontend/.nvmrc`) | `node --version` |
 | openssl, curl | any | `openssl version`, `curl --version` |
 
 uv installs Python 3.12 by itself. Supported systems: **macOS** and **Linux**. On **Windows**, use WSL 2: clone the
 repository inside the WSL file system (not under `/mnt/c`), enable Docker Desktop's WSL integration and run every
-command in the WSL shell; the Makefile and scripts need a POSIX shell.
+command in the WSL shell; the Makefile and scripts need a POSIX shell. Git Bash and PowerShell do not work: among
+other things, the generated secrets in `.secrets/` get CRLF line endings and the database passwords stop matching.
 
 ## 2. One-time setup
 

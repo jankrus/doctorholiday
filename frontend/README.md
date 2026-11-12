@@ -6,7 +6,8 @@ Libraries and versions: [ADR-001](../docs/architecture/adr/ADR-001-tech-stack.md
 
 ## Setup
 
-Requires Node.js 22.13+ (`.nvmrc`). Install exactly what the lockfile pins:
+Requires Node.js 22.13+ (`engines` in `package.json`; `.nvmrc` selects it for nvm). Install exactly what the
+lockfile pins:
 
 ```sh
 npm ci
