@@ -19,9 +19,7 @@ export interface paths {
          *     is already taken, so the endpoint cannot be used to enumerate accounts (BR-02).
          *     Every request counts against a limit per client IP (default 10 within 60 minutes);
          *     reaching it locks the IP for 60 minutes with `429 RATE_LIMITED` (BR-03).
-         *
-         *     **MVP-TEMP:** the optional `role` creates accounts of every role until invitations
-         *     (FR-02) and the first-admin bootstrap (#15) exist. It will be removed again.
+         *     A `role` field is rejected with `422 VALIDATION_ERROR`, like any unknown field.
          */
         post: operations["register"];
         delete?: never;
@@ -267,8 +265,10 @@ export interface paths {
         /**
          * List available appointment times
          * @description Computed from working hours minus absences minus booked appointments (BR-23); nothing is
-         *     stored. `from` and `to` are required and span at most 31 days. Sorted ascending by start,
-         *     then by doctor (BR-20).
+         *     stored. `from` and `to` are required, `to` is after `from` and at most 31 days later
+         *     (`422` otherwise); they bound the start. Only future starts at most 365 days ahead. An
+         *     unknown or inactive `doctorId` yields an empty page. Sorted ascending by start, then by
+         *     doctor name (BR-20).
          */
         get: operations["listAvailability"];
         put?: never;
@@ -290,9 +290,12 @@ export interface paths {
         put?: never;
         /**
          * Block a time range of a doctor
-         * @description `DOCTOR` blocks only their own time (`doctorId` omitted or own ID); `STAFF` and `ADMIN`
-         *     must name an active doctor. Rejected while booked appointments fall into the range
-         *     (`409 ABSENCE_HAS_APPOINTMENTS`, BR-12).
+         * @description `DOCTOR` blocks only their own time (`doctorId` omitted or own ID, another ID `404`);
+         *     `STAFF` and `ADMIN` must name an active doctor (omitted `422`, unknown `404`). Both times
+         *     on full minutes, `endsAt` after `startsAt`, at most 90 days long, `endsAt` in the future
+         *     and `startsAt` at most 365 days ahead (`422` otherwise). At most 100 absences per doctor
+         *     that have not ended (`409 CONFLICT`). Rejected while booked appointments fall into the
+         *     range (`409 ABSENCE_HAS_APPOINTMENTS`, BR-12).
          */
         post: operations["createAbsence"];
         delete?: never;
@@ -340,9 +343,12 @@ export interface paths {
          * @description A `PATIENT` books for themselves and sends neither `patientEmail` nor `guest` (otherwise
          *     `403`). `STAFF` sends exactly one of them (both or none: `422`): `patientEmail` of an active
          *     patient (otherwise `404`), or `guest` for a person without an account (BR-09, BR-24).
-         *     `startsAt` must be an available
-         *     time of the doctor (BR-23). The booking is atomic; booked appointments of one doctor never
-         *     overlap, and a patient has at most five open appointments.
+         *     `startsAt` must be a start time the doctor offers
+         *     (BR-23): in the working hours, on a step of `appointmentMinutes`, outside absences, in the
+         *     future and at most 365 days ahead (`409 TIME_NOT_AVAILABLE`). An overlap with another
+         *     booked appointment is `409 TIME_ALREADY_BOOKED`, also for concurrent bookings (atomic,
+         *     exclusion constraint). An unknown or inactive doctor returns `404`. A patient or guest
+         *     phone has at most five open appointments (`409 APPOINTMENT_LIMIT_REACHED`).
          */
         post: operations["bookAppointment"];
         delete?: never;
@@ -407,7 +413,9 @@ export interface paths {
          * @description A30. Moves a booked appointment to another available time in one transaction; ID, patient
          *     and reason stay the same and the old time becomes available (BR-22). `PATIENT` only for own
          *     appointments (others return `404`) and until the cancellation deadline; `STAFF` and
-         *     `DOCTOR` until the start.
+         *     `DOCTOR` until the start. The new time follows the rules of a booking (`409
+         *     TIME_NOT_AVAILABLE`, `409 TIME_ALREADY_BOOKED`); the appointment's own old time does not
+         *     block it. An unknown or inactive new doctor returns `404`.
          */
         post: operations["rescheduleAppointment"];
         delete?: never;
@@ -468,7 +476,10 @@ export interface paths {
         /**
          * Replace a doctor's weekly working hours
          * @description Replaces the whole weekly schedule in one transaction (BR-08). Booked appointments are not
-         *     changed. A `DOCTOR` may only set their own hours; other IDs return `404`.
+         *     changed. Entries of one weekday must not overlap (`409 WORKING_HOURS_OVERLAP`); touching
+         *     entries are fine. More than 5 entries per weekday or an `endTime` not after `startTime`
+         *     return `422`. The doctor must be an active `DOCTOR` (`404` otherwise). A `DOCTOR` may only
+         *     set their own hours; other IDs return `404`.
          */
         put: operations["setWorkingHours"];
         post?: never;
@@ -806,13 +817,6 @@ export interface components {
             email: components["schemas"]["Email"];
             password: components["schemas"]["NewPassword"];
             displayName?: components["schemas"]["DisplayName"];
-            /**
-             * @description **MVP-TEMP**, will be removed: role of the new account, default `PATIENT`. Deviates
-             *     from BR-02 (registration always creates a `PATIENT`) so the MVP can be tested with
-             *     every role before invitations and the admin bootstrap exist.
-             * @default PATIENT
-             */
-            role: components["schemas"]["Role"];
         };
         InvitationAcceptRequest: {
             token: components["schemas"]["InvitationToken"];

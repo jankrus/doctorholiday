@@ -17,6 +17,8 @@ Dependencies, the virtualenv and the Python version are managed with **[uv](http
 
 ## Setup
 
+To run database, backend and frontend together and test by hand, follow [docs/development/local-testing.md](../docs/development/local-testing.md); it includes a snippet that fills in `.env`. The steps for the backend alone:
+
 1. Install uv in the version range from `[tool.uv] required-version` in `pyproject.toml` (currently 0.12.x):
    ```sh
    brew install uv                                     # macOS
@@ -54,6 +56,7 @@ Run from `backend/`; `make help` lists all targets. From the repo root, `make te
 | Lint + format check | `make lint` | `uv run --locked ruff check . && uv run --locked ruff format --check .` |
 | Auto-fix + format | `make format` | `uv run ruff check --fix . && uv run ruff format .` |
 | Run the API | `make run` | `uv run --locked --env-file .env python -m doctorholiday` |
+| Erase expired guest data (daily job, BR-24) | `make cleanup-guests` | `uv run --locked --env-file .env python -m doctorholiday.jobs.guest_cleanup` |
 
 ## Changing dependencies
 
@@ -102,12 +105,20 @@ src/doctorholiday/
   middleware.py   request ID (X-Request-Id), access log, generic 500, body size and JSON checks
   db.py           SQLAlchemy engine, per-request transaction (DbSession), readiness check
   models.py       ORM models mirroring the migrated schema, enums
+  scheduling.py   available times from working hours, absences and bookings (BR-23), no DB access
   repositories/   data access layer: the only code that builds queries
   auth/           passwords (Argon2id), session tokens and cookie, CurrentSession/ActiveUser,
-                  rate limiting (rate_limiting.py)
+                  require_roles (RBAC per route), rate limiting (rate_limiting.py)
+  api/common.py   client IP, pagination, UTC timestamps, camelCase request/response base models
+  api/responses.py  response bodies shared by the routers (DoctorRef, Appointment, ...)
   api/health.py   GET /healthz, GET /readyz
   api/auth.py     POST /api/v1/auth/register, /login, /logout, GET /api/v1/auth/me
+  api/directory.py  GET /api/v1/doctors, GET /api/v1/settings
+  api/schedule.py   working hours, absences, doctor schedule, availability
+  api/appointments.py  book, cancel, reschedule, own and all appointments
+  jobs/           one-off commands run on a schedule (guest_cleanup.py)
 tests/            pytest; tests/db/ needs a database (`make test-db`)
+  contract.py     checks responses against openapi.yaml (see Contract tests)
 ```
 
 Conventions for new code:
@@ -131,12 +142,13 @@ Conventions for new code:
   Responses never contain the submitted values, parser messages, the framework's `detail`, stack traces or file paths; the validation log has field locations and error types only. The `500` is answered in `RequestContextMiddleware`, not by an exception handler, because Starlette runs those outside every middleware, so the response would lack `X-Request-Id`. New error codes go into `ErrorCode` in `openapi.yaml` first; `tests/test_errors.py` fails otherwise.
 - **Validation** (#13, SR-03): request bodies subclass `RequestModel` (`extra="forbid"`) and use the field types in `validation.py` (`Email`, `Password`, `NewPassword`, `DisplayName`) or give every string and every list a `max_length`. Query parameters a route does not declare are rejected. `tests/test_validation.py` fails for any route whose body, path, query, header or cookie parameters are unbounded or whose body is not a `RequestModel`, and for any endpoint that reads the raw body (`request.json()` etc.). E-mail addresses are trimmed and lowercased, display names trimmed; passwords are never changed.
 - **No API docs at runtime:** `/docs`, `/redoc` and `/openapi.json` are disabled; the contract is `openapi.yaml`.
+- **Authorisation:** an endpoint takes `user: Annotated[User, Depends(require_roles(...))]` with the roles of its `x-roles`; other roles get `403 FORBIDDEN`. Object-level checks ("own only") are done in the endpoint against the session's user, and a foreign object answers `404` like an unknown one. The central, default-deny rule table is #16.
+- **Responses** with camelCase fields subclass `ResponseModel` (`api/common.py`) and are built by field name; timestamps are `UtcDatetime`, so they are UTC with `Z` whatever the database session's time zone is. Optional fields are left out of the JSON with `response_model_exclude_none=True`.
 
 ## Authentication
 
-MVP subset of #14: register, login, logout and `/me` with a server-side session (ADR-001, BR-01 to BR-05), and login rate limiting with temporary lockout. Still missing: MFA, the first-admin bootstrap (#15), CSRF protection, invitations, rate limiting of the other endpoints BR-03 names (registration etc.). Temporary shortcuts are marked `MVP-TEMP` in the code and in `openapi.yaml`:
+MVP subset of #14: register, login, logout and `/me` with a server-side session (ADR-001, BR-01 to BR-05), and login rate limiting with temporary lockout. The first-admin bootstrap (#15) is in place. Still missing: MFA, CSRF protection, invitations, rate limiting of the other endpoints BR-03 names (registration etc.). Temporary shortcuts are marked `MVP-TEMP` in the code and in `openapi.yaml`:
 
-- `RegisterRequest` takes an optional `role` (default `PATIENT`), so every role can be tested before invitations and the bootstrap exist.
 - Every session is `ACTIVE`; there is no MFA step yet.
 - `GET /auth/me` never returns `setupRequired`, because `PUT /api/v1/settings` does not exist yet.
 
@@ -151,10 +163,40 @@ How it works:
   - **Login:** failed logins are counted per e-mail address and per client IP (IPv6: per /64). 5 failures per e-mail or 20 per IP within 15 minutes lock that key for 15 minutes; meanwhile every login with it answers `429 RATE_LIMITED` with `Retry-After`, without checking the password, so not even the right one gets through. The IP limit is higher because a practice or household shares one IP behind NAT. Every failure cause counts (unknown e-mail, wrong password, deactivated account), and unknown e-mails get a counter too, so a lockout reveals no accounts. A successful login resets the e-mail counter, never the IP counter, so a known account cannot reset the IP limit between guesses. Trade-off: anyone can lock an account for 15 minutes with 5 wrong passwords; the values are configurable (see [Configuration](#configuration)).
   - **Registration:** every request counts per client IP, whatever the e-mail, so the limit reveals no accounts either: 10 within 60 minutes, then the IP is locked for 60 minutes. A locked request is answered before the password is hashed, so a flood costs no Argon2id time.
   - **Still to come** with their endpoints (scopes already in the schema, limits in BR-03): MFA verification (#76, with #21), invitation acceptance (#77, with #55), password reset (#78, with #61), re-authentication for password change and account deletion (#79, with #66 and #18).
+- **Registration** always creates a `PATIENT` (BR-02); a `role` field is rejected with `422 VALIDATION_ERROR` like any unknown field. Until invitations (FR-02) exist, `STAFF` and `DOCTOR` test accounts come only from the [seed data](#seed-data).
+- **First-admin bootstrap** (exam brief §4, BR-04; `repositories/admin_bootstrap.py`): the first login that passes every check (rate limit, password, active account) while `admin_bootstrap` says no admin exists promotes that account to `ADMIN`, in the login transaction and before the session is created, so the login response and `/me` already show the new role. The row is locked with `SELECT … FOR UPDATE`, so of parallel first logins exactly one is promoted; once it is set, logins only read it. A failed, inactive or rate-limited login never bootstraps. A database reset re-arms it. Still missing: the new admin's MFA enrolment before anything else (#21).
 - **Who is calling:** `CurrentSession` (any session state, for `/me` and `/logout`) and `ActiveUser` (`ACTIVE` sessions only, else `403 MFA_REQUIRED`) in `auth/dependencies.py` resolve cookie → hash → session → active user and answer `401 UNAUTHENTICATED` otherwise. New endpoints that need a login take `user: ActiveUser`. A deactivated user's sessions stop working immediately.
-- **Audit:** `USER_REGISTERED`, `LOGIN` (`SUCCESS`/`FAILURE` with `details.reason`), `LOGOUT`, with the user as target and the client IP; never an e-mail address. A rate-limited request is audited as `LOGIN` or `USER_REGISTERED` `FAILURE` with `reason: RATE_LIMITED`; the start of a lockout is logged as a warning. The IP is the direct peer; behind ingress-nginx that is the proxy until forwarded headers are handled (#75), and until then all clients share one IP counter.
+- **Audit:** `USER_REGISTERED`, `LOGIN` (`SUCCESS`/`FAILURE` with `details.reason`), `LOGOUT`, `ADMIN_BOOTSTRAPPED` (the promoted account as actor and target), with the user as target and the client IP; never an e-mail address. A rate-limited request is audited as `LOGIN` or `USER_REGISTERED` `FAILURE` with `reason: RATE_LIMITED`; the start of a lockout is logged as a warning. The IP is the direct peer; behind ingress-nginx that is the proxy until forwarded headers are handled (#75), and until then all clients share one IP counter.
 - Responses with session data send `Cache-Control: no-store`.
 - E-mail addresses are validated with `email-validator`, which rejects special-use domains such as `.test` or `.localhost`; use e.g. `@example.com` for test accounts.
+
+## Schedule and appointments
+
+The schedule, availability and appointment API of #17 (`api/schedule.py`, `api/appointments.py`, `api/directory.py`), as specified in `openapi.yaml` and BR-08 to BR-12, BR-22 to BR-24 of [requirements.md](../docs/architecture/requirements.md).
+
+| Operation | Roles (`x-roles`) | Own only |
+| :--- | :--- | :--- |
+| `GET /doctors`, `GET /settings`, `GET /availability` | all four | – |
+| `PUT /doctors/{id}/working-hours`, `GET /doctors/{id}/schedule`, `POST /absences`, `DELETE /absences/{id}` | `STAFF`, `DOCTOR`, `ADMIN` | `DOCTOR`: only their own ID, else `404` |
+| `POST /appointments` | `PATIENT`, `STAFF` | `PATIENT` books for themselves only (`403` if naming anyone) |
+| `GET /appointments/me` | `PATIENT` | always the session's user |
+| `GET /appointments` | `STAFF`, `DOCTOR`, `ADMIN` (TBAC grant) | – |
+| `POST /appointments/{id}/cancel` | all four, `ADMIN` with TBAC grant | `PATIENT`: only `patient_id == user.id`, else `404` |
+| `POST /appointments/{id}/reschedule` | `PATIENT`, `STAFF`, `DOCTOR` | as cancel |
+
+- **Availability is computed, never stored** (`scheduling.py`, BR-23). Working hours are local times in `Europe/Berlin` and converted to UTC per date, so DST changes are handled; each entry is cut into steps of `appointmentMinutes` (shorter remainders dropped); a start is available if it is in the future, at most 365 days ahead and overlaps neither an absence nor a booked appointment. `from`/`to` are required and at most 31 days apart (`422`).
+- **Booking and rescheduling** accept only an offered start time (`409 TIME_NOT_AVAILABLE`: outside the working hours, not on a step, absent, past or too far ahead). An overlap with another booked appointment is left to the exclusion constraint, which answers `409 TIME_ALREADY_BOOKED`, for concurrent requests too: of two simultaneous bookings of one time exactly one gets `201`. The server sets `endsAt = startsAt + appointmentMinutes`.
+- **Limits** are checked in the transaction of the write, under a lock: 5 open (booked, not started) appointments per patient or guest phone (`409 APPOINTMENT_LIMIT_REACHED`), 100 absences per doctor that have not ended (`409 CONFLICT`), 5 working-hours entries per weekday (`422`). Absences are rejected while booked appointments fall into them (`409 ABSENCE_HAS_APPOINTMENTS`).
+- **Lock order** (no deadlocks): the patient's `users` row or, for guests, a transaction advisory lock on the phone number; then the appointment (`FOR UPDATE`); then the doctor's `users` row. Absences and working hours lock only the doctor. Availability checks run after the doctor's lock, so a concurrent absence is either seen or waits.
+- **Cancellation and rescheduling** (BR-11, BR-22) only for booked appointments that have not started (`409 APPOINTMENT_NOT_CANCELLABLE` / `APPOINTMENT_NOT_RESCHEDULABLE`); a `PATIENT` only until `cancellationDeadlineHours` before the start (`409 CANCELLATION_DEADLINE_PASSED`), the practice until the start. Rescheduling keeps ID, patient and reason; if the new time is taken, nothing changes.
+- **Data minimisation:** a `PATIENT` never gets `patient` or `guest` in a response. The practice sees the patient (`deleted: true` without e-mail and name after an account deletion) or the guest until its data is erased. `reason` is an enum, no free text (BR-10).
+- **TBAC** (BR-17): `ADMIN` reaches appointment data (A10, A12) only with an active grant in `admin_access_grants`, else `403 ACCESS_GRANT_REQUIRED`; each access is audited as `APPOINTMENT_DATA_ACCESSED` with the grant ID. Creating grants (A19) comes with #55, so until then an admin cannot list or cancel appointments.
+- **Audit:** `WORKING_HOURS_CHANGED` (target the doctor, `details.entries`), `ABSENCE_CREATED`, `ABSENCE_DELETED`, `APPOINTMENT_BOOKED`, `APPOINTMENT_CANCELLED`, `APPOINTMENT_RESCHEDULED` (`details`: old and new start, old and new doctor if changed). Targets are IDs only; guest name and phone never reach the audit log or the logs (BR-19, BR-24). Denials (`ACCESS_DENIED`) are not audited yet, because raising rolls back the request transaction (#16, #20).
+- **Guest data cleanup** (BR-24): `python -m doctorholiday.jobs.guest_cleanup` (`make cleanup-guests`) erases guest name and phone 30 days after the appointment ended or was cancelled and sets `guest_erased_at`. It is idempotent, uses the backend's database role and reads only `DATABASE_URL` and `LOG_LEVEL` (no other secrets, AGENTS.md rule 6). It must run once a day: locally by hand or cron, in the cluster as a Kubernetes CronJob with the backend image (with the workloads, #38).
+
+### Contract tests
+
+`tests/contract.py` checks every response the database tests receive (`client_as` fixture, and the auth tests) against `openapi.yaml`: the status must be declared for the operation (or apply to every path), the body must match the schema, a declared `Cache-Control: no-store` must be sent. Response objects are treated as closed (`unevaluatedProperties: false`), so a field the contract does not declare, e.g. guest data in a patient's view, fails the test, and timestamps must be UTC with `Z`. `tests/test_contract.py` checks that every route is an operation of the contract with the same `operationId`, request body fields and query parameters. `tests/db/test_permissions.py` generates the role × endpoint matrix of the operations above from `x-roles`.
 
 ## Database
 
@@ -165,7 +207,7 @@ PostgreSQL 16 schema as defined in [docs/architecture/database.md](../docs/archi
 - **The migrations own the schema.** `models.py` mirrors the tables for SQLAlchemy and is never used to create or alter them. A new column needs a migration *and* the model change; `tests/db/test_schema.py` fails if the two drift apart (columns, nullability, defaults, foreign keys).
 - **One transaction per request.** An endpoint that needs the database takes `session: DbSession`. The transaction is committed when the endpoint returns and rolled back on any exception; repositories never commit. The commit runs before the response is sent (`Depends(..., scope="function")`), so a failed commit is never answered with a success status.
 - **Queries only in `repositories/`**, built with SQLAlchemy (bound parameters, AGENTS.md rule 4). No `text()` with values spliced in, no f-strings with SQL. `make sast-sql` (repo root) checks `src/` for SQL built from strings with the project's Semgrep rule (`.semgrep/raw-sql.yml`); ruff's `S608` checks the same while linting.
-- **The database is the final guard for conflicts.** Overlapping bookings (`appointments_no_overlap`) and duplicate e-mails (`users_email_key`) are rejected by constraints, also for concurrent requests. Repositories run such inserts in a SAVEPOINT and raise a `DataConflictError` subclass (`TimeAlreadyBookedError`, `EmailAlreadyRegisteredError`), which the API maps to 409. A check before the insert is for user feedback only. `book_appointment` first locks the doctor's `users` row (`FOR NO KEY UPDATE`, until the transaction ends), so bookings of one doctor run one after the other: without it, concurrent conflicting inserts wait for each other's uncommitted rows and PostgreSQL aborts one with a deadlock error instead of the constraint violation. Repositories for the other exclusion constraints (`working_hours`, `admin_access_grants`) need the same per-owner lock.
+- **The database is the final guard for conflicts.** Overlapping bookings (`appointments_no_overlap`) and duplicate e-mails (`users_email_key`) are rejected by constraints, also for concurrent requests. Repositories run such inserts in a SAVEPOINT and raise a `DataConflictError` subclass (`TimeAlreadyBookedError`, `EmailAlreadyRegisteredError`), which the API maps to 409. A check before the insert is for user feedback only. Writes that depend on a doctor's schedule or bookings first lock the doctor's `users` row (`users.get_active_doctor(lock=True)`, `FOR NO KEY UPDATE` until the transaction ends), so they run one after the other per doctor: without it, concurrent conflicting inserts wait for each other's uncommitted rows and PostgreSQL aborts one with a deadlock error instead of the constraint violation (#74). The lock order is fixed, see [Schedule and appointments](#schedule-and-appointments). The repository for the TBAC grants (`admin_access_grants`, #55) needs the same per-owner lock.
 - **Database errors carry personal data.** The message and `DETAIL` of an `IntegrityError` contain the offending values (e.g. an e-mail address or the whole row). Never return them, and never log `str(exc)`; log the constraint name (`db.violated_constraint`) instead (rule 3, #13).
 - **No ORM relationships.** Every read is an explicit query and nothing loads lazily; in particular no attribute leads from a `User` to its `Credential`, which only the auth module reads.
 
@@ -197,7 +239,7 @@ The container (`compose.yaml`) runs `postgres:16-alpine`, pinned by digest, as U
 make -C backend seed   # after make db-up; needs SEED_DEV_DATA=true and SEED_PASSWORD in backend/.env
 ```
 
-For local development only (#12). Creates `dev-admin@example.com`, `dev-staff@example.com`, `dev-doctor-1@example.com`, `dev-doctor-2@example.com`, `dev-patient-1@example.com` and `dev-patient-2@example.com`, all with the password from `SEED_PASSWORD`. The doctors get working hours Monday to Friday 08:00-12:00 and 14:00-17:00, and each patient one booked appointment next week. The seeded admin is recorded in `admin_bootstrap`, so the first-login bootstrap (#15) promotes no one else; the practice setup stays pending.
+For local development only (#12). Creates `dev-admin@example.com`, `dev-staff@example.com`, `dev-doctor-1@example.com`, `dev-doctor-2@example.com`, `dev-patient-1@example.com` and `dev-patient-2@example.com`, all with the password from `SEED_PASSWORD`. The doctors get working hours Monday to Friday 08:00-12:00 and 14:00-17:00, and each patient one booked appointment next week. The seeded admin is recorded in `admin_bootstrap`, so the first-login bootstrap (#15) promotes no one else; the practice setup stays pending. Until invitations (FR-02) exist, this is the only way to get `STAFF` and `DOCTOR` accounts: registration always creates a `PATIENT`.
 
 Guards (`doctorholiday/seed.py`): it is a one-off command, never part of the app's startup; it refuses to run unless `SEED_DEV_DATA=true` and `DATABASE_URL` points at `localhost`, `127.0.0.1` or `::1`, so it cannot run against the cluster database; `SEED_PASSWORD` must pass the registration policy (BR-01) and is never printed. Seeding twice changes nothing. To start over: `make db-reset` (repo root), then seed again.
 

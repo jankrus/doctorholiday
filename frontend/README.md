@@ -6,7 +6,8 @@ Libraries and versions: [ADR-001](../docs/architecture/adr/ADR-001-tech-stack.md
 
 ## Setup
 
-Requires Node.js 22.13+ (`.nvmrc`). Install exactly what the lockfile pins:
+Requires Node.js 22.13+ (`engines` in `package.json`; `.nvmrc` selects it for nvm). Install exactly what the
+lockfile pins:
 
 ```sh
 npm ci
@@ -62,7 +63,8 @@ Set `API_PROXY_TARGET` to forward `/api` to a running backend instead of the moc
 API_PROXY_TARGET=http://localhost:8080 npm run dev
 ```
 
-Either way the frontend only calls its own origin, so no CORS is needed.
+Either way the frontend only calls its own origin, so no CORS is needed. The whole local stack, manual test
+scenarios and troubleshooting: [docs/development/local-testing.md](../docs/development/local-testing.md).
 
 ## Structure
 

@@ -110,7 +110,7 @@ flowchart TD
     AD --> M[MFA enrolment required]
 ```
 
-- **Race condition:** Two simultaneous first logins must not both become `ADMIN`. The bootstrap state lives in a single-row table (`admin_bootstrapped`). The login locks this row with `SELECT … FOR UPDATE`, checks the state, promotes the account and sets the state in the same transaction. A concurrent login waits for the lock, sees the updated state after the commit and keeps its role.
+- **Race condition:** Two simultaneous first logins must not both become `ADMIN`. The bootstrap state lives in a single-row table (`admin_bootstrap`). The login locks this row with `SELECT … FOR UPDATE`, checks the state, promotes the account and sets the state in the same transaction. A concurrent login waits for the lock, sees the updated state after the commit and keeps its role. Once the state is set, logins skip the lock: the state never goes back to "no admin" in the app, so an unlocked read is enough and later logins do not queue behind this one row.
 - **MFA:** The new admin falls under the [MFA requirement](#mfa-requirement) at once: until MFA is enrolled and verified, the session may only verify MFA, enrol MFA, log out and read its session state.
 - **Audit:** The promotion produces an audit event (`ADMIN_BOOTSTRAPPED`) with account and timestamp, so an unexpected admin is visible in the audit log.
 - **Practice setup:** After the bootstrap (and MFA enrolment) the new admin is forwarded to a setup page to save the practice settings (name, cancellation deadline, appointment length) for the first time ([BR-18](requirements.md#business-rules)). This is a UX step only; it grants no rights beyond the `ADMIN` role.

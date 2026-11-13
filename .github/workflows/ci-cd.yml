@@ -1,0 +1,342 @@
+# CI/CD pipeline skeleton (issue #31). Brief §3: every change to main triggers
+#   (a) SBOM, (b) SAST + SCA + secret scan, (c) build + container build, (d) image signing,
+#   (e) quality gate, then deployment to Kubernetes via the container registry (GHCR).
+#
+# Job graph (an arrow is a `needs:`; a failed job stops everything behind it):
+#
+#   context ─────────────────────────────────────────────┐  (is this a release run? see below)
+#   meta ─┬─ test-backend ──┐                            │
+#         ├─ test-frontend ─┤                            ▼
+#         └─ sbom ─┬─ sast ─┤
+#                  ├─ sca ──┼─ build (frontend, backend) ─ sign ─ quality-gate ─ deploy ─ evidence
+#                  └─ secrets ┘
+#
+# A *release run* is a push to main or a manual run on main (`context` job, output `release`).
+# Build, sign, gate, deploy and evidence run only then: no signing, no registry write and no
+# deployment from a pull request or from a manual run on another branch. One expression, one
+# place: every release job asks `needs.context.outputs.release == 'true'`.
+#
+# Pull requests and manual runs on other branches run meta, the tests, the SBOM and the scans.
+#
+# The stage jobs are stubs that name the issue that fills them in. Each stub already carries the
+# permissions its final version needs, so the least-privilege layout is reviewed once, here.
+#
+# Rules for every change to this file (SR-06, SR-07; checked by scripts/check-pinning.sh and
+# `make lint-actions`):
+#   - every third-party action is pinned by its full commit SHA, with the version in a comment;
+#   - `permissions` start at none; a job asks only for what it uses;
+#   - no untrusted input (branch name, PR title, ...) goes into a `run:` line; pass it via `env:`.
+
+name: ci-cd
+
+on:
+  push:
+    branches: [main]
+    # The evidence job commits reports back (#44); ignoring them avoids a loop. Nothing else is
+    # ignored, so every other change to main (also documentation) triggers a run (brief §3).
+    paths-ignore: ["evidence/**"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+# One group per commit, so every push to main gets its own run and its own evidence. (A group per
+# branch would keep only one running and one waiting run and cancel the older waiting one.) A newer
+# push to a pull request cancels the older scan of that pull request. Deployments are serialised
+# separately, by the concurrency of the deploy job.
+concurrency:
+  group: ci-cd-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # ---------------------------------------------------------------------------------------------
+  # context: is this a release run (push or manual run on main, never a pull request)? Computed
+  # once and reused by every job that builds, signs, deploys or writes evidence. No checkout, no
+  # permissions, nothing that can fail.
+  # ---------------------------------------------------------------------------------------------
+  context:
+    name: context
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions: {}
+    outputs:
+      release: ${{ steps.release.outputs.release }}
+    steps:
+      - name: Decide whether this is a release run
+        id: release
+        env:
+          EVENT: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          release=false
+          if [[ "$EVENT" != "pull_request" && "$REF" == "refs/heads/main" ]]; then
+            release=true
+          fi
+          echo "release=$release" >> "$GITHUB_OUTPUT"
+          echo "Release run: $release (event $EVENT, ref $REF)" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------------------------
+  # meta: pinning check and the version that every later job uses (VERSION.txt, brief §7a).
+  # ---------------------------------------------------------------------------------------------
+  meta:
+    name: meta
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      short_sha: ${{ steps.version.outputs.short_sha }}
+      tag_version: ${{ steps.version.outputs.tag_version }}
+      tag_sha: ${{ steps.version.outputs.tag_sha }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # SR-06: actions pinned by SHA, base images by digest. Fails on any mutable reference.
+      - name: Check that actions and images are pinned
+        run: scripts/check-pinning.sh
+
+      - name: Read the version
+        id: version
+        run: |
+          version="$(tr -d '[:space:]' < VERSION.txt)"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "VERSION.txt is not a SemVer version: '$version'" >&2
+            exit 1
+          fi
+          short_sha="${GITHUB_SHA::7}"
+          {
+            echo "version=$version"
+            echo "short_sha=$short_sha"
+            echo "tag_version=$version"
+            echo "tag_sha=$version-$short_sha"
+          } >> "$GITHUB_OUTPUT"
+          echo "Version $version, commit $short_sha" >> "$GITHUB_STEP_SUMMARY"
+
+  # ---------------------------------------------------------------------------------------------
+  # Unit tests and linters of both components (before anything is built).
+  # ---------------------------------------------------------------------------------------------
+  test-backend:
+    name: test (backend)
+    needs: meta
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version-file: backend/.python-version
+
+      # The version range is enforced by `required-version` in backend/pyproject.toml (ADR-002).
+      - name: Set up uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.12.24"
+          enable-cache: false
+
+      - name: Lint
+        run: make -C backend lint
+
+      # Throwaway PostgreSQL from compose.yaml with the real migrations, then the full suite.
+      - name: Test against PostgreSQL
+        run: make test-db
+
+  test-frontend:
+    name: test (frontend)
+    needs: meta
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    defaults:
+      run:
+        shell: bash
+        working-directory: frontend
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: frontend/.nvmrc
+
+      # Installs exactly package-lock.json; install scripts of dependencies do not run.
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  # ---------------------------------------------------------------------------------------------
+  # (a) SBOM, (b) scans. Stubs; the tools and reports follow in #32 and #33.
+  # ---------------------------------------------------------------------------------------------
+  sbom:
+    name: sbom
+    needs: meta
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: SBOM per image with Syft (CycloneDX)
+        run: 'echo "stub: SBOM generation is implemented in #32"'
+
+  sast:
+    name: scan (SAST)
+    needs: sbom
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: SAST with Semgrep
+        run: 'echo "stub: Semgrep is implemented in #33 (project rules in .semgrep/ already exist)"'
+
+  sca:
+    name: scan (SCA)
+    needs: sbom
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: SCA with Trivy
+        run: 'echo "stub: Trivy is implemented in #33"'
+
+  secrets:
+    name: scan (secrets)
+    needs: sbom
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Secret scan with Gitleaks
+        run: 'echo "stub: Gitleaks over the full history is implemented in #33"'
+
+  # ---------------------------------------------------------------------------------------------
+  # (c) Build and container build. Not on pull requests.
+  # ---------------------------------------------------------------------------------------------
+  build:
+    name: build (${{ matrix.image }})
+    needs: [context, meta, test-backend, test-frontend, sast, sca, secrets]
+    if: needs.context.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # packages: write is the only write permission of the image push (#34).
+    permissions:
+      contents: read
+      packages: write  # push the image to GHCR (#34)
+    strategy:
+      fail-fast: true
+      matrix:
+        image: [frontend, backend]
+    steps:
+      - name: Build and push the image
+        env:
+          IMAGE: ${{ matrix.image }}
+          TAG: ${{ needs.meta.outputs.tag_sha }}
+        run: 'echo "stub: build ghcr.io/jankrus/doctorholiday-$IMAGE:$TAG and push it in #34"'
+
+  # ---------------------------------------------------------------------------------------------
+  # (d) Image signing with cosign. Not on pull requests.
+  # ---------------------------------------------------------------------------------------------
+  sign:
+    name: sign (${{ matrix.image }})
+    needs: [context, meta, build]
+    if: needs.context.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # packages: write attaches signature and attestation to the image in GHCR (#35).
+    permissions:
+      contents: read
+      packages: write  # attach signature and attestation to the image (#35)
+    strategy:
+      fail-fast: true
+      matrix:
+        image: [frontend, backend]
+    steps:
+      - name: Sign the image digest with cosign
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: 'echo "stub: sign doctorholiday-$IMAGE by digest and attach the SBOM attestation in #35"'
+
+  # ---------------------------------------------------------------------------------------------
+  # (e) Quality gate (brief §3e): fails on a secret, on CVSS >= 7.0 and on a missing or invalid
+  # signature. Implemented in #36. The deploy job depends on it.
+  # ---------------------------------------------------------------------------------------------
+  quality-gate:
+    name: quality gate
+    needs: [context, meta, sast, sca, secrets, sign]
+    if: needs.context.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read  # pull the images to verify their signatures (#36)
+    steps:
+      - name: Evaluate the reports and verify the signatures
+        run: 'echo "stub: scripts/quality-gate.sh is implemented in #36"'
+
+  # ---------------------------------------------------------------------------------------------
+  # Deployment of the verified digests to a kind cluster (#43).
+  # ---------------------------------------------------------------------------------------------
+  deploy:
+    name: deploy
+    needs: [context, meta, quality-gate]
+    if: needs.context.outputs.release == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # One deployment at a time. A deploy that is still waiting is replaced by a newer one, which is
+    # fine: the newer commit contains the older one. Every run keeps its own evidence.
+    concurrency:
+      group: deploy
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: read  # pull the verified images (#43)
+    steps:
+      - name: Deploy to kind
+        run: 'echo "stub: verify again, create the kind cluster and apply the manifests in #43"'
+
+  # ---------------------------------------------------------------------------------------------
+  # Evidence of every run (#44): run log, SAST, SBOM, SCA, secrets and signing reports.
+  # Runs also when an earlier job failed (even `meta`), because a blocked run is evidence too, but
+  # not when the run was cancelled by hand. Committing to main needs a way around the branch
+  # ruleset (evidence branch or app token), decided in #44.
+  # ---------------------------------------------------------------------------------------------
+  evidence:
+    name: evidence
+    needs: [context, meta, sbom, sast, sca, secrets, build, sign, quality-gate, deploy]
+    if: ${{ !cancelled() && needs.context.outputs.release == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write  # commit the evidence reports (#44)
+    steps:
+      - name: Collect and commit the reports
+        run: 'echo "stub: collect the reports into evidence/<image>/ and commit them in #44"'

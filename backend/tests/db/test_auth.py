@@ -1,4 +1,5 @@
-"""Register, login, logout, /me and login rate limiting against a real database (#14).
+"""Register, login, logout, /me, login rate limiting (#14) and the first-admin bootstrap (#15)
+against a real database.
 
 The app commits for real; every test uses its own e-mail addresses, and the database is thrown
 away after `make test-db`.
@@ -13,7 +14,7 @@ import uuid
 from collections.abc import Callable, Iterator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import ExitStack
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import pytest
 from fastapi import FastAPI
@@ -28,6 +29,7 @@ from doctorholiday.config import Settings
 from doctorholiday.logs import JsonFormatter
 from doctorholiday.main import create_app
 from doctorholiday.models import (
+    AdminBootstrap,
     AuditAction,
     AuditEvent,
     AuditOutcome,
@@ -39,6 +41,8 @@ from doctorholiday.models import (
     User,
     UserSession,
 )
+from tests import contract
+from tests.db.conftest import UserFactory
 
 PASSWORD = "correct horse battery staple"
 COOKIE_ATTRIBUTES = "HttpOnly; Secure; SameSite=Strict; Path=/"
@@ -57,6 +61,48 @@ def app(env: dict[str, str], db_url: str, monkeypatch: pytest.MonkeyPatch) -> Fa
     return app
 
 
+def set_bootstrap(engine: Engine, admin_id: uuid.UUID | None) -> None:
+    """Mark the first-admin bootstrap as done by `admin_id`, or as not done yet (None)."""
+    with Session(engine) as session, session.begin():
+        session.execute(
+            update(AdminBootstrap)
+            .where(AdminBootstrap.id == 1)
+            .values(
+                bootstrapped=admin_id is not None,
+                admin_id=admin_id,
+                bootstrapped_at=None if admin_id is None else func.now(),
+            )
+        )
+
+
+def bootstrap_row(engine: Engine) -> AdminBootstrap:
+    with Session(engine) as session:
+        return session.get_one(AdminBootstrap, 1)
+
+
+@pytest.fixture(autouse=True)
+def bootstrapped_admin(db_engine: Engine, make_committed_user: UserFactory) -> Iterator[User]:
+    """The admin of an already bootstrapped system, as after the operator's first login or
+    `make -C backend seed`, so the logins of the tests keep their role.
+
+    Restored afterwards, because test_seed.py expects the state of a fresh database.
+    """
+    before = bootstrap_row(db_engine)
+    admin = make_committed_user(Role.ADMIN)
+    set_bootstrap(db_engine, admin.id)
+    yield admin
+    with Session(db_engine) as session, session.begin():
+        session.execute(
+            update(AdminBootstrap)
+            .where(AdminBootstrap.id == 1)
+            .values(
+                bootstrapped=before.bootstrapped,
+                admin_id=before.admin_id,
+                bootstrapped_at=before.bootstrapped_at,
+            )
+        )
+
+
 @pytest.fixture
 def client_ip() -> str:
     """An IP of its own per test, so failed logins of other tests never hit its IP limit."""
@@ -68,8 +114,10 @@ def new_client(app: FastAPI, client_ip: str) -> Iterator[ClientFactory]:
     """Independent clients (own cookie jar), e.g. two browsers on the same machine (one IP).
     https: the cookie is Secure."""
     with ExitStack() as stack:
-        yield lambda: stack.enter_context(
-            TestClient(app, base_url="https://testserver", client=(client_ip, 50000))
+        yield lambda: contract.install(
+            stack.enter_context(
+                TestClient(app, base_url="https://testserver", client=(client_ip, 50000))
+            )
         )
 
 
@@ -196,11 +244,14 @@ def test_optional_fields_are_absent_not_null(client: TestClient, email: str) -> 
 
 
 @pytest.mark.parametrize("role", list(Role))
-def test_register_with_role(client: TestClient, email: str, role: Role) -> None:
-    # MVP-TEMP: the role field goes away with invitations and the bootstrap.
-    assert register(client, email, role=role.value).status_code == 202
-    login(client, email)
-    assert client.get("/api/v1/auth/me").json()["user"]["role"] == role.value
+def test_registration_with_a_role_is_rejected(
+    client: TestClient, email: str, db_engine: Engine, role: Role
+) -> None:
+    """BR-02: no role can be chosen at registration, not even PATIENT (extra="forbid")."""
+    response = register(client, email, role=role.value)
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert user_by_email(db_engine, email) is None
 
 
 def test_email_is_case_insensitive(client: TestClient, email: str) -> None:
@@ -283,7 +334,7 @@ def test_duplicate_registration_is_accepted_but_changes_nothing(
         "doctorholiday.api.auth.hash_password",
         lambda password: hashed.append(password) or "$argon2id$unused",
     )
-    second = register(new_client(), email, "another password, also long", role="ADMIN")
+    second = register(new_client(), email, "another password, also long")
     monkeypatch.undo()
 
     assert (second.status_code, second.content) == (first.status_code, first.content) == (202, b"")
@@ -786,6 +837,179 @@ def test_rate_limited_registration_is_audited(
     assert sorted(e.details["reason"] for e in events if e.details) == ["RATE_LIMITED"]
     assert [e.target for e in events if e.details] == [None]
     assert len([e for e in events if e.outcome is AuditOutcome.SUCCESS]) == 10
+
+
+# ---------- First-admin bootstrap (#15) ----------
+
+
+@pytest.fixture
+def unbootstrapped(db_engine: Engine, bootstrapped_admin: User) -> None:
+    """No account has become admin yet, as on a freshly deployed system."""
+    set_bootstrap(db_engine, None)
+
+
+def database_now(engine: Engine) -> datetime:
+    with Session(engine) as session:
+        return session.execute(select(func.now())).scalar_one()
+
+
+def bootstrap_events_since(engine: Engine, since: datetime) -> list[AuditEvent]:
+    """Every ADMIN_BOOTSTRAPPED event since `since`, whatever its target."""
+    with Session(engine) as session:
+        return list(
+            session.scalars(
+                select(AuditEvent).where(
+                    AuditEvent.action == AuditAction.ADMIN_BOOTSTRAPPED,
+                    AuditEvent.timestamp >= since,
+                )
+            )
+        )
+
+
+def role_of(engine: Engine, email: str) -> Role:
+    user = user_by_email(engine, email)
+    assert user is not None
+    return user.role
+
+
+def logged_in_role(client: TestClient, email: str) -> str:
+    response = login(client, email)
+    assert response.status_code == 200
+    me = client.get("/api/v1/auth/me").json()
+    assert me["user"]["role"] == response.json()["user"]["role"]
+    return me["user"]["role"]
+
+
+@pytest.mark.usefixtures("unbootstrapped")
+def test_first_login_becomes_admin_and_later_logins_keep_their_role(
+    new_client: ClientFactory, db_engine: Engine, client_ip: str
+) -> None:
+    since = database_now(db_engine)
+    a, b = (f"first-{name}-{uuid.uuid4().hex}@example.com" for name in "ab")
+    client = new_client()
+    assert register(client, a).status_code == 202
+    assert register(client, b).status_code == 202
+    # Registration never creates an admin, not even on an empty system (BR-02).
+    assert role_of(db_engine, a) == role_of(db_engine, b) == Role.PATIENT
+
+    # The login response and /me show the new role right away.
+    assert logged_in_role(new_client(), a) == "ADMIN"
+    assert logged_in_role(new_client(), b) == "PATIENT"
+    assert logged_in_role(new_client(), a) == "ADMIN"
+
+    admin = user_by_email(db_engine, a)
+    assert admin is not None
+    assert role_of(db_engine, b) == Role.PATIENT
+    bootstrap = bootstrap_row(db_engine)
+    assert (bootstrap.bootstrapped, bootstrap.admin_id) == (True, admin.id)
+    assert bootstrap.bootstrapped_at is not None
+    assert since <= bootstrap.bootstrapped_at <= database_now(db_engine)
+
+    [event] = bootstrap_events_since(db_engine, since)
+    assert (event.outcome, event.actor_id, event.target) == (
+        AuditOutcome.SUCCESS,
+        admin.id,
+        f"user:{admin.id}",
+    )
+    assert str(event.ip) == client_ip
+    assert event.details is None
+
+
+@pytest.mark.usefixtures("unbootstrapped")
+def test_concurrent_first_logins_promote_exactly_one(app: FastAPI, db_engine: Engine) -> None:
+    since = database_now(db_engine)
+    emails = [f"race-{i}-{uuid.uuid4().hex}@example.com" for i in range(10)]
+    # One IP per login, so the logins share no rate limit counter and meet only at the bootstrap
+    # row (one shared IP counter would serialize them before it).
+    subnet = f"10.{random.randrange(256)}.{random.randrange(256)}"  # noqa: S311
+    ready = threading.Barrier(10)
+
+    def attempt(i: int) -> int:
+        # No `with`: leaving it would run the lifespan shutdown while other threads still work.
+        client = TestClient(app, base_url="https://testserver", client=(f"{subnet}.{i + 1}", 1))
+        ready.wait(timeout=10)
+        return login(client, emails[i]).status_code
+
+    # The outer client's lifespan closes the pooled connections once all threads are done.
+    with TestClient(app, base_url="https://testserver", client=(f"{subnet}.100", 1)) as client:
+        for email in emails:
+            assert register(client, email).status_code == 202
+        with ThreadPoolExecutor(max_workers=10) as pool:
+            statuses = list(pool.map(attempt, range(10)))
+
+    # No deadlock and no lost login: every one succeeds.
+    assert statuses == [200] * 10
+    roles = [role_of(db_engine, email) for email in emails]
+    assert sorted(roles) == [Role.ADMIN] + [Role.PATIENT] * 9
+    admin = user_by_email(db_engine, emails[roles.index(Role.ADMIN)])
+    assert admin is not None
+    assert bootstrap_row(db_engine).admin_id == admin.id
+    assert [event.target for event in bootstrap_events_since(db_engine, since)] == [
+        f"user:{admin.id}"
+    ]
+
+
+def _wrong_password(client: TestClient, email: str, db_engine: Engine) -> Response:
+    return login(client, email, WRONG)
+
+
+def _inactive(client: TestClient, email: str, db_engine: Engine) -> Response:
+    with Session(db_engine) as session, session.begin():
+        session.execute(update(User).where(User.email == email).values(is_active=False))
+    return login(client, email)
+
+
+def _rate_limited(client: TestClient, email: str, db_engine: Engine) -> Response:
+    for _ in range(5):
+        login(client, email, WRONG)
+    return login(client, email)  # the correct password, but locked
+
+
+@pytest.mark.usefixtures("unbootstrapped")
+@pytest.mark.parametrize(
+    ("failed_login", "expected_status"),
+    [(_wrong_password, 401), (_inactive, 401), (_rate_limited, 429)],
+    ids=["wrong-password", "inactive", "rate-limited"],
+)
+def test_failed_login_does_not_bootstrap(
+    new_client: ClientFactory,
+    email: str,
+    db_engine: Engine,
+    failed_login: Callable[[TestClient, str, Engine], Response],
+    expected_status: int,
+) -> None:
+    since = database_now(db_engine)
+    client = new_client()
+    register(client, email)
+
+    assert failed_login(client, email, db_engine).status_code == expected_status
+
+    assert role_of(db_engine, email) == Role.PATIENT
+    assert not bootstrap_row(db_engine).bootstrapped
+    assert bootstrap_events_since(db_engine, since) == []
+
+    # The bootstrap is still open for the next successful login.
+    other = f"next-{uuid.uuid4().hex}@example.com"
+    register(client, other)
+    assert logged_in_role(new_client(), other) == "ADMIN"
+
+
+def test_bootstrapped_system_promotes_no_one(
+    client: TestClient, email: str, db_engine: Engine, bootstrapped_admin: User
+) -> None:
+    """E.g. a seeded database: `make -C backend seed` records its admin as bootstrapped."""
+    since = database_now(db_engine)
+    before = bootstrap_row(db_engine)
+    register(client, email)
+
+    assert logged_in_role(client, email) == "PATIENT"
+
+    after = bootstrap_row(db_engine)
+    assert (after.admin_id, after.bootstrapped_at) == (
+        bootstrapped_admin.id,
+        before.bootstrapped_at,
+    )
+    assert bootstrap_events_since(db_engine, since) == []
 
 
 # ---------- Validation ----------
