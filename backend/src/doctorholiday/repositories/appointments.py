@@ -87,3 +87,22 @@ def cancel_appointment(
     appointment.cancelled_at = func.now()
     appointment.cancelled_by_id = cancelled_by_id
     session.flush()
+
+
+def has_booked_overlapping(
+    session: Session, doctor_id: uuid.UUID, *, starts_at: datetime, ends_at: datetime
+) -> bool:
+    """Whether a booked appointment of the doctor overlaps [starts_at, ends_at) (BR-12)."""
+    return (
+        session.scalar(
+            select(Appointment.id)
+            .where(
+                Appointment.doctor_id == doctor_id,
+                Appointment.status == AppointmentStatus.BOOKED,
+                Appointment.starts_at < ends_at,
+                Appointment.ends_at > starts_at,
+            )
+            .limit(1)
+        )
+        is not None
+    )

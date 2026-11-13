@@ -22,7 +22,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from doctorholiday.repositories.errors import DataConflictError, TimeAlreadyBookedError
+from doctorholiday.repositories.errors import (
+    DataConflictError,
+    TimeAlreadyBookedError,
+    WorkingHoursOverlapError,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +43,9 @@ class ErrorCode(enum.StrEnum):
     NOT_FOUND = "NOT_FOUND"
     METHOD_NOT_ALLOWED = "METHOD_NOT_ALLOWED"
     CONFLICT = "CONFLICT"
+    WORKING_HOURS_OVERLAP = "WORKING_HOURS_OVERLAP"
     TIME_ALREADY_BOOKED = "TIME_ALREADY_BOOKED"
+    ABSENCE_HAS_APPOINTMENTS = "ABSENCE_HAS_APPOINTMENTS"
     PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE"
     UNSUPPORTED_MEDIA_TYPE = "UNSUPPORTED_MEDIA_TYPE"
     RATE_LIMITED = "RATE_LIMITED"
@@ -51,6 +57,8 @@ VALIDATION_MESSAGE = "The request is invalid."
 INTERNAL_MESSAGE = "Something went wrong. Please try again later."
 PAYLOAD_TOO_LARGE_MESSAGE = "The request is too large."
 UNSUPPORTED_MEDIA_TYPE_MESSAGE = "The request body must be JSON (application/json)."
+WORKING_HOURS_OVERLAP_MESSAGE = "Working hours of one weekday must not overlap."
+NOT_FOUND_MESSAGE = "Not found."
 
 
 class ApiError(Exception):
@@ -115,6 +123,8 @@ def _data_conflict(request: Request, exc: DataConflictError) -> JSONResponse:
     logger.info("data conflict", extra={"conflict": type(exc).__name__})
     if isinstance(exc, TimeAlreadyBookedError):
         code, message = ErrorCode.TIME_ALREADY_BOOKED, "This time is no longer available."
+    elif isinstance(exc, WorkingHoursOverlapError):
+        code, message = ErrorCode.WORKING_HOURS_OVERLAP, WORKING_HOURS_OVERLAP_MESSAGE
     else:
         code, message = (
             ErrorCode.CONFLICT,
@@ -128,7 +138,7 @@ def _data_conflict(request: Request, exc: DataConflictError) -> JSONResponse:
 _HTTP_ERRORS: Mapping[int, tuple[ErrorCode, str]] = {
     status.HTTP_401_UNAUTHORIZED: (ErrorCode.UNAUTHENTICATED, "Please log in."),
     status.HTTP_403_FORBIDDEN: (ErrorCode.FORBIDDEN, "You are not allowed to do this."),
-    status.HTTP_404_NOT_FOUND: (ErrorCode.NOT_FOUND, "Not found."),
+    status.HTTP_404_NOT_FOUND: (ErrorCode.NOT_FOUND, NOT_FOUND_MESSAGE),
     status.HTTP_405_METHOD_NOT_ALLOWED: (
         ErrorCode.METHOD_NOT_ALLOWED,
         "This method is not allowed here.",
@@ -174,3 +184,8 @@ def install_error_handlers(app: FastAPI) -> None:
     app.add_exception_handler(DataConflictError, _data_conflict)
     # Also catches fastapi.HTTPException, a subclass.
     app.add_exception_handler(StarletteHTTPException, _http_error)
+
+
+def not_found() -> ApiError:
+    """Unknown, or someone else's: the same answer, so IDs cannot be probed (AGENTS.md rule 2)."""
+    return ApiError(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, NOT_FOUND_MESSAGE)

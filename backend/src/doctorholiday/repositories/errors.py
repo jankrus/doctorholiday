@@ -11,3 +11,7 @@ class EmailAlreadyRegisteredError(DataConflictError):
 
 class TimeAlreadyBookedError(DataConflictError):
     """The doctor already has a booked appointment overlapping this time (BR-09)."""
+
+
+class WorkingHoursOverlapError(DataConflictError):
+    """Two working-hours entries of one weekday overlap (BR-08, `working_hours_no_overlap`)."""
