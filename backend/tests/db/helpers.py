@@ -1,5 +1,6 @@
 """Helpers for the schedule and appointment API tests (#17): rows written directly, committed."""
 
+import uuid
 from datetime import UTC, date, datetime, time, timedelta
 
 from sqlalchemy import Engine, select
@@ -98,3 +99,9 @@ def audit_events(engine: Engine, action: AuditAction, target: str) -> list[Audit
                 select(AuditEvent).where(AuditEvent.action == action, AuditEvent.target == target)
             )
         )
+
+
+def new_guest() -> dict[str, str]:
+    """Guest contact with a phone number of its own, so the per-phone limit (BR-24) of one test
+    never affects another."""
+    return {"name": "Erika Mustermann", "phone": f"+49170{uuid.uuid4().int % 10**8:08d}"}

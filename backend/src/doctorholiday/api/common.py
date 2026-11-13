@@ -31,13 +31,13 @@ Offset = Annotated[int, Query(ge=0, le=10_000)]
 DEFAULT_LIMIT = 20
 
 
-def _utc(value: datetime) -> str:
+def utc_iso(value: datetime) -> str:
     # The contract's Timestamp: the server returns UTC with `Z`, whatever the session time zone
     # of the database connection is.
     return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
-UtcDatetime = Annotated[datetime, PlainSerializer(_utc, return_type=str)]
+UtcDatetime = Annotated[datetime, PlainSerializer(utc_iso, return_type=str)]
 
 
 class CamelRequest(RequestModel):

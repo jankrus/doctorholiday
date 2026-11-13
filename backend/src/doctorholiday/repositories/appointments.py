@@ -164,3 +164,37 @@ def lock_guest_phone(session: Session, phone: str) -> None:
     bookings cannot both pass the open-appointment limit (BR-24). A guest has no row to lock, so
     this takes a transaction-level advisory lock on a hash of the number."""
     session.execute(select(func.pg_advisory_xact_lock(func.hashtextextended(phone, 0))))
+
+
+def lock_appointment(session: Session, appointment_id: uuid.UUID) -> Appointment | None:
+    """The appointment, locked until the transaction ends (`FOR UPDATE`), so a cancellation and
+    a rescheduling of the same appointment cannot interleave."""
+    return session.scalars(
+        select(Appointment)
+        .where(Appointment.id == appointment_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).one_or_none()
+
+
+def reschedule_appointment(
+    session: Session,
+    appointment: Appointment,
+    *,
+    doctor_id: uuid.UUID,
+    starts_at: datetime,
+    ends_at: datetime,
+) -> None:
+    """Move a booked appointment (BR-22); ID, patient and reason stay. The caller holds the new
+    doctor's row lock. An overlap with another booked appointment raises TimeAlreadyBookedError
+    and leaves the appointment unchanged; its own old time never conflicts."""
+    try:
+        with session.begin_nested():
+            appointment.doctor_id = doctor_id
+            appointment.starts_at = starts_at
+            appointment.ends_at = ends_at
+            session.flush()
+    except IntegrityError as exc:
+        if violated_constraint(exc) == "appointments_no_overlap":
+            raise TimeAlreadyBookedError from None
+        raise

@@ -26,11 +26,13 @@ from tests.db.helpers import (
     book,
     get_appointment,
     iso,
+    new_guest,
     next_monday,
     set_hours,
 )
 
-GUEST = {"name": "Erika Mustermann", "phone": "+4971112345678"}
+# For requests that are rejected; successful guest bookings use new_guest().
+GUEST = new_guest()
 
 
 @pytest.fixture
@@ -136,21 +138,22 @@ def test_staff_books_for_a_patient_by_e_mail(
 def test_staff_books_for_a_guest_and_the_audit_holds_no_guest_data(
     client_as: ClientFactory, doctor: User, staff: User, monday: date, db_engine: Engine
 ) -> None:
-    response = post(client_as(staff), booking(doctor, at(monday, 9, 15), guest=GUEST))
+    guest_contact = new_guest()
+    response = post(client_as(staff), booking(doctor, at(monday, 9, 15), guest=guest_contact))
 
     assert response.status_code == 201
     body = response.json()
-    assert body["guest"] == GUEST
+    assert body["guest"] == guest_contact
     assert "patient" not in body
     assert body["bookedBy"] == "PRACTICE"
     row = get_appointment(db_engine, body["id"])
     assert (row.patient_id, row.guest_name, row.guest_phone) == (
         None,
-        GUEST["name"],
-        GUEST["phone"],
+        guest_contact["name"],
+        guest_contact["phone"],
     )
     [event] = audit_events(db_engine, AuditAction.APPOINTMENT_BOOKED, f"appointment:{body['id']}")
-    assert GUEST["name"] not in repr(event.details)
+    assert guest_contact["name"] not in repr(event.details)
     assert event.target == f"appointment:{body['id']}"
 
 

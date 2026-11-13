@@ -224,12 +224,16 @@ def test_sorted_by_start_then_doctor_and_paginated(
 ) -> None:
     ours = [make_committed_user(Role.DOCTOR) for _ in range(2)]
     for doctor in ours:
-        # 06:00 is a time few other tests' doctors work, so the page holds all of ours.
         set_hours(db_engine, doctor, (1, time(6), time(6, 30)))
     monday = next_monday(db_engine)
     window = (at(monday, 6), at(monday, 6, 30))
 
-    everything = query(patient_client, *window, limit=100).json()
+    # Every page: other tests' doctors may offer times in this window too.
+    pages: list[Any] = []
+    while not pages or len(pages) * 100 < pages[-1]["total"]:
+        pages.append(query(patient_client, *window, limit=100, offset=len(pages) * 100).json())
+    everything = {"total": pages[0]["total"], "items": [i for page in pages for i in page["items"]]}
+    assert len(everything["items"]) == everything["total"]
     items = [
         item for item in everything["items"] if item["doctor"]["id"] in {str(d.id) for d in ours}
     ]

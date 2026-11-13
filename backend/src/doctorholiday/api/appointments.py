@@ -25,14 +25,29 @@ from pydantic import AwareDatetime, StringConstraints
 from sqlalchemy.orm import Session
 
 from doctorholiday import scheduling
-from doctorholiday.api.common import NO_STORE, CamelRequest, client_ip
+from doctorholiday.api.common import NO_STORE, CamelRequest, client_ip, utc_iso
 from doctorholiday.api.responses import Appointment
 from doctorholiday.auth.dependencies import require_roles
 from doctorholiday.db import DbSession
 from doctorholiday.errors import VALIDATION_MESSAGE, ApiError, ErrorCode, not_found
+from doctorholiday.models import (
+    AdminAccessGrant,
+    AppointmentReason,
+    AppointmentStatus,
+    AuditAction,
+    AuditOutcome,
+    Role,
+    User,
+)
 from doctorholiday.models import Appointment as AppointmentRow
-from doctorholiday.models import AppointmentReason, AuditAction, AuditOutcome, Role, User
-from doctorholiday.repositories import appointments, clock, practice_settings, schedule, users
+from doctorholiday.repositories import (
+    access_grants,
+    appointments,
+    clock,
+    practice_settings,
+    schedule,
+    users,
+)
 from doctorholiday.repositories.audit import audit_target, record_event
 from doctorholiday.validation import DisplayName, Email
 
@@ -44,6 +59,11 @@ router = APIRouter(prefix="/api/v1/appointments", tags=["appointments"])
 MAX_OPEN_APPOINTMENTS = 5
 
 BookingUser = Annotated[User, Depends(require_roles(Role.PATIENT, Role.STAFF))]
+CancellingUser = Annotated[
+    User, Depends(require_roles(Role.PATIENT, Role.STAFF, Role.DOCTOR, Role.ADMIN))
+]
+# ADMIN does not book and therefore does not reschedule (footnote 10).
+ReschedulingUser = Annotated[User, Depends(require_roles(Role.PATIENT, Role.STAFF, Role.DOCTOR))]
 
 # E.164 as in the contract's GuestContact.phone.
 Phone = Annotated[str, StringConstraints(max_length=16, pattern=r"^\+[1-9][0-9]{6,14}$")]
@@ -63,6 +83,12 @@ class AppointmentCreateRequest(CamelRequest):
     # (`_booking_party`), not here.
     patient_email: Email | None = None
     guest: GuestContactIn | None = None
+
+
+class AppointmentRescheduleRequest(CamelRequest):
+    starts_at: AwareDatetime
+    # Omitted: the same doctor.
+    doctor_id: uuid.UUID | None = None
 
 
 def _invalid() -> ApiError:
@@ -199,5 +225,165 @@ def book_appointment(
         ip=client_ip(request),
     )
     logger.info("appointment booked", extra={"appointmentId": str(row.id)})
+    response.headers.update(NO_STORE)
+    return appointment_view(db, row, user)
+
+
+def require_grant(db: Session, user: User) -> AdminAccessGrant | None:
+    """TBAC (BR-17): an ADMIN needs an active grant for appointment data, else `403
+    ACCESS_GRANT_REQUIRED`. Returns the grant, or None for every other role."""
+    if user.role is not Role.ADMIN:
+        return None
+    grant = access_grants.active_grant(db, user.id)
+    if grant is None:
+        raise ApiError(
+            status.HTTP_403_FORBIDDEN,
+            ErrorCode.ACCESS_GRANT_REQUIRED,
+            "Please unlock access to appointment data first.",
+        )
+    return grant
+
+
+def audit_grant_access(
+    db: Session, user: User, grant: AdminAccessGrant | None, request: Request, target: str
+) -> None:
+    """Every access under a grant is audited (BR-17, BR-19)."""
+    if grant is None:
+        return
+    record_event(
+        db,
+        action=AuditAction.APPOINTMENT_DATA_ACCESSED,
+        outcome=AuditOutcome.SUCCESS,
+        actor_id=user.id,
+        target=target,
+        ip=client_ip(request),
+        details={"grantId": str(grant.id)},
+    )
+
+
+def _own_appointment(db: Session, user: User, appointment_id: uuid.UUID) -> AppointmentRow:
+    """The appointment, locked; `404` if unknown or, for a PATIENT, someone else's (IDOR)."""
+    row = appointments.lock_appointment(db, appointment_id)
+    if row is None or (user.role is Role.PATIENT and row.patient_id != user.id):
+        raise not_found()
+    return row
+
+
+def _deadline_passed(db: Session, user: User, row: AppointmentRow, now: datetime) -> bool:
+    """A PATIENT acts only until `cancellationDeadlineHours` before the start (BR-11, BR-22);
+    the practice until the start."""
+    if user.role is not Role.PATIENT:
+        return False
+    hours = practice_settings.get_practice_settings(db).cancellation_deadline_hours
+    return now > row.starts_at - timedelta(hours=hours)
+
+
+def _deadline_error() -> ApiError:
+    return ApiError(
+        status.HTTP_409_CONFLICT,
+        ErrorCode.CANCELLATION_DEADLINE_PASSED,
+        "It is too late to change this appointment online. Please call the practice.",
+    )
+
+
+@router.post(
+    "/{id}/cancel",
+    operation_id="cancelAppointment",
+    response_model=Appointment,
+    response_model_exclude_none=True,
+)
+def cancel_appointment(
+    id: uuid.UUID,  # path parameter name of the contract
+    user: CancellingUser,
+    request: Request,
+    response: Response,
+    db: DbSession,
+) -> Appointment:
+    grant = require_grant(db, user)
+    row = _own_appointment(db, user, id)
+    now = clock.database_now(db)
+    # BR-11: only booked appointments that have not started.
+    if row.status is not AppointmentStatus.BOOKED or row.starts_at <= now:
+        raise ApiError(
+            status.HTTP_409_CONFLICT,
+            ErrorCode.APPOINTMENT_NOT_CANCELLABLE,
+            "This appointment can no longer be cancelled.",
+        )
+    if _deadline_passed(db, user, row, now):
+        raise _deadline_error()
+
+    # The time is available again: the constraint only covers BOOKED rows.
+    appointments.cancel_appointment(db, row, cancelled_by_id=user.id)
+    target = audit_target("appointment", row.id)
+    record_event(
+        db,
+        action=AuditAction.APPOINTMENT_CANCELLED,
+        outcome=AuditOutcome.SUCCESS,
+        actor_id=user.id,
+        target=target,
+        ip=client_ip(request),
+    )
+    audit_grant_access(db, user, grant, request, target)
+    logger.info("appointment cancelled", extra={"appointmentId": str(row.id)})
+    response.headers.update(NO_STORE)
+    return appointment_view(db, row, user)
+
+
+@router.post(
+    "/{id}/reschedule",
+    operation_id="rescheduleAppointment",
+    response_model=Appointment,
+    response_model_exclude_none=True,
+)
+def reschedule_appointment(
+    id: uuid.UUID,  # path parameter name of the contract
+    body: AppointmentRescheduleRequest,
+    user: ReschedulingUser,
+    request: Request,
+    response: Response,
+    db: DbSession,
+) -> Appointment:
+    row = _own_appointment(db, user, id)
+    now = clock.database_now(db)
+    # BR-22: only booked appointments that have not started.
+    if row.status is not AppointmentStatus.BOOKED or row.starts_at <= now:
+        raise ApiError(
+            status.HTTP_409_CONFLICT,
+            ErrorCode.APPOINTMENT_NOT_RESCHEDULABLE,
+            "This appointment can no longer be moved.",
+        )
+    if _deadline_passed(db, user, row, now):
+        raise _deadline_error()
+
+    # Lock order: the appointment (above), then the doctor (module docstring).
+    doctor = users.get_active_doctor(db, body.doctor_id or row.doctor_id, lock=True)
+    if doctor is None:
+        raise not_found()
+    minutes = practice_settings.get_practice_settings(db).appointment_minutes
+    ensure_offered(db, doctor, body.starts_at, minutes=minutes, now=now)
+
+    old_doctor_id, old_starts_at = row.doctor_id, row.starts_at
+    # One transaction: if the new time is taken, the old appointment stays as it was (BR-22).
+    # The open-appointment limit is unaffected, the count does not change.
+    appointments.reschedule_appointment(
+        db,
+        row,
+        doctor_id=doctor.id,
+        starts_at=body.starts_at,
+        ends_at=body.starts_at + timedelta(minutes=minutes),
+    )
+    details = {"oldStartsAt": utc_iso(old_starts_at), "newStartsAt": utc_iso(body.starts_at)}
+    if old_doctor_id != doctor.id:
+        details |= {"oldDoctorId": str(old_doctor_id), "newDoctorId": str(doctor.id)}
+    record_event(
+        db,
+        action=AuditAction.APPOINTMENT_RESCHEDULED,
+        outcome=AuditOutcome.SUCCESS,
+        actor_id=user.id,
+        target=audit_target("appointment", row.id),
+        ip=client_ip(request),
+        details=details,
+    )
+    logger.info("appointment rescheduled", extra={"appointmentId": str(row.id)})
     response.headers.update(NO_STORE)
     return appointment_view(db, row, user)
