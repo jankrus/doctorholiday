@@ -1,0 +1,44 @@
+/* App shell: see docs/architecture/ui-design.md (layout "app shell"). */
+
+.app-layout {
+  min-height: 100vh;
+  background-color: var(--gray-2);
+}
+
+.app-header {
+  background-color: var(--color-panel-solid);
+  border-bottom: 1px solid var(--gray-a5);
+}
+
+.app-header__home {
+  display: inline-flex;
+  border-radius: var(--radius-3);
+  text-decoration: none;
+}
+
+.app-header__home:focus-visible {
+  outline: 2px solid var(--focus-8);
+  outline-offset: 4px;
+}
+
+/* The tab navigation sits flush on the header's bottom border. */
+.app-header__nav {
+  margin-bottom: -1px;
+  box-shadow: none;
+}
+
+.app-header__practice,
+.app-header__account {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .app-header__practice {
+    display: flex;
+  }
+
+  .app-header__account {
+    display: block;
+    max-width: 24ch;
+  }
+}

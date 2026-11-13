@@ -6,7 +6,8 @@ Libraries and versions: [ADR-001](../docs/architecture/adr/ADR-001-tech-stack.md
 
 ## Setup
 
-Requires Node.js 22.13+ (`.nvmrc`). Install exactly what the lockfile pins:
+Requires Node.js 22.13+ (`engines` in `package.json`; `.nvmrc` selects it for nvm). Install exactly what the
+lockfile pins:
 
 ```sh
 npm ci
@@ -28,8 +29,9 @@ npm ci
 ### Without a backend (default)
 
 `npm run dev` starts a mock API inside the dev server ([`dev-mock-api.ts`](dev-mock-api.ts)), so all pages can be
-viewed and the auth flows clicked through. It answers the session, login, registration, logout, MFA and settings
-endpoints; other API calls get `503`. The e-mail address used to log in picks the flow (any password works, except
+viewed and the auth and booking flows clicked through. It answers the session, login, registration, logout, MFA and
+settings endpoints and, for patients, the doctors list, availability and their own appointments (book, cancel,
+reschedule); other API calls get `500`. The e-mail address used to log in picks the flow (any password works, except
 `falsch`):
 
 | E-mail                                          | Flow                                                                 |
@@ -41,6 +43,12 @@ endpoints; other API calls get `503`. The e-mail address used to log in picks th
 
 The mock keeps its state in memory per e-mail address, like the backend does per account; restarting the dev
 server resets it.
+
+For the patient pages the mock has two doctors with working hours Monday to Friday, 08:00-12:00 and 14:00-17:00
+(one of them not on Wednesdays) and a few appointments: one inside the 24-hour change deadline, one with a fasting
+blood test, one booked by the practice, a past one and one cancelled by the practice. Booking a time at minute 45
+(e.g. 08:45) answers `409 TIME_ALREADY_BOOKED`, as if another patient had been faster, and the time disappears from
+the list. Switching the session via `/__mock/session` resets the appointments.
 
 To jump to a state directly, open one of these URLs; it redirects to the matching start page:
 
@@ -62,7 +70,8 @@ Set `API_PROXY_TARGET` to forward `/api` to a running backend instead of the moc
 API_PROXY_TARGET=http://localhost:8080 npm run dev
 ```
 
-Either way the frontend only calls its own origin, so no CORS is needed.
+Either way the frontend only calls its own origin, so no CORS is needed. The whole local stack, manual test
+scenarios and troubleshooting: [docs/development/local-testing.md](../docs/development/local-testing.md).
 
 ## Structure
 
@@ -75,8 +84,11 @@ src/
   auth/guards.ts     route guards (UX only; the backend authorises every request)
   auth/validation.ts client-side checks mirroring the API contract (server stays authoritative)
   auth/logout.ts     logout action (POST /auth/logout, back to /login)
+  appointments/      practice time zone helpers, reason labels, availability and appointment requests
   components/        shared UI: form fields, notices, QR code, copy and logout buttons, logo, icons
+  components/appointments/  availability browser, booking/reschedule dialog, appointment card
   pages/auth/        split-screen auth layout; login, register, MFA and setup pages
+  pages/patient/     my appointments, booking and rescheduling (#25)
   pages/             app layout, error and placeholder pages
   routes.tsx         route table
 ```
@@ -88,16 +100,21 @@ Colours, typography, layout and form patterns are described in the
 
 ## Routes
 
-| Path                  | Who                                                                     | Built in |
-| :-------------------- | :---------------------------------------------------------------------- | :------- |
-| `/login`, `/register` | no session                                                              | #24      |
-| `/mfa`                | MFA verification or enrolment pending, or a patient's MFA offer (BR-26) | #24      |
-| `/setup`              | `ADMIN` whose practice setup is pending (BR-18)                         | #24      |
-| `/logout`             | form target (`POST`) of every logout button                             | #24      |
-| `/appointments`       | `PATIENT`                                                               | #25      |
-| `/staff`              | `STAFF`, `DOCTOR`                                                       | #26      |
-| `/admin`              | `ADMIN`                                                                 | #26      |
+| Path                           | Who                                                                     | Built in |
+| :----------------------------- | :---------------------------------------------------------------------- | :------- |
+| `/login`, `/register`          | no session                                                              | #24      |
+| `/mfa`                         | MFA verification or enrolment pending, or a patient's MFA offer (BR-26) | #24      |
+| `/setup`                       | `ADMIN` whose practice setup is pending (BR-18)                         | #24      |
+| `/logout`                      | form target (`POST`) of every logout button                             | #24      |
+| `/appointments`                | `PATIENT`: own appointments, cancel (A11, A09)                          | #25      |
+| `/appointments/book`           | `PATIENT`: availability browser and booking (A07, A08)                  | #25      |
+| `/appointments/:id/reschedule` | `PATIENT`: move an own appointment (A30)                                | #25      |
+| `/staff`                       | `STAFF`, `DOCTOR`                                                       | #26      |
+| `/admin`                       | `ADMIN`                                                                 | #26      |
 
 Without a session every protected route redirects to `/login`; other roles are sent to their own start page.
+The booking and reschedule pages keep the shown week and the doctor filter in the query string
+(`?week=2026-11-16&doctor=<id>|all`), so the back button and a reload keep the view; invalid values fall back to
+the current week and all doctors.
 The first login creates the admin (BR-04, #15); `GET /api/v1/auth/me` then returns `setupRequired: true` and
 every route forwards the admin to `/setup` until the practice settings are saved for the first time.

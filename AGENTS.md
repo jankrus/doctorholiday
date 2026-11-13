@@ -24,6 +24,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | `scripts/` | Helper scripts (quality gate, packaging, cluster setup) |
 | `evidence/<image>/{run,sast,sbom,sca,secrets,signing}/` | Pipeline reports per image (`frontend`, `backend`) |
 | `docs/architecture/`, `threat-model/`, `report/`, `presentation/` | Documentation |
+| `docs/development/` | Developer guides: [local stack and manual testing](docs/development/local-testing.md) |
 | `VERSION.txt` | SemVer, single line, used as image tag |
 | `Makefile` | Project blueprint: `make up` must yield a healthy cluster and print `Ready` |
 
@@ -78,5 +79,6 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | Frontend API types | `cd frontend && npm run gen:api` (after changing `backend/openapi.yaml`) |
 | Cluster up / down | `make up` / `make down` |
 | Local DB up (+ migrations) / down / reset | `make db-up` / `make db-down` / `make db-reset` |
+| Full local stack + manual test scenarios | [docs/development/local-testing.md](docs/development/local-testing.md) |
 
 Commands become valid as the respective skeleton tickets land; update this table when they do.

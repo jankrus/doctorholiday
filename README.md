@@ -19,6 +19,8 @@ Der Schwerpunkt dieses Projekts liegt nicht primär auf der reinen Funktionalit�
 
 > **Restrisiko:** Wer nach dem Deployment als Erstes einen Login schafft, wird Admin. Ein Zurücksetzen der Datenbank (z. B. `make db-reset`) setzt auch diesen Zustand zurück, danach wird der nächste erste Login wieder Admin. Deshalb ist der eigene Login der Schritt direkt nach `make up`; die Begründung steht in [roles-and-permissions.md](docs/architecture/roles-and-permissions.md#bootstrapping-the-first-admin).
 
+Lokale Entwicklung ohne Cluster (Datenbank, Backend und Frontend aus dem Quellcode), manuelle Testszenarien und Fehlerbehebung: [docs/development/local-testing.md](docs/development/local-testing.md).
+
 `STAFF`- und `DOCTOR`-Testkonten gibt es, bis Einladungen (FR-02) umgesetzt sind, nur über die lokalen Seed-Daten (`make -C backend seed`, siehe [backend/README.md](backend/README.md#seed-data)). Die Seed-Daten tragen ihren eigenen Admin ein, dann wird kein weiterer Login befördert.
 
 ### Project planning Kanban Board
