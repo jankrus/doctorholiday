@@ -21,7 +21,7 @@ whether or not an account has the address, so a lockout reveals no accounts; the
 anyone can lock an account for the lockout time, which is why the values are configurable.
 
 Counters are stored in the database, not in process memory, so they hold across restarts and
-pods, and they are compared with the database clock (repositories/rate_limits.py).
+pods, and they are compared with the database clock (repositories/clock.py).
 """
 
 import hashlib
@@ -35,7 +35,7 @@ from sqlalchemy.orm import Session
 
 from doctorholiday.config import Settings
 from doctorholiday.models import IPAddress, RateLimit, RateLimitScope
-from doctorholiday.repositories import rate_limits
+from doctorholiday.repositories import clock, rate_limits
 
 # A single IPv6 client usually has a whole /64, so its addresses share one counter.
 _IPV6_PREFIX = 64
@@ -97,7 +97,7 @@ class RateLimiter:
         self._db = db
         for limit in {limit.scope: limit for limit, _ in checks}.values():
             rate_limits.delete_stale_counters(db, scope=limit.scope, window=limit.window)
-        self._now = rate_limits.database_now(db)
+        self._now = clock.database_now(db)
         # Locked in one global order, so two requests never wait for each other's rows in
         # opposite order (no deadlock).
         keyed = sorted(

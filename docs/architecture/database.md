@@ -25,7 +25,7 @@ The physical model needed four things the first version of the domain model did 
 | Addition | Why |
 | --- | --- |
 | `credentials.totp_last_step` (`bigint`, `NULL`) | RFC 6238 §5.2: a verifier must not accept the same TOTP code twice. Stores the time step of the last accepted code; codes with a step `<=` this value are rejected. Without it, a code observed by an attacker stays valid for its 30 s window (#21). |
-| `audit_events.details` (`jsonb`, `NULL`) | BR-22 requires the audit event of a rescheduling to record the old and the new time, and `target` holds only one ID. `details` takes a small object with allow-listed keys only (e.g. `oldStartsAt`, `newStartsAt`, `oldDoctorId`, `newDoctorId`, `oldRole`, `newRole`); the audit module never copies request bodies or personal data into it (BR-19). |
+| `audit_events.details` (`jsonb`, `NULL`) | BR-22 requires the audit event of a rescheduling to record the old and the new time, and `target` holds only one ID. `details` takes a small object with allow-listed keys only (e.g. `oldStartsAt`, `newStartsAt`, `oldDoctorId`, `newDoctorId`, `oldRole`, `newRole`, `entries` for the number of working-hours entries, `grantId` for an access under a TBAC grant); the audit module never copies request bodies or personal data into it (BR-19). |
 | `admin_access_grants.expiry_logged_at` (`timestamptz`, `NULL`) | BR-17 requires an `APPOINTMENT_ACCESS_EXPIRED` audit event when a grant expires. The column marks grants whose event was written, so the event is written exactly once even if several pods or job runs see the same expired grant. |
 | Exclusion constraints on `working_hours` and `admin_access_grants` | BR-08 (entries of one weekday do not overlap) and BR-17 (only one active grant per admin) are checked by the backend, but two concurrent requests can both pass the check. As with appointments (BR-09), the database is the final guard. `working_hours` needs the range type `timerange` over `time`, which the first migration creates. |
 
@@ -52,6 +52,16 @@ These rules stay in the backend and need tests there (#12, #14–#18):
 - **Time-relative rules:** "in the future", "at most 365 days ahead", cancellation deadline (BR-11, BR-12, BR-23) depend on `now()` and do not belong in `CHECK` constraints.
 - **Last active admin** (BR-15): checked under `SELECT … FOR UPDATE` on the admin rows.
 - **Absence vs. booked appointment** (BR-12): checked in the transaction that creates the absence.
+
+## Concurrency
+
+The constraints are the final guard; locks make concurrent writes end in the documented business error instead of a deadlock (#74) and keep the counting rules exact. Every lock is held until the transaction ends and taken in this order (backend/README.md, "Schedule and appointments"):
+
+1. The party of a booking: the patient's `users` row (`FOR NO KEY UPDATE`) or, for a guest, `pg_advisory_xact_lock` on a hash of the phone number (no row to lock). Concurrent bookings of one patient or phone cannot both pass the limit of 5.
+2. The appointment being cancelled or rescheduled (`FOR UPDATE`).
+3. The doctor's `users` row (`FOR NO KEY UPDATE`), for bookings, reschedulings, absences and working hours. Conflicting inserts on `appointments_no_overlap` and `working_hours_no_overlap` therefore never check the constraint at the same time, and "no booked appointment in this absence" cannot be invalidated by a concurrent booking. `FOR NO KEY UPDATE` does not block the `FOR KEY SHARE` locks of foreign key checks.
+
+No transaction waits for an earlier lock in this list while it holds a later one, so the locks cannot deadlock.
 
 ## Rows created by the migrations
 
