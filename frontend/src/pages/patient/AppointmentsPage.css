@@ -1,0 +1,73 @@
+.appointments__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.appointments__notice:focus {
+  outline: none;
+}
+
+.appointments__empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--accent-3);
+  color: var(--accent-11);
+}
+
+.appointments__locked {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--amber-11);
+}
+
+.appointments__locked > svg {
+  flex-shrink: 0;
+}
+
+.appointments__history > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--space-7);
+  cursor: pointer;
+  border-radius: var(--radius-3);
+  color: var(--gray-12);
+  list-style: none;
+}
+
+.appointments__history > summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Chevron that turns when the section opens. */
+.appointments__history > summary::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  margin: 0 var(--space-1);
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+  transition: transform 150ms ease;
+}
+
+.appointments__history[open] > summary::before {
+  transform: rotate(45deg);
+}
+
+.appointments__history > summary:focus-visible {
+  outline: 2px solid var(--focus-8);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .appointments__history > summary::before {
+    transition: none;
+  }
+}

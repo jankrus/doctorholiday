@@ -99,3 +99,69 @@ export const DownloadIcon = (props: IconProps) => (
     <path d="M12 3.5v11M7.5 10l4.5 4.5 4.5-4.5M4 17.5v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1" />
   </Icon>
 );
+
+export const ChevronLeftIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m14.5 6-6 6 6 6" />
+  </Icon>
+);
+
+export const ChevronRightIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m9.5 6 6 6-6 6" />
+  </Icon>
+);
+
+export const ArrowLeftIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M19.5 12h-15M10.5 6l-6 6 6 6" />
+  </Icon>
+);
+
+export const ArrowRightIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M4.5 12h15M13.5 6l6 6-6 6" />
+  </Icon>
+);
+
+export const PlusIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M12 5v14M5 12h14" />
+  </Icon>
+);
+
+export const InfoIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 11v5.5M12 7.5h.01" />
+  </Icon>
+);
+
+export const StethoscopeIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M5.5 3.5H4.5v5a5 5 0 0 0 10 0v-5h-1" />
+    <path d="M9.5 13.5v1.5a5 5 0 0 0 10 0v-2" />
+    <circle cx="19.5" cy="11" r="2" />
+  </Icon>
+);
+
+export const RescheduleIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M20 11a8 8 0 0 0-14.6-4.5M4 4v3.5h3.5" />
+    <path d="M4 13a8 8 0 0 0 14.6 4.5M20 20v-3.5h-3.5" />
+  </Icon>
+);
+
+export const CancelIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="m9 9 6 6M15 9l-6 6" />
+  </Icon>
+);
+
+export const CalendarEmptyIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+    <path d="M3.5 10h17M8 3v4M16 3v4M9.5 14.5h5" />
+  </Icon>
+);

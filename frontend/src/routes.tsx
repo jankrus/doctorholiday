@@ -3,7 +3,7 @@ import type { RouteObject } from 'react-router';
 import { guestOnly, mfaPending, requireRole, toHome } from './auth/guards';
 import { logoutAction } from './auth/logout';
 import { loadSession } from './auth/session';
-import { AppLayout } from './pages/AppLayout';
+import { AppLayout, appLayoutLoader } from './pages/AppLayout';
 import { AuthLayout } from './pages/auth/AuthLayout';
 import { LoginPage, loginAction } from './pages/auth/LoginPage';
 import { MfaPage, mfaAction, mfaShouldRevalidate } from './pages/auth/MfaPage';
@@ -11,6 +11,13 @@ import { RegisterPage, registerAction } from './pages/auth/RegisterPage';
 import { SetupPage, setupAction, setupLoader } from './pages/auth/SetupPage';
 import { ErrorPage } from './pages/ErrorPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import {
+  AppointmentsPage,
+  appointmentsAction,
+  appointmentsLoader,
+} from './pages/patient/AppointmentsPage';
+import { BookPage, bookAction, bookLoader } from './pages/patient/BookPage';
+import { ReschedulePage, rescheduleAction, rescheduleLoader } from './pages/patient/ReschedulePage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 
 export const routes: RouteObject[] = [
@@ -49,12 +56,31 @@ export const routes: RouteObject[] = [
       // Form target only; a direct visit goes to the start page.
       { path: 'logout', loader: toHome, action: logoutAction },
       {
+        id: 'app',
         element: <AppLayout />,
+        loader: appLayoutLoader,
+        // Settings rarely change: reload them after a form submission or on another page, not
+        // when only the query (week, doctor filter) changes.
+        shouldRevalidate: ({ currentUrl, nextUrl, formMethod }) =>
+          formMethod !== undefined || currentUrl.pathname !== nextUrl.pathname,
         children: [
           {
             path: 'appointments',
-            loader: requireRole(['PATIENT']),
-            element: <PlaceholderPage title="Meine Termine" ticket="#25" />,
+            loader: appointmentsLoader,
+            action: appointmentsAction,
+            element: <AppointmentsPage />,
+          },
+          {
+            path: 'appointments/book',
+            loader: bookLoader,
+            action: bookAction,
+            element: <BookPage />,
+          },
+          {
+            path: 'appointments/:id/reschedule',
+            loader: rescheduleLoader,
+            action: rescheduleAction,
+            element: <ReschedulePage />,
           },
           {
             path: 'staff',
