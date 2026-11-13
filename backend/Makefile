@@ -1,4 +1,4 @@
-.PHONY: help install test lint format run seed lock
+.PHONY: help install test lint format run seed cleanup-guests lock
 .DEFAULT_GOAL := help
 
 # --locked fails if uv.lock does not match pyproject.toml instead of silently updating it.
@@ -26,6 +26,9 @@ run: ## Start the API with the variables from .env
 
 seed: ## Fill the local database with dev accounts and appointments (needs SEED_DEV_DATA=true in .env)
 	$(UV_RUN) --env-file .env python -m doctorholiday.seed
+
+cleanup-guests: ## Erase guest contact data 30 days after the appointment (BR-24; daily job)
+	$(UV_RUN) --env-file .env python -m doctorholiday.jobs.guest_cleanup
 
 lock: ## Re-resolve uv.lock after editing pyproject.toml
 	uv lock

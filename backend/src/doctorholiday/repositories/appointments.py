@@ -1,10 +1,10 @@
 """Appointments. Overlaps are prevented by the database, not by a prior check (BR-09)."""
 
 import uuid
-from collections.abc import Sequence
-from datetime import datetime
+from collections.abc import Iterable, Sequence
+from datetime import datetime, timedelta
 
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, Row, and_, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -36,6 +36,11 @@ def book_appointment(
     each wait for the other's uncommitted row, and PostgreSQL aborts one of them with a deadlock
     error instead of the constraint violation (a 500 instead of a 409). `FOR NO KEY UPDATE` does
     not block the `FOR KEY SHARE` locks that foreign key checks take on the same row.
+
+    Who locks: this function takes the lock itself, because it is also called outside the API
+    (seed, tests). The endpoint already holds it from `get_active_doctor(lock=True)`; taking it
+    again in the same transaction is a no-op. `reschedule_appointment` does not lock, its caller
+    must.
     """
     session.execute(select(User.id).where(User.id == doctor_id).with_for_update(key_share=True))
     appointment = Appointment(
@@ -87,3 +92,186 @@ def cancel_appointment(
     appointment.cancelled_at = func.now()
     appointment.cancelled_by_id = cancelled_by_id
     session.flush()
+
+
+def has_booked_overlapping(
+    session: Session, doctor_id: uuid.UUID, *, starts_at: datetime, ends_at: datetime
+) -> bool:
+    """Whether a booked appointment of the doctor overlaps [starts_at, ends_at) (BR-12)."""
+    return (
+        session.scalar(
+            select(Appointment.id)
+            .where(
+                Appointment.doctor_id == doctor_id,
+                Appointment.status == AppointmentStatus.BOOKED,
+                Appointment.starts_at < ends_at,
+                Appointment.ends_at > starts_at,
+            )
+            .limit(1)
+        )
+        is not None
+    )
+
+
+def list_booked_overlapping(
+    session: Session,
+    doctor_ids: Iterable[uuid.UUID],
+    *,
+    starts_before: datetime,
+    ends_after: datetime,
+) -> Sequence[Row[tuple[uuid.UUID, datetime, datetime]]]:
+    """`(doctor_id, starts_at, ends_at)` of the booked appointments of these doctors that overlap
+    [ends_after, starts_before).
+
+    Only these three columns: availability needs the times, never who the appointment is for, so
+    no patient or guest data is loaded (BR-24, data minimisation).
+    """
+    return session.execute(
+        select(Appointment.doctor_id, Appointment.starts_at, Appointment.ends_at).where(
+            Appointment.doctor_id.in_(set(doctor_ids)),
+            Appointment.status == AppointmentStatus.BOOKED,
+            Appointment.starts_at < starts_before,
+            Appointment.ends_at > ends_after,
+        )
+    ).all()
+
+
+def count_open_for_patient(session: Session, patient_id: uuid.UUID) -> int:
+    """Booked appointments of the patient that have not started (BR-09: at most 5), whoever
+    booked them."""
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(Appointment)
+            .where(
+                Appointment.patient_id == patient_id,
+                Appointment.status == AppointmentStatus.BOOKED,
+                Appointment.starts_at > func.now(),
+            )
+        )
+        or 0
+    )
+
+
+def count_open_for_guest_phone(session: Session, phone: str) -> int:
+    """Booked guest appointments with this phone number that have not started (BR-24: at most 5)."""
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(Appointment)
+            .where(
+                Appointment.guest_phone == phone,
+                Appointment.status == AppointmentStatus.BOOKED,
+                Appointment.starts_at > func.now(),
+            )
+        )
+        or 0
+    )
+
+
+def lock_guest_phone(session: Session, phone: str) -> None:
+    """Serialise bookings for one guest phone number until the transaction ends, so concurrent
+    bookings cannot both pass the open-appointment limit (BR-24). A guest has no row to lock, so
+    this takes a transaction-level advisory lock on a hash of the number."""
+    session.execute(select(func.pg_advisory_xact_lock(func.hashtextextended(phone, 0))))
+
+
+def lock_appointment(session: Session, appointment_id: uuid.UUID) -> Appointment | None:
+    """The appointment, locked until the transaction ends (`FOR UPDATE`), so a cancellation and
+    a rescheduling of the same appointment cannot interleave."""
+    return session.scalars(
+        select(Appointment)
+        .where(Appointment.id == appointment_id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    ).one_or_none()
+
+
+def reschedule_appointment(
+    session: Session,
+    appointment: Appointment,
+    *,
+    doctor_id: uuid.UUID,
+    starts_at: datetime,
+    ends_at: datetime,
+) -> None:
+    """Move a booked appointment (BR-22); ID, patient and reason stay. The caller must hold the
+    new doctor's row lock (`get_active_doctor(lock=True)`); unlike `book_appointment`, this
+    function does not take it. An overlap with another booked appointment raises
+    TimeAlreadyBookedError and leaves the appointment unchanged; its own old time never
+    conflicts."""
+    try:
+        with session.begin_nested():
+            appointment.doctor_id = doctor_id
+            appointment.starts_at = starts_at
+            appointment.ends_at = ends_at
+            session.flush()
+    except IntegrityError as exc:
+        if violated_constraint(exc) == "appointments_no_overlap":
+            raise TimeAlreadyBookedError from None
+        raise
+
+
+def page_appointments(
+    session: Session,
+    *,
+    limit: int,
+    offset: int,
+    patient_id: uuid.UUID | None = None,
+    doctor_id: uuid.UUID | None = None,
+    status: AppointmentStatus | None = None,
+    starts_from: datetime | None = None,
+    starts_before: datetime | None = None,
+) -> tuple[Sequence[Appointment], int]:
+    """A page of appointments sorted by start (BR-20), and the total; filters are optional, the
+    time range is on the start, inclusive and exclusive."""
+    conditions: list[ColumnElement[bool]] = []
+    if patient_id is not None:
+        conditions.append(Appointment.patient_id == patient_id)
+    if doctor_id is not None:
+        conditions.append(Appointment.doctor_id == doctor_id)
+    if status is not None:
+        conditions.append(Appointment.status == status)
+    if starts_from is not None:
+        conditions.append(Appointment.starts_at >= starts_from)
+    if starts_before is not None:
+        conditions.append(Appointment.starts_at < starts_before)
+    total = session.scalar(select(func.count()).select_from(Appointment).where(*conditions))
+    items = session.scalars(
+        select(Appointment)
+        .where(*conditions)
+        .order_by(Appointment.starts_at, Appointment.id)
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return items, total or 0
+
+
+# BR-24: guest name and phone are kept this long after the appointment ended or was cancelled.
+GUEST_DATA_RETENTION = timedelta(days=30)
+
+
+def erase_expired_guest_data(session: Session) -> int:
+    """Erase name and phone of guest appointments that ended or were cancelled more than 30 days
+    ago (BR-24) and set `guest_erased_at`; returns how many were erased."""
+    cutoff = func.now() - GUEST_DATA_RETENTION
+    result = session.execute(
+        update(Appointment)
+        .where(
+            Appointment.patient_id.is_(None),
+            Appointment.guest_erased_at.is_(None),
+            or_(
+                and_(
+                    Appointment.status == AppointmentStatus.CANCELLED,
+                    Appointment.cancelled_at <= cutoff,
+                ),
+                and_(
+                    Appointment.status == AppointmentStatus.BOOKED,
+                    Appointment.ends_at <= cutoff,
+                ),
+            ),
+        )
+        .values(guest_name=None, guest_phone=None, guest_erased_at=func.now())
+        .execution_options(synchronize_session=False)
+    )
+    return result.rowcount

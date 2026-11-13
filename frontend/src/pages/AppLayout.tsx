@@ -1,8 +1,9 @@
 import { Box, Container, Flex, Heading, Separator, Text } from '@radix-ui/themes';
 import { Outlet, useRouteLoaderData } from 'react-router';
 import type { SessionInfo } from '../api/client';
+import { LogoutButton } from '../components/LogoutButton';
 
-/** Shell for the app pages: header with the signed-in account above the page content. */
+/** Shell for the app pages: header with the signed-in account and logout above the page content. */
 export function AppLayout() {
   const session = useRouteLoaderData<SessionInfo | null>('root');
 
@@ -15,9 +16,12 @@ export function AppLayout() {
               Doctor Holiday
             </Heading>
             {session?.user && (
-              <Text size="2" color="gray">
-                {session.user.email}
-              </Text>
+              <Flex align="center" gap="4">
+                <Text size="2" color="gray">
+                  {session.user.email}
+                </Text>
+                <LogoutButton />
+              </Flex>
             )}
           </Flex>
         </header>

@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Supply-chain pinning check (SR-06, AGENTS.md rule 7; issue #31).
 #
-#   - every third-party GitHub Action in .github/workflows/ is pinned by a full 40-character
-#     commit SHA and carries its version in a comment (`uses: owner/repo@<sha> # v1.2.3`);
+#   - every third-party GitHub Action in .github/workflows/ and in local composite actions
+#     (.github/actions/*/action.yml) is pinned by a full 40-character commit SHA and carries its
+#     version in a comment (`uses: owner/repo@<sha> # v1.2.3`);
 #   - every external container image is pinned by a sha256 digest, in
 #       * Dockerfiles (`Dockerfile`, `Dockerfile.prod`, `app.Dockerfile`, `Containerfile`):
 #         `FROM` and `COPY --from`,
@@ -27,8 +28,9 @@ fail() {
 }
 
 # ---- GitHub Actions -------------------------------------------------------------------------
-shopt -s nullglob
-workflows=(.github/workflows/*.yml .github/workflows/*.yaml)
+# Workflows and local composite actions (`.github/actions/<name>/action.yml`, also nested).
+mapfile -t workflows < <(git ls-files '.github/workflows/*.yml' '.github/workflows/*.yaml' \
+  '.github/actions/*action.yml' '.github/actions/*action.yaml' | sort -u)
 for file in "${workflows[@]}"; do
   line_no=0
   while IFS= read -r line; do
@@ -53,8 +55,10 @@ digest='@sha256:[0-9a-f]{64}'
 check_image() { # file line_no image
   local file="$1" line_no="$2" image="$3"
   [[ "$image" == "scratch" ]] && return 0
-  # A value built from a variable (`${IMAGE}`, `$(IMAGE)`) is checked where the variable is set.
-  [[ "$image" == *'$'* ]] && return 0
+  # A value that is only a variable (`${IMAGE}`, `$(IMAGE)`, `$IMAGE`) is checked where the
+  # variable is set. A name with a variable part (`ghcr.io/x/y:${TAG}`) is not: the name is
+  # spelled out here, so the digest has to be as well.
+  [[ "$image" == '$'* ]] && return 0
   # `image: [frontend, backend]` is a build matrix, not an image reference.
   [[ "$image" == '['* || "$image" == '{'* ]] && return 0
   if ! [[ "$image" =~ $digest ]]; then
@@ -97,15 +101,19 @@ while IFS= read -r file; do
   done < "$file"
 done < <(git ls-files '*.yaml' '*.yml' | sort -u)
 
-# Makefile, *.mk and shell scripts: variables named ...IMAGE that hold an image reference.
+# Makefile, *.mk and shell scripts: variables named ...IMAGE that hold an image reference. Every
+# value is checked, also a bare name such as `alpine` (which means `alpine:latest`). An image that
+# is built in the same run and not pulled from a registry opts out with a comment on its line:
+#   BACKEND_IMAGE := doctorholiday-backend  # pinning-ignore: built locally
 while IFS= read -r file; do
   line_no=0
   while IFS= read -r line; do
     line_no=$((line_no + 1))
     if [[ "$line" =~ ^[[:space:]]*([A-Z0-9_]*IMAGE)[[:space:]]*:?=[[:space:]]*[\"\']?([^\"\'[:space:]#]+) ]]; then
-      value="${BASH_REMATCH[2]}"
-      # Only values that look like an image reference (registry path or tag), not flags or names.
-      [[ "$value" =~ [:/] ]] && check_image "$file" "$line_no" "$value"
+      if [[ "$line" == *'pinning-ignore:'* ]]; then
+        continue
+      fi
+      check_image "$file" "$line_no" "${BASH_REMATCH[2]}"
     fi
   done < "$file"
 done < <(git ls-files 'Makefile' '*/Makefile' '*.mk' 'scripts/*.sh' | sort -u)

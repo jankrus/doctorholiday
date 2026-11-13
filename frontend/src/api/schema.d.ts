@@ -17,6 +17,9 @@ export interface paths {
          * Register a patient account
          * @description Creates a `PATIENT` account. Always answers `202` without body, whether or not the e-mail
          *     is already taken, so the endpoint cannot be used to enumerate accounts (BR-02).
+         *     Every request counts against a limit per client IP (default 10 within 60 minutes);
+         *     reaching it locks the IP for 60 minutes with `429 RATE_LIMITED` (BR-03).
+         *     A `role` field is rejected with `422 VALIDATION_ERROR`, like any unknown field.
          */
         post: operations["register"];
         delete?: never;
@@ -83,6 +86,10 @@ export interface paths {
          *     whether an MFA code (`MFA_PENDING`) or an MFA enrolment (`MFA_ENROLLMENT_REQUIRED`) is
          *     still needed. The first successful login while no admin exists promotes the account
          *     to `ADMIN` (BR-04). All failures return the same `401 INVALID_CREDENTIALS` (BR-03).
+         *     Failed logins are counted per e-mail address (default 5) and per client IP (default 20)
+         *     within 15 minutes; reaching a limit locks that e-mail or IP for 15 minutes, during which
+         *     every login with it returns `429 RATE_LIMITED` without checking the password. Unknown
+         *     e-mails are counted and locked the same way.
          */
         post: operations["login"];
         delete?: never;
@@ -258,8 +265,10 @@ export interface paths {
         /**
          * List available appointment times
          * @description Computed from working hours minus absences minus booked appointments (BR-23); nothing is
-         *     stored. `from` and `to` are required and span at most 31 days. Sorted ascending by start,
-         *     then by doctor (BR-20).
+         *     stored. `from` and `to` are required, `to` is after `from` and at most 31 days later
+         *     (`422` otherwise); they bound the start. Only future starts at most 365 days ahead. An
+         *     unknown or inactive `doctorId` yields an empty page. Sorted ascending by start, then by
+         *     doctor name (BR-20).
          */
         get: operations["listAvailability"];
         put?: never;
@@ -281,9 +290,12 @@ export interface paths {
         put?: never;
         /**
          * Block a time range of a doctor
-         * @description `DOCTOR` blocks only their own time (`doctorId` omitted or own ID); `STAFF` and `ADMIN`
-         *     must name an active doctor. Rejected while booked appointments fall into the range
-         *     (`409 ABSENCE_HAS_APPOINTMENTS`, BR-12).
+         * @description `DOCTOR` blocks only their own time (`doctorId` omitted or own ID, another ID `404`);
+         *     `STAFF` and `ADMIN` must name an active doctor (omitted `422`, unknown `404`). Both times
+         *     on full minutes, `endsAt` after `startsAt`, at most 90 days long, `endsAt` in the future
+         *     and `startsAt` at most 365 days ahead (`422` otherwise). At most 100 absences per doctor
+         *     that have not ended (`409 CONFLICT`). Rejected while booked appointments fall into the
+         *     range (`409 ABSENCE_HAS_APPOINTMENTS`, BR-12).
          */
         post: operations["createAbsence"];
         delete?: never;
@@ -331,9 +343,12 @@ export interface paths {
          * @description A `PATIENT` books for themselves and sends neither `patientEmail` nor `guest` (otherwise
          *     `403`). `STAFF` sends exactly one of them (both or none: `422`): `patientEmail` of an active
          *     patient (otherwise `404`), or `guest` for a person without an account (BR-09, BR-24).
-         *     `startsAt` must be an available
-         *     time of the doctor (BR-23). The booking is atomic; booked appointments of one doctor never
-         *     overlap, and a patient has at most five open appointments.
+         *     `startsAt` must be a start time the doctor offers
+         *     (BR-23): in the working hours, on a step of `appointmentMinutes`, outside absences, in the
+         *     future and at most 365 days ahead (`409 TIME_NOT_AVAILABLE`). An overlap with another
+         *     booked appointment is `409 TIME_ALREADY_BOOKED`, also for concurrent bookings (atomic,
+         *     exclusion constraint). An unknown or inactive doctor returns `404`. A patient or guest
+         *     phone has at most five open appointments (`409 APPOINTMENT_LIMIT_REACHED`).
          */
         post: operations["bookAppointment"];
         delete?: never;
@@ -398,7 +413,9 @@ export interface paths {
          * @description A30. Moves a booked appointment to another available time in one transaction; ID, patient
          *     and reason stay the same and the old time becomes available (BR-22). `PATIENT` only for own
          *     appointments (others return `404`) and until the cancellation deadline; `STAFF` and
-         *     `DOCTOR` until the start.
+         *     `DOCTOR` until the start. The new time follows the rules of a booking (`409
+         *     TIME_NOT_AVAILABLE`, `409 TIME_ALREADY_BOOKED`); the appointment's own old time does not
+         *     block it. An unknown or inactive new doctor returns `404`.
          */
         post: operations["rescheduleAppointment"];
         delete?: never;
@@ -459,7 +476,10 @@ export interface paths {
         /**
          * Replace a doctor's weekly working hours
          * @description Replaces the whole weekly schedule in one transaction (BR-08). Booked appointments are not
-         *     changed. A `DOCTOR` may only set their own hours; other IDs return `404`.
+         *     changed. Entries of one weekday must not overlap (`409 WORKING_HOURS_OVERLAP`); touching
+         *     entries are fine. More than 5 entries per weekday or an `endTime` not after `startTime`
+         *     return `422`. The doctor must be an active `DOCTOR` (`404` otherwise). A `DOCTOR` may only
+         *     set their own hours; other IDs return `404`.
          */
         put: operations["setWorkingHours"];
         post?: never;
@@ -733,7 +753,10 @@ export interface components {
         Timestamp: string;
         /** Format: email */
         Email: string;
-        /** @description BR-01. Not trimmed; any Unicode characters allowed. */
+        /**
+         * @description BR-01. Not trimmed; any Unicode characters allowed. Common passwords, the service name and
+         *     the account's e-mail address are rejected with `422 PASSWORD_TOO_COMMON`.
+         */
         NewPassword: string;
         Password: string;
         /** @description Shown in the UI; control characters and angle brackets are rejected. */
@@ -781,7 +804,7 @@ export interface components {
         /** @enum {string} */
         AuditOutcome: "SUCCESS" | "FAILURE" | "DENIED";
         /** @enum {string} */
-        ErrorCode: "VALIDATION_ERROR" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "MFA_REQUIRED" | "FORBIDDEN" | "ACCESS_GRANT_REQUIRED" | "REAUTHENTICATION_FAILED" | "INVALID_MFA_CODE" | "INVALID_INVITATION" | "INVALID_RESET_CODE" | "NOT_FOUND" | "CONFLICT" | "MFA_ALREADY_ENABLED" | "MFA_NOT_ENABLED" | "WORKING_HOURS_OVERLAP" | "TIME_NOT_AVAILABLE" | "TIME_ALREADY_BOOKED" | "ABSENCE_HAS_APPOINTMENTS" | "APPOINTMENT_LIMIT_REACHED" | "APPOINTMENT_NOT_CANCELLABLE" | "APPOINTMENT_NOT_RESCHEDULABLE" | "CANCELLATION_DEADLINE_PASSED" | "LAST_ADMIN" | "ROLE_CHANGE_NOT_ALLOWED" | "ACCESS_GRANT_ACTIVE" | "PAYLOAD_TOO_LARGE" | "RATE_LIMITED" | "INTERNAL_ERROR";
+        ErrorCode: "VALIDATION_ERROR" | "PASSWORD_TOO_COMMON" | "UNAUTHENTICATED" | "INVALID_CREDENTIALS" | "MFA_REQUIRED" | "FORBIDDEN" | "ACCESS_GRANT_REQUIRED" | "REAUTHENTICATION_FAILED" | "INVALID_MFA_CODE" | "INVALID_INVITATION" | "INVALID_RESET_CODE" | "NOT_FOUND" | "METHOD_NOT_ALLOWED" | "CONFLICT" | "MFA_ALREADY_ENABLED" | "MFA_NOT_ENABLED" | "WORKING_HOURS_OVERLAP" | "TIME_NOT_AVAILABLE" | "TIME_ALREADY_BOOKED" | "ABSENCE_HAS_APPOINTMENTS" | "APPOINTMENT_LIMIT_REACHED" | "APPOINTMENT_NOT_CANCELLABLE" | "APPOINTMENT_NOT_RESCHEDULABLE" | "CANCELLATION_DEADLINE_PASSED" | "LAST_ADMIN" | "ROLE_CHANGE_NOT_ALLOWED" | "ACCESS_GRANT_ACTIVE" | "PAYLOAD_TOO_LARGE" | "UNSUPPORTED_MEDIA_TYPE" | "RATE_LIMITED" | "INTERNAL_ERROR";
         Error: {
             error: {
                 code: components["schemas"]["ErrorCode"];
@@ -896,7 +919,8 @@ export interface components {
             appointmentAccessUntil?: components["schemas"]["Timestamp"];
             /**
              * @description `ADMIN` in `ACTIVE` only: `true` while the practice settings were never saved (BR-18).
-             *     The client then shows the setup page; absent otherwise.
+             *     The client then shows the setup page; absent otherwise. **MVP-TEMP:** not returned
+             *     yet, because `PUT /api/v1/settings` does not exist yet.
              */
             setupRequired?: boolean;
         };
@@ -1046,7 +1070,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description Request body exceeds the size limit; rejected before parsing (`PAYLOAD_TOO_LARGE`). */
+        /** @description Request body exceeds 16 KiB; rejected before parsing (`PAYLOAD_TOO_LARGE`). */
         PayloadTooLarge: {
             headers: {
                 [name: string]: unknown;
@@ -1057,6 +1081,27 @@ export interface components {
                  *       "error": {
                  *         "code": "PAYLOAD_TOO_LARGE",
                  *         "message": "The request is too large.",
+                 *         "requestId": "3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f"
+                 *       }
+                 *     }
+                 */
+                "application/json": components["schemas"]["Error"];
+            };
+        };
+        /**
+         * @description Non-empty request body whose `Content-Type` is not `application/json` (optionally with
+         *     `charset=utf-8`); rejected before parsing (`UNSUPPORTED_MEDIA_TYPE`).
+         */
+        UnsupportedMediaType: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                /**
+                 * @example {
+                 *       "error": {
+                 *         "code": "UNSUPPORTED_MEDIA_TYPE",
+                 *         "message": "The request body must be JSON (application/json).",
                  *         "requestId": "3f2c9a4e-8b1d-4c6a-9e2f-7a5b0c1d2e3f"
                  *       }
                  *     }
@@ -1255,7 +1300,19 @@ export interface operations {
                 };
             };
             413: components["responses"]["PayloadTooLarge"];
-            422: components["responses"]["ValidationError"];
+            415: components["responses"]["UnsupportedMediaType"];
+            /**
+             * @description Request does not match the schema (`VALIDATION_ERROR`), or the password is too common
+             *     (`PASSWORD_TOO_COMMON`, BR-01).
+             */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
         };
@@ -1308,6 +1365,7 @@ export interface operations {
                 };
             };
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1352,6 +1410,7 @@ export interface operations {
                 };
             };
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1392,6 +1451,7 @@ export interface operations {
                 };
             };
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1458,6 +1518,7 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1553,6 +1614,7 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1582,6 +1644,7 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             429: components["responses"]["RateLimited"];
             500: components["responses"]["InternalError"];
@@ -1647,6 +1710,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1738,6 +1802,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1834,6 +1899,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1923,6 +1989,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -1984,6 +2051,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -2018,6 +2086,7 @@ export interface operations {
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -2107,6 +2176,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -2163,6 +2233,7 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             409: components["responses"]["Conflict"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };
@@ -2215,6 +2286,7 @@ export interface operations {
             401: components["responses"]["Unauthenticated"];
             403: components["responses"]["Forbidden"];
             413: components["responses"]["PayloadTooLarge"];
+            415: components["responses"]["UnsupportedMediaType"];
             422: components["responses"]["ValidationError"];
             500: components["responses"]["InternalError"];
         };

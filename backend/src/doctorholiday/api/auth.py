@@ -1,19 +1,18 @@
 """Register, login, logout and the current session (A01, A03, A06, A22; #14).
 
-MVP subset of #14; not here yet: MFA, the first-admin bootstrap (#15), CSRF protection,
-invitations. Search for MVP-TEMP to find the temporary shortcuts.
+The first successful login while no admin exists becomes ADMIN (#15). Not here yet: MFA, CSRF
+protection, invitations. Search for MVP-TEMP to find the temporary shortcuts.
 """
 
 import logging
 import uuid
 from datetime import timedelta
-from ipaddress import ip_address
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, Response, status
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from doctorholiday.api.common import NO_STORE, client_ip
 from doctorholiday.auth.dependencies import CurrentSession, reject_session
 from doctorholiday.auth.passwords import (
     hash_password,
@@ -41,43 +40,28 @@ from doctorholiday.errors import ErrorCode, error_response
 from doctorholiday.models import (
     AuditAction,
     AuditOutcome,
-    IPAddress,
     RateLimitScope,
     Role,
     SessionState,
     User,
 )
-from doctorholiday.repositories import sessions, users
+from doctorholiday.repositories import admin_bootstrap, sessions, users
 from doctorholiday.repositories.audit import audit_target, record_event
 from doctorholiday.repositories.errors import EmailAlreadyRegisteredError
+from doctorholiday.validation import DisplayName, Email, NewPassword, Password, RequestModel
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
-# Field types as in backend/openapi.yaml. Passwords are SecretStr so they never show up in a repr
-# or traceback, and they are not trimmed (BR-01).
-Email = Annotated[EmailStr, Field(min_length=3, max_length=254)]
-NewPassword = Annotated[SecretStr, Field(min_length=12, max_length=128)]
-Password = Annotated[SecretStr, Field(min_length=1, max_length=128)]
-DisplayName = Annotated[str, Field(min_length=1, max_length=100, pattern=r"^[^\x00-\x1F\x7F<>]+$")]
 
-
-class _Request(BaseModel):
-    model_config = ConfigDict(extra="forbid")  # additionalProperties: false
-
-
-class RegisterRequest(_Request):
+class RegisterRequest(RequestModel):
     email: Email
     password: NewPassword
     display_name: DisplayName | None = Field(default=None, alias="displayName")
-    # MVP-TEMP: lets testers create every role until invitations (FR-02) and the admin bootstrap
-    # (#15) exist. Remove together with `role` in RegisterRequest in openapi.yaml; registration
-    # then always creates a PATIENT again (BR-02).
-    role: Role = Role.PATIENT
 
 
-class LoginRequest(_Request):
+class LoginRequest(RequestModel):
     email: Email
     password: Password
 
@@ -97,20 +81,6 @@ class SessionInfo(BaseModel):
     # MVP-TEMP: `setupRequired` is left out. The frontend sends an admin with setupRequired to
     # /setup, and PUT /api/v1/settings does not exist yet. `appointmentAccessUntil` follows with
     # the grants (#18).
-
-
-_NO_STORE = {"Cache-Control": "no-store"}
-
-
-def _client_ip(request: Request) -> IPAddress | None:
-    # The direct peer; behind ingress-nginx that is the proxy until forwarded headers are handled
-    # (#75).
-    if request.client is None:
-        return None
-    try:
-        return ip_address(request.client.host)
-    except ValueError:
-        return None
 
 
 def _rate_limited(request: Request, retry_after: int) -> Response:
@@ -148,7 +118,7 @@ def _session_info(db: Session, state: SessionState, user: User) -> SessionInfo:
 )
 def register(body: RegisterRequest, request: Request, db: DbSession) -> Response:
     settings: Settings = request.app.state.settings
-    ip = _client_ip(request)
+    ip = client_ip(request)
     # Every request counts, whatever the e-mail, so the limit reveals no accounts either.
     limiter = RateLimiter(db, (registration_limit(settings), ip_key(ip)))
     if (retry_after := limiter.retry_after()) is not None:
@@ -183,7 +153,8 @@ def register(body: RegisterRequest, request: Request, db: DbSession) -> Response
             db,
             email=body.email,
             display_name=body.display_name,
-            role=body.role,
+            # Always a patient (BR-02); a `role` in the request is rejected by extra="forbid".
+            role=Role.PATIENT,
             password_hash=password_hash,
         )
     except EmailAlreadyRegisteredError:
@@ -220,7 +191,7 @@ def register(body: RegisterRequest, request: Request, db: DbSession) -> Response
 )
 def login(body: LoginRequest, request: Request, response: Response, db: DbSession) -> object:
     settings: Settings = request.app.state.settings
-    ip = _client_ip(request)
+    ip = client_ip(request)
     ip_limit, account_limit = login_limits(settings)
     limiter = RateLimiter(db, (ip_limit, ip_key(ip)), (account_limit, account_key(body.email)))
     user = users.get_user_by_email(db, body.email)
@@ -284,6 +255,21 @@ def login(body: LoginRequest, request: Request, response: Response, db: DbSessio
     if (old_token := token_from_cookie(request)) is not None:
         sessions.delete_session(db, token_hash=hash_token(old_token))
 
+    # Only here, after every check passed: a failed, inactive or rate-limited login never
+    # bootstraps. Before the session is created, so it already carries the new role.
+    if admin_bootstrap.promote_if_first_admin(db, user):
+        record_event(
+            db,
+            action=AuditAction.ADMIN_BOOTSTRAPPED,
+            outcome=AuditOutcome.SUCCESS,
+            actor_id=user.id,
+            target=audit_target("user", user.id),
+            ip=ip,
+        )
+        logger.warning("first admin bootstrapped", extra={"userId": str(user.id)})
+        # TODO(#21): the new admin must enrol MFA before any other action, i.e. this session
+        # starts in MFA_ENROLLMENT_REQUIRED instead of ACTIVE.
+
     token = new_token()
     # MVP-TEMP: always ACTIVE. With MFA (#21), staff roles start in MFA_ENROLLMENT_REQUIRED and
     # accounts with MFA in MFA_PENDING (BR-05).
@@ -305,7 +291,7 @@ def login(body: LoginRequest, request: Request, response: Response, db: DbSessio
     )
     logger.info("login succeeded", extra={"userId": str(user.id)})
     set_session_cookie(response, token)
-    response.headers.update(_NO_STORE)
+    response.headers.update(NO_STORE)
     return _session_info(db, state, user)
 
 
@@ -318,9 +304,9 @@ def logout(authenticated: CurrentSession, request: Request, db: DbSession) -> Re
         outcome=AuditOutcome.SUCCESS,
         actor_id=authenticated.user.id,
         target=audit_target("user", authenticated.user.id),
-        ip=_client_ip(request),
+        ip=client_ip(request),
     )
-    response = Response(status_code=status.HTTP_204_NO_CONTENT, headers=_NO_STORE)
+    response = Response(status_code=status.HTTP_204_NO_CONTENT, headers=NO_STORE)
     clear_session_cookie(response)
     return response
 
@@ -332,5 +318,5 @@ def logout(authenticated: CurrentSession, request: Request, db: DbSession) -> Re
     response_model_exclude_none=True,
 )
 def me(authenticated: CurrentSession, response: Response, db: DbSession) -> SessionInfo:
-    response.headers.update(_NO_STORE)
+    response.headers.update(NO_STORE)
     return _session_info(db, authenticated.session.state, authenticated.user)

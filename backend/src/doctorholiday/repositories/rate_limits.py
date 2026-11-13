@@ -1,17 +1,12 @@
 """Rate limit counters (BR-03). The policy lives in doctorholiday.auth.rate_limiting."""
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from sqlalchemy import delete, func, or_, select, tuple_
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from doctorholiday.models import RateLimit, RateLimitScope
-
-
-def database_now(session: Session) -> datetime:
-    """The transaction's `now()`, the one clock all counters are compared with."""
-    return session.scalars(select(func.now())).one()
 
 
 def lock_counter(session: Session, *, scope: RateLimitScope, key_hash: bytes) -> RateLimit:
