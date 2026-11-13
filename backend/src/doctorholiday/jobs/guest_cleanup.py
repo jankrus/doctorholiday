@@ -6,9 +6,10 @@ appointment ended or was cancelled; the job sets `guest_erased_at`, and the appo
 only doctor, time, reason and status. It is idempotent: a second run the same day erases
 nothing, and a missed day is caught up by the next run.
 
-It uses the backend's configuration (`DATABASE_URL` and the other variables are validated as at
-startup) and the same database role, which may update `appointments`. It logs only the number of
-erased appointments, never guest data.
+It reads only `DATABASE_URL` and `LOG_LEVEL` (`load_database_settings()`, validated as at
+startup), so the CronJob needs no other secret (AGENTS.md rule 6). It uses the backend's database
+role, which may update `appointments`. It logs only the number of erased appointments, never
+guest data.
 """
 
 import logging
@@ -17,7 +18,7 @@ import sys
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
-from doctorholiday.config import ConfigError, LogLevel, load_settings
+from doctorholiday.config import ConfigError, LogLevel, load_database_settings
 from doctorholiday.db import create_db_engine
 from doctorholiday.logs import configure_logging
 from doctorholiday.repositories.appointments import erase_expired_guest_data
@@ -28,7 +29,7 @@ logger = logging.getLogger("doctorholiday.jobs.guest_cleanup")
 def main() -> int:
     configure_logging(LogLevel.INFO)
     try:
-        settings = load_settings()
+        settings = load_database_settings()
     except ConfigError as exc:
         logger.critical("invalid configuration, exiting", extra={"errors": exc.errors})
         return 1
