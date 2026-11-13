@@ -76,6 +76,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | Frontend lint | `cd frontend && npm run lint` (ESLint + Prettier) |
 | Frontend build | `cd frontend && npm run build` (static assets in `frontend/dist/`) |
 | Frontend API types | `cd frontend && npm run gen:api` (after changing `backend/openapi.yaml`) |
+| Pinning check / workflow lint | `make check-pinning` / `make lint-actions` (needs Docker) |
 | Cluster up / down | `make up` / `make down` |
 | Local DB up (+ migrations) / down / reset | `make db-up` / `make db-down` / `make db-reset` |
 | Full local stack + manual test scenarios | [docs/development/local-testing.md](docs/development/local-testing.md) |
