@@ -31,6 +31,18 @@ Brief §5e ("Erklärung aller nicht-sicheren Parts mit Begründung") draws on th
 - **Consequence:** An image is no longer a pure function of the base digest and the sources: it also depends on the Alpine package index at build time. Reproducibility is restored by the digest of the *built* image (pushed and signed in #34, #35) and by the SBOM, which lists the exact package versions (#32). Two builds on different days can differ in patch versions.
 - **Production alternative:** rebuild images on a schedule and bump the base digest through Dependabot (#46) instead of upgrading inside the build.
 
+## Scanner exceptions (#33)
+
+Findings are never hidden silently. Every ignore entry lives in one of the files below, with a justification, and is listed here. Anything not listed is scanned and counted.
+
+| Scanner | Ignored | Where | Justification |
+| :--- | :--- | :--- | :--- |
+| Semgrep | `**/*.test.ts`, `**/*.test.tsx`, `backend/tests/` | `.semgrepignore` | Tests contain fixed dummy values (TOTP secrets, one-time codes, passwords) that the generic-secret rule (`detected-generic-secret`) flags, 4 findings in `MfaPage.test.tsx`, and test-only constructs that the Python packs flag (5 warnings: `hardcoded-password-default-argument`, `len-all-count`, `dynamic-urllib-use-detected`). None is a real credential or runs in production, and test files are not part of any image. |
+| Semgrep | `frontend/dev-mock-api.ts` | `.semgrepignore` | Mock of the API that only the Vite dev server loads (`vite.config.ts`), never built into the image. Its demo TOTP secret is a fixed dummy value (`detected-generic-secret`). |
+| Semgrep | rule `python.lang.compatibility.python37.python37-compatibility-importlib2` | `scripts/scan.sh` (`--exclude-rule`) | Flags `importlib.resources` as unavailable before Python 3.7. The backend runs on Python 3.12 only (`requires-python`). |
+| Trivy | none | `.trivyignore` (empty) | No vulnerability is ignored. |
+| Gitleaks | none | `.gitleaks.toml` (default rules, no allowlist) | No leak is ignored. |
+
 ## Planned or likely deviations (not decided yet)
 
 | ID | Topic | Note |

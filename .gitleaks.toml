@@ -1,0 +1,12 @@
+# Gitleaks configuration (issues #33, #30).
+#
+# The default rule set stays on. Project-specific rules for our variable names (DATABASE_URL,
+# MFA_ENCRYPTION_KEY, ...) and the pre-commit hook follow with the secret concept in #30.
+#
+# False positives are handled only here, each with a justification, and are listed in
+# docs/report/deviations.md. An empty allowlist means there are none.
+
+title = "Doctor Holiday"
+
+[extend]
+useDefault = true
