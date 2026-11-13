@@ -103,3 +103,12 @@ Colours, typography, layout and form patterns are described in the
 Without a session every protected route redirects to `/login`; other roles are sent to their own start page.
 The first login creates the admin (BR-04, #15); `GET /api/v1/auth/me` then returns `setupRequired: true` and
 every route forwards the admin to `/setup` until the practice settings are saved for the first time.
+
+## Container image
+
+`frontend/Dockerfile` builds the static SPA with Node (`npm ci --ignore-scripts`, then `npm run build`) and serves it with `nginx-unprivileged` (issue #28). The runtime image has no Node and no sources. It runs as UID 101 on port 8080 with a read-only root filesystem (it also starts under another numeric UID, for example `--user 10001` as the issue lists, so Kubernetes may set one common `runAsUser`); pid file and temporary files go to `/tmp`. `nginx.conf` answers `GET /healthz` for the Kubernetes probes, falls back to `index.html` for client-side routes and sets security headers (`security-headers.conf`; the CSP follows in #27). The API is not served here: ingress-nginx routes `/api` to the backend (#40).
+
+```sh
+docker build -t doctorholiday-frontend frontend --build-arg VERSION="$(cat VERSION.txt)" --build-arg REVISION="$(git rev-parse HEAD)"
+docker run --rm --read-only --tmpfs /tmp --user 101 --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8081:8080 doctorholiday-frontend
+```
