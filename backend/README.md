@@ -270,3 +270,14 @@ Plain SQL files in [`migrations/`](migrations), named `V<nnn>__<name>.sql` and a
 | `practice_settings`, `admin_bootstrap` | `SELECT, UPDATE` | Single rows created by the migration; the app cannot add or remove them. |
 | `audit_events` | `SELECT, INSERT` | Append-only, the application cannot rewrite the audit log (BR-19). |
 | `schema_migrations` | none | Owned by the migration role. |
+
+## Container image
+
+`backend/Dockerfile` builds the image (issue #28). Multi-stage: `uv sync --locked --no-build` installs the hash-locked wheels into a venv, the runtime stage copies only the venv. The image runs as UID 10001 on port 8080, with a read-only root filesystem and no capabilities. Base images are pinned by digest; why `python:3.12-alpine`: [deviations.md](../docs/report/deviations.md) D-03.
+
+```sh
+docker build -t doctorholiday-backend backend --build-arg VERSION="$(cat VERSION.txt)" --build-arg REVISION="$(git rev-parse HEAD)"
+docker run --rm --read-only --tmpfs /tmp --user 10001 --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8080:8080 --env-file backend/.env doctorholiday-backend
+```
+
+Configuration only comes from environment variables (`.env.example`); the image contains no secrets. The migrations are not part of the image, they run from `make db-up` locally and as a Job in the cluster (#39).

@@ -1,0 +1,16 @@
+# Build context for frontend/Dockerfile: sources and lockfile only, no secrets, no local artefacts.
+node_modules
+dist
+coverage
+.env
+.env.*
+!.env.example
+*.log
+*.md
+Dockerfile
+.dockerignore
+
+# Tests and test helpers are not part of the build.
+**/*.test.ts
+**/*.test.tsx
+src/test

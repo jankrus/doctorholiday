@@ -36,7 +36,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 - Auth: server-side sessions in `HttpOnly; Secure; SameSite=Strict` cookies (no JWT in browser storage)
 - Pipeline: GitHub Actions, GHCR, Syft (SBOM), Semgrep (SAST), Trivy (SCA/image), Gitleaks, cosign (key-based)
 - Deploy: local `kind` + `ingress-nginx`, driven by the Makefile
-- Base images: distroless/chainguard (backend), `nginxinc/nginx-unprivileged:alpine`, `postgres:16-alpine`; **pinned by sha256 digest**
+- Base images: `python:3.12-alpine` (backend, see D-03 in `docs/report/deviations.md`), `nginxinc/nginx-unprivileged:alpine`, `postgres:16-alpine`; **pinned by sha256 digest**
 
 ## Naming
 - Kubernetes namespace: `doctorholiday`
