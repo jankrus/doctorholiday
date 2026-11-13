@@ -2,9 +2,9 @@
 
 import uuid
 from collections.abc import Iterable, Sequence
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import ColumnElement, and_, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -233,3 +233,33 @@ def page_appointments(
         .offset(offset)
     ).all()
     return items, total or 0
+
+
+# BR-24: guest name and phone are kept this long after the appointment ended or was cancelled.
+GUEST_DATA_RETENTION = timedelta(days=30)
+
+
+def erase_expired_guest_data(session: Session) -> int:
+    """Erase name and phone of guest appointments that ended or were cancelled more than 30 days
+    ago (BR-24) and set `guest_erased_at`; returns how many were erased."""
+    cutoff = func.now() - GUEST_DATA_RETENTION
+    result = session.execute(
+        update(Appointment)
+        .where(
+            Appointment.patient_id.is_(None),
+            Appointment.guest_erased_at.is_(None),
+            or_(
+                and_(
+                    Appointment.status == AppointmentStatus.CANCELLED,
+                    Appointment.cancelled_at <= cutoff,
+                ),
+                and_(
+                    Appointment.status == AppointmentStatus.BOOKED,
+                    Appointment.ends_at <= cutoff,
+                ),
+            ),
+        )
+        .values(guest_name=None, guest_phone=None, guest_erased_at=func.now())
+        .execution_options(synchronize_session=False)
+    )
+    return result.rowcount
