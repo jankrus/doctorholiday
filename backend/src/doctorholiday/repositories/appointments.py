@@ -4,7 +4,7 @@ import uuid
 from collections.abc import Iterable, Sequence
 from datetime import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -198,3 +198,38 @@ def reschedule_appointment(
         if violated_constraint(exc) == "appointments_no_overlap":
             raise TimeAlreadyBookedError from None
         raise
+
+
+def page_appointments(
+    session: Session,
+    *,
+    limit: int,
+    offset: int,
+    patient_id: uuid.UUID | None = None,
+    doctor_id: uuid.UUID | None = None,
+    status: AppointmentStatus | None = None,
+    starts_from: datetime | None = None,
+    starts_before: datetime | None = None,
+) -> tuple[Sequence[Appointment], int]:
+    """A page of appointments sorted by start (BR-20), and the total; filters are optional, the
+    time range is on the start, inclusive and exclusive."""
+    conditions: list[ColumnElement[bool]] = []
+    if patient_id is not None:
+        conditions.append(Appointment.patient_id == patient_id)
+    if doctor_id is not None:
+        conditions.append(Appointment.doctor_id == doctor_id)
+    if status is not None:
+        conditions.append(Appointment.status == status)
+    if starts_from is not None:
+        conditions.append(Appointment.starts_at >= starts_from)
+    if starts_before is not None:
+        conditions.append(Appointment.starts_at < starts_before)
+    total = session.scalar(select(func.count()).select_from(Appointment).where(*conditions))
+    items = session.scalars(
+        select(Appointment)
+        .where(*conditions)
+        .order_by(Appointment.starts_at, Appointment.id)
+        .limit(limit)
+        .offset(offset)
+    ).all()
+    return items, total or 0

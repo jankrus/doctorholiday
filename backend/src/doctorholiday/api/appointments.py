@@ -20,12 +20,21 @@ import uuid
 from datetime import datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import AwareDatetime, StringConstraints
 from sqlalchemy.orm import Session
 
 from doctorholiday import scheduling
-from doctorholiday.api.common import NO_STORE, CamelRequest, client_ip, utc_iso
+from doctorholiday.api.common import (
+    DEFAULT_LIMIT,
+    NO_STORE,
+    CamelRequest,
+    Limit,
+    Offset,
+    Page,
+    client_ip,
+    utc_iso,
+)
 from doctorholiday.api.responses import Appointment
 from doctorholiday.auth.dependencies import require_roles
 from doctorholiday.db import DbSession
@@ -62,6 +71,8 @@ BookingUser = Annotated[User, Depends(require_roles(Role.PATIENT, Role.STAFF))]
 CancellingUser = Annotated[
     User, Depends(require_roles(Role.PATIENT, Role.STAFF, Role.DOCTOR, Role.ADMIN))
 ]
+PatientUser = Annotated[User, Depends(require_roles(Role.PATIENT))]
+PracticeUser = Annotated[User, Depends(require_roles(Role.STAFF, Role.DOCTOR, Role.ADMIN))]
 # ADMIN does not book and therefore does not reschedule (footnote 10).
 ReschedulingUser = Annotated[User, Depends(require_roles(Role.PATIENT, Role.STAFF, Role.DOCTOR))]
 
@@ -83,6 +94,13 @@ class AppointmentCreateRequest(CamelRequest):
     # (`_booking_party`), not here.
     patient_email: Email | None = None
     guest: GuestContactIn | None = None
+
+
+# Filters of the lists (`StatusFilter`, `From`, `To`, `DoctorIdFilter` in openapi.yaml).
+StatusFilter = Annotated[AppointmentStatus | None, Query(alias="status")]
+FromFilter = Annotated[AwareDatetime | None, Query(alias="from")]
+ToFilter = Annotated[AwareDatetime | None, Query(alias="to")]
+DoctorIdFilter = Annotated[uuid.UUID | None, Query(alias="doctorId")]
 
 
 class AppointmentRescheduleRequest(CamelRequest):
@@ -387,3 +405,83 @@ def reschedule_appointment(
     logger.info("appointment rescheduled", extra={"appointmentId": str(row.id)})
     response.headers.update(NO_STORE)
     return appointment_view(db, row, user)
+
+
+def _page(
+    db: Session, rows: list[AppointmentRow], total: int, user: User, limit: int, offset: int
+) -> Page[Appointment]:
+    practice_view = user.role is not Role.PATIENT
+    ids = {row.doctor_id for row in rows}
+    if practice_view:
+        ids |= {row.patient_id for row in rows if row.patient_id}
+    by_id = users.get_users(db, ids)
+    return Page(
+        limit=limit,
+        offset=offset,
+        total=total,
+        items=[Appointment.of(row, by_id, practice_view=practice_view) for row in rows],
+    )
+
+
+@router.get(
+    "/me",
+    operation_id="listMyAppointments",
+    response_model=Page[Appointment],
+    response_model_exclude_none=True,
+)
+def list_my_appointments(
+    user: PatientUser,
+    response: Response,
+    db: DbSession,
+    status_filter: StatusFilter = None,
+    from_: FromFilter = None,
+    to: ToFilter = None,
+    limit: Limit = DEFAULT_LIMIT,
+    offset: Offset = 0,
+) -> Page[Appointment]:
+    # Own only: the patient comes from the session, there is no patient parameter (A11).
+    rows, total = appointments.page_appointments(
+        db,
+        limit=limit,
+        offset=offset,
+        patient_id=user.id,
+        status=status_filter,
+        starts_from=from_,
+        starts_before=to,
+    )
+    response.headers.update(NO_STORE)
+    return _page(db, list(rows), total, user, limit, offset)
+
+
+@router.get(
+    "",
+    operation_id="listAppointments",
+    response_model=Page[Appointment],
+    response_model_exclude_none=True,
+)
+def list_appointments(
+    user: PracticeUser,
+    request: Request,
+    response: Response,
+    db: DbSession,
+    doctor_id: DoctorIdFilter = None,
+    status_filter: StatusFilter = None,
+    from_: FromFilter = None,
+    to: ToFilter = None,
+    limit: Limit = DEFAULT_LIMIT,
+    offset: Offset = 0,
+) -> Page[Appointment]:
+    grant = require_grant(db, user)
+    rows, total = appointments.page_appointments(
+        db,
+        limit=limit,
+        offset=offset,
+        doctor_id=doctor_id,
+        status=status_filter,
+        starts_from=from_,
+        starts_before=to,
+    )
+    if grant is not None:
+        audit_grant_access(db, user, grant, request, audit_target("admin_access_grant", grant.id))
+    response.headers.update(NO_STORE)
+    return _page(db, list(rows), total, user, limit, offset)
