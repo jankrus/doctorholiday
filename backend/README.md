@@ -17,6 +17,8 @@ Dependencies, the virtualenv and the Python version are managed with **[uv](http
 
 ## Setup
 
+To run database, backend and frontend together and test by hand, follow [docs/development/local-testing.md](../docs/development/local-testing.md); it includes a snippet that fills in `.env`. The steps for the backend alone:
+
 1. Install uv in the version range from `[tool.uv] required-version` in `pyproject.toml` (currently 0.12.x):
    ```sh
    brew install uv                                     # macOS

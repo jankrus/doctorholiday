@@ -1,9 +1,11 @@
 import { Theme } from '@radix-ui/themes';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { SessionInfo } from './api/client';
 import { routes } from './routes';
+import { renderRoute } from './test/render';
 import { activeSession, stubSession } from './test/session';
 
 function renderAt(path: string, session: SessionInfo | null) {
@@ -52,6 +54,27 @@ describe('routing', () => {
       '/setup',
       'Praxis einrichten',
     );
+  });
+
+  it.each([
+    ['/appointments', 'PATIENT'],
+    ['/staff', 'STAFF'],
+    ['/admin', 'ADMIN'],
+  ] as const)('logs out from the header of %s', async (path, role) => {
+    let loggedOut = false;
+    stubSession(activeSession(role), {
+      'POST /api/v1/auth/logout': (_, setSession) => {
+        loggedOut = true;
+        setSession(null);
+        return new Response(null, { status: 204 });
+      },
+    });
+    const router = renderRoute(path);
+    await userEvent.click(await screen.findByRole('button', { name: 'Abmelden' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Sie wurden abgemeldet.');
+    expect(router.state.location.pathname).toBe('/login');
+    expect(loggedOut).toBe(true);
   });
 
   it('sends an admin away from /setup once it is done', async () => {
