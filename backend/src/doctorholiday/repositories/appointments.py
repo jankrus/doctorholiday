@@ -4,7 +4,7 @@ import uuid
 from collections.abc import Iterable, Sequence
 from datetime import datetime, timedelta
 
-from sqlalchemy import ColumnElement, and_, func, or_, select, update
+from sqlalchemy import ColumnElement, Row, and_, func, or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -36,6 +36,11 @@ def book_appointment(
     each wait for the other's uncommitted row, and PostgreSQL aborts one of them with a deadlock
     error instead of the constraint violation (a 500 instead of a 409). `FOR NO KEY UPDATE` does
     not block the `FOR KEY SHARE` locks that foreign key checks take on the same row.
+
+    Who locks: this function takes the lock itself, because it is also called outside the API
+    (seed, tests). The endpoint already holds it from `get_active_doctor(lock=True)`; taking it
+    again in the same transaction is a no-op. `reschedule_appointment` does not lock, its caller
+    must.
     """
     session.execute(select(User.id).where(User.id == doctor_id).with_for_update(key_share=True))
     appointment = Appointment(
@@ -114,10 +119,15 @@ def list_booked_overlapping(
     *,
     starts_before: datetime,
     ends_after: datetime,
-) -> Sequence[Appointment]:
-    """Booked appointments of these doctors that overlap [ends_after, starts_before)."""
-    return session.scalars(
-        select(Appointment).where(
+) -> Sequence[Row[tuple[uuid.UUID, datetime, datetime]]]:
+    """`(doctor_id, starts_at, ends_at)` of the booked appointments of these doctors that overlap
+    [ends_after, starts_before).
+
+    Only these three columns: availability needs the times, never who the appointment is for, so
+    no patient or guest data is loaded (BR-24, data minimisation).
+    """
+    return session.execute(
+        select(Appointment.doctor_id, Appointment.starts_at, Appointment.ends_at).where(
             Appointment.doctor_id.in_(set(doctor_ids)),
             Appointment.status == AppointmentStatus.BOOKED,
             Appointment.starts_at < starts_before,
@@ -185,9 +195,11 @@ def reschedule_appointment(
     starts_at: datetime,
     ends_at: datetime,
 ) -> None:
-    """Move a booked appointment (BR-22); ID, patient and reason stay. The caller holds the new
-    doctor's row lock. An overlap with another booked appointment raises TimeAlreadyBookedError
-    and leaves the appointment unchanged; its own old time never conflicts."""
+    """Move a booked appointment (BR-22); ID, patient and reason stay. The caller must hold the
+    new doctor's row lock (`get_active_doctor(lock=True)`); unlike `book_appointment`, this
+    function does not take it. An overlap with another booked appointment raises
+    TimeAlreadyBookedError and leaves the appointment unchanged; its own old time never
+    conflicts."""
     try:
         with session.begin_nested():
             appointment.doctor_id = doctor_id
