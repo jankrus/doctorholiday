@@ -8,22 +8,26 @@ from typing import Any
 
 import pytest
 from fastapi import FastAPI
-from fastapi.routing import APIRoute
+from fastapi.routing import APIRoute, iter_route_contexts
 from httpx2 import Request, Response
 from pydantic import BaseModel
 
 from tests import contract
-from tests.contract import spec, violations
+from tests.contract import operations, spec, violations
 
 _API_PREFIXES = ("/api/", "/healthz", "/readyz")
 
 
 def _routes(app: FastAPI) -> list[APIRoute]:
-    return [
-        route
-        for route in app.routes
-        if isinstance(route, APIRoute) and route.path.startswith(_API_PREFIXES)
+    # As served: plain `app.routes` holds only wrappers for the included routers.
+    routes = [
+        ctx.original_route
+        for ctx in iter_route_contexts(app.routes)
+        if isinstance(ctx.original_route, APIRoute)
+        and ctx.original_route.path.startswith(_API_PREFIXES)
     ]
+    assert routes, "no routes found; the checks below would pass vacuously"
+    return routes
 
 
 def _resolve(node: dict[str, Any]) -> dict[str, Any]:
@@ -106,6 +110,18 @@ def test_query_parameters_match_the_contract(app: FastAPI) -> None:
             mismatches[f"{method} {route.path}"] = {"ours": ours, "contract": declared}
 
     assert mismatches == {}
+
+
+def test_the_schedule_appointment_and_directory_operations_are_served(app: FastAPI) -> None:
+    served = {route.operation_id for route in _routes(app)}
+    tagged = {
+        operation["operationId"]
+        for _, _, operation in operations()
+        if {"schedule", "appointments", "directory"} & set(operation["tags"])
+    }
+
+    assert tagged
+    assert tagged <= served
 
 
 # ---------- The response check ----------
