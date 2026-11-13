@@ -1,8 +1,9 @@
-"""Working hours (A13), absences (A14, A31) and the doctor schedule (A32) of #17.
+"""Working hours (A13), absences (A14, A31), the doctor schedule (A32) and availability (A07).
 
-Roles (x-roles in openapi.yaml): `STAFF` and `ADMIN` for every active doctor, `DOCTOR` only for
-themselves; another doctor's ID answers `404`, like an unknown one (x-own-only). `PATIENT` gets
-`403`. Availability (A07) is computed from these in `doctorholiday.scheduling`.
+Roles (x-roles in openapi.yaml): working hours, absences and schedules are for `STAFF` and
+`ADMIN` (every active doctor) and `DOCTOR` (only themselves; another doctor's ID answers `404`,
+like an unknown one, x-own-only); `PATIENT` gets `403`. Availability is open to every role and is
+computed in `doctorholiday.scheduling`, never stored (BR-23).
 """
 
 import logging
@@ -11,13 +12,22 @@ from datetime import datetime, time, timedelta
 from itertools import pairwise
 from typing import Annotated, Self
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import AwareDatetime, Field, StringConstraints, model_validator
 from sqlalchemy.orm import Session
 
-from doctorholiday.api.common import NO_STORE, CamelRequest, client_ip
-from doctorholiday.api.responses import Absence, DoctorSchedule
-from doctorholiday.auth.dependencies import require_roles
+from doctorholiday import scheduling
+from doctorholiday.api.common import (
+    DEFAULT_LIMIT,
+    NO_STORE,
+    CamelRequest,
+    Limit,
+    Offset,
+    Page,
+    client_ip,
+)
+from doctorholiday.api.responses import Absence, AvailableTime, DoctorSchedule
+from doctorholiday.auth.dependencies import ActiveUser, require_roles
 from doctorholiday.db import DbSession
 from doctorholiday.errors import (
     VALIDATION_MESSAGE,
@@ -27,7 +37,7 @@ from doctorholiday.errors import (
     not_found,
 )
 from doctorholiday.models import AuditAction, AuditOutcome, Role, User
-from doctorholiday.repositories import appointments, clock, schedule, users
+from doctorholiday.repositories import appointments, clock, practice_settings, schedule, users
 from doctorholiday.repositories.audit import audit_target, record_event
 
 logger = logging.getLogger(__name__)
@@ -41,7 +51,7 @@ MAX_ENTRIES_PER_WEEKDAY = 5
 # BR-12
 MAX_ABSENCE_LENGTH = timedelta(days=90)
 MAX_OPEN_ABSENCES = 100
-MAX_DAYS_AHEAD = timedelta(days=365)
+MAX_DAYS_AHEAD = scheduling.MAX_DAYS_AHEAD
 
 # `LocalTime` of the contract: HH:MM on full 5 minutes.
 LocalTime = Annotated[
@@ -271,3 +281,65 @@ def delete_absence(
     )
     logger.info("absence deleted", extra={"absenceId": str(id)})
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/availability",
+    operation_id="listAvailability",
+    response_model=Page[AvailableTime],
+)
+def list_availability(
+    _user: ActiveUser,
+    db: DbSession,
+    from_: Annotated[AwareDatetime, Query(alias="from")],
+    to: AwareDatetime,
+    doctor_id: Annotated[uuid.UUID | None, Query(alias="doctorId")] = None,
+    limit: Limit = DEFAULT_LIMIT,
+    offset: Offset = 0,
+) -> Page[AvailableTime]:
+    # Bounds the work per request (BR-23): at most 31 days of steps per doctor.
+    if not from_ < to <= from_ + scheduling.MAX_RANGE:
+        raise _invalid()
+
+    # An unknown or inactive doctorId simply has no available times.
+    doctors = users.list_active_doctors(db, doctor_id=doctor_id)
+    minutes = practice_settings.get_practice_settings(db).appointment_minutes
+    now = clock.database_now(db)
+    ids = [doctor.id for doctor in doctors]
+    # Everything that can overlap an appointment starting in [from, to).
+    window = {"starts_before": to + timedelta(minutes=minutes), "ends_after": from_}
+    hours: dict[uuid.UUID, list[scheduling.WorkingHoursEntry]] = {}
+    for row in schedule.list_working_hours(db, ids):
+        hours.setdefault(row.doctor_id, []).append((row.weekday, row.start_time, row.end_time))
+    blocked: dict[uuid.UUID, list[scheduling.Interval]] = {}
+    for row in [
+        *schedule.list_absences_overlapping(db, ids, **window),
+        *appointments.list_booked_overlapping(db, ids, **window),
+    ]:
+        blocked.setdefault(row.doctor_id, []).append(
+            scheduling.Interval(row.starts_at, row.ends_at)
+        )
+
+    found = [
+        (starts_at, doctor)
+        for doctor in doctors
+        for starts_at in scheduling.available_times(
+            hours.get(doctor.id, []),
+            scheduling.Blocked(blocked.get(doctor.id, [])),
+            starts_from=from_,
+            starts_before=to,
+            minutes=minutes,
+            now=now,
+        )
+    ]
+    # Ascending by start, then by doctor (BR-20); `doctors` is sorted by name, sort() is stable.
+    found.sort(key=lambda item: item[0])
+    return Page(
+        limit=limit,
+        offset=offset,
+        total=len(found),
+        items=[
+            AvailableTime.of(doctor, starts_at, minutes)
+            for starts_at, doctor in found[offset : offset + limit]
+        ],
+    )

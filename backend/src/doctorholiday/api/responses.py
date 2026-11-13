@@ -2,7 +2,7 @@
 
 import uuid
 from collections.abc import Iterable
-from datetime import time
+from datetime import datetime, time, timedelta
 
 from doctorholiday.api.common import ResponseModel, UtcDatetime
 from doctorholiday.models import Absence as AbsenceRow
@@ -84,4 +84,18 @@ class DoctorSchedule(ResponseModel):
             doctor=DoctorRef.of(doctor),
             working_hours=[WorkingHoursEntry.of(row) for row in working_hours],
             absences=[Absence.of(row, doctor) for row in absences],
+        )
+
+
+class AvailableTime(ResponseModel):
+    doctor: DoctorRef
+    starts_at: UtcDatetime
+    ends_at: UtcDatetime
+
+    @classmethod
+    def of(cls, doctor: User, starts_at: datetime, minutes: int) -> "AvailableTime":
+        return cls(
+            doctor=DoctorRef.of(doctor),
+            starts_at=starts_at,
+            ends_at=starts_at + timedelta(minutes=minutes),
         )

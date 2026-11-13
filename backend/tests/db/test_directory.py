@@ -16,13 +16,19 @@ def test_every_role_lists_the_active_doctors_without_their_e_mail(
     doctor = make_committed_user(Role.DOCTOR)
     make_committed_user(Role.STAFF)
 
-    response = client_as(make_committed_user(role)).get("/api/v1/doctors?limit=100")
+    client = client_as(make_committed_user(role))
 
-    assert response.status_code == 200
-    body = response.json()
-    assert {"id": str(doctor.id), "displayName": doctor.display_name} in body["items"]
-    assert all(set(item) == {"id", "displayName"} for item in body["items"])
-    assert body["total"] >= 1
+    items: list[dict[str, str]] = []
+    while True:  # every page: other tests' doctors are in the database too
+        response = client.get(f"/api/v1/doctors?limit=100&offset={len(items)}")
+        assert response.status_code == 200
+        body = response.json()
+        items += body["items"]
+        if len(items) >= body["total"]:
+            break
+
+    assert {"id": str(doctor.id), "displayName": doctor.display_name} in items
+    assert all(set(item) == {"id", "displayName"} for item in items)
     assert body["limit"] == 100
 
 

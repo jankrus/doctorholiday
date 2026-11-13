@@ -1,7 +1,7 @@
 """Appointments. Overlaps are prevented by the database, not by a prior check (BR-09)."""
 
 import uuid
-from collections.abc import Sequence
+from collections.abc import Iterable, Sequence
 from datetime import datetime
 
 from sqlalchemy import func, select
@@ -106,3 +106,21 @@ def has_booked_overlapping(
         )
         is not None
     )
+
+
+def list_booked_overlapping(
+    session: Session,
+    doctor_ids: Iterable[uuid.UUID],
+    *,
+    starts_before: datetime,
+    ends_after: datetime,
+) -> Sequence[Appointment]:
+    """Booked appointments of these doctors that overlap [ends_after, starts_before)."""
+    return session.scalars(
+        select(Appointment).where(
+            Appointment.doctor_id.in_(set(doctor_ids)),
+            Appointment.status == AppointmentStatus.BOOKED,
+            Appointment.starts_at < starts_before,
+            Appointment.ends_at > ends_after,
+        )
+    ).all()
