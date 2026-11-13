@@ -30,10 +30,10 @@ from doctorholiday.api.responses import Absence, AvailableTime, DoctorSchedule
 from doctorholiday.auth.dependencies import ActiveUser, require_roles
 from doctorholiday.db import DbSession
 from doctorholiday.errors import (
-    VALIDATION_MESSAGE,
     WORKING_HOURS_OVERLAP_MESSAGE,
     ApiError,
     ErrorCode,
+    invalid,
     not_found,
 )
 from doctorholiday.models import AuditAction, AuditOutcome, Role, User
@@ -108,12 +108,6 @@ class AbsenceCreateRequest(CamelRequest):
         if self.ends_at - self.starts_at > MAX_ABSENCE_LENGTH:
             raise ValueError("an absence lasts at most 90 days")
         return self
-
-
-def _invalid() -> ApiError:
-    return ApiError(
-        status.HTTP_422_UNPROCESSABLE_CONTENT, ErrorCode.VALIDATION_ERROR, VALIDATION_MESSAGE
-    )
 
 
 def schedule_doctor(db: Session, user: User, doctor_id: uuid.UUID, *, lock: bool = False) -> User:
@@ -210,7 +204,7 @@ def create_absence(
     if body.doctor_id is None:
         # A doctor may omit their own ID; STAFF and ADMIN must name the doctor.
         if user.role is not Role.DOCTOR:
-            raise _invalid()
+            raise invalid()
         doctor_id = user.id
     else:
         doctor_id = body.doctor_id
@@ -219,7 +213,7 @@ def create_absence(
 
     now = clock.database_now(db)
     if body.ends_at <= now or body.starts_at > now + MAX_DAYS_AHEAD:
-        raise _invalid()
+        raise invalid()
     if schedule.count_open_absences(db, doctor.id) >= MAX_OPEN_ABSENCES:
         raise ApiError(
             status.HTTP_409_CONFLICT,
@@ -299,7 +293,7 @@ def list_availability(
 ) -> Page[AvailableTime]:
     # Bounds the work per request (BR-23): at most 31 days of steps per doctor.
     if not from_ < to <= from_ + scheduling.MAX_RANGE:
-        raise _invalid()
+        raise invalid()
 
     # An unknown or inactive doctorId simply has no available times.
     doctors = users.list_active_doctors(db, doctor_id=doctor_id)

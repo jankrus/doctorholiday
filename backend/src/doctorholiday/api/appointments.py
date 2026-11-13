@@ -11,8 +11,10 @@ Authorisation (x-roles, x-own-only, x-tbac in openapi.yaml):
 
 Concurrency: every write locks the rows it depends on in a fixed order (patient or guest phone,
 then the appointment, then the doctor), so concurrent requests run one after the other where
-they conflict and never deadlock. The exclusion constraint `appointments_no_overlap` stays the
-final guard: an overlap with another booked appointment is `409 TIME_ALREADY_BOOKED`.
+they conflict and never deadlock. Endpoints lock the doctor with `get_active_doctor(lock=True)`;
+`repositories.appointments.book_appointment` locks it again (harmless), `reschedule_appointment`
+does not. The exclusion constraint `appointments_no_overlap` stays the final guard: an overlap
+with another booked appointment is `409 TIME_ALREADY_BOOKED`.
 """
 
 import logging
@@ -38,7 +40,7 @@ from doctorholiday.api.common import (
 from doctorholiday.api.responses import Appointment
 from doctorholiday.auth.dependencies import require_roles
 from doctorholiday.db import DbSession
-from doctorholiday.errors import VALIDATION_MESSAGE, ApiError, ErrorCode, not_found
+from doctorholiday.errors import ApiError, ErrorCode, forbidden, invalid, not_found
 from doctorholiday.models import (
     AdminAccessGrant,
     AppointmentReason,
@@ -109,18 +111,6 @@ class AppointmentRescheduleRequest(CamelRequest):
     doctor_id: uuid.UUID | None = None
 
 
-def _invalid() -> ApiError:
-    return ApiError(
-        status.HTTP_422_UNPROCESSABLE_CONTENT, ErrorCode.VALIDATION_ERROR, VALIDATION_MESSAGE
-    )
-
-
-def _forbidden() -> ApiError:
-    return ApiError(
-        status.HTTP_403_FORBIDDEN, ErrorCode.FORBIDDEN, "You are not allowed to do this."
-    )
-
-
 def ensure_offered(
     db: Session, doctor: User, starts_at: datetime, *, minutes: int, now: datetime
 ) -> None:
@@ -166,11 +156,11 @@ def _booking_party(
     if user.role is Role.PATIENT:
         # Always for themselves: naming anyone is not allowed, not just ignored.
         if body.patient_email is not None or body.guest is not None:
-            raise _forbidden()
+            raise forbidden()
         return user, None
     # STAFF: exactly one of patientEmail and guest.
     if (body.patient_email is None) == (body.guest is None):
-        raise _invalid()
+        raise invalid()
     if body.guest is not None:
         return None, body.guest
     patient = users.get_active_patient_by_email(db, body.patient_email)
