@@ -1,7 +1,7 @@
 """Working hours (A13), absences (A14, A31) and the doctor schedule (A32), #17."""
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from typing import Any
 
 import pytest
@@ -11,16 +11,15 @@ from sqlalchemy.orm import Session
 from doctorholiday.models import (
     Absence,
     Appointment,
-    AppointmentReason,
     AuditAction,
-    AuditEvent,
     AuditOutcome,
     Role,
     User,
     WorkingHours,
 )
-from doctorholiday.repositories.appointments import book_appointment, cancel_appointment
+from doctorholiday.repositories.appointments import cancel_appointment
 from tests.db.conftest import ClientFactory, UserFactory, database_now
+from tests.db.helpers import audit_events, book, iso
 
 WEEK = [
     {"weekday": 1, "startTime": "08:00", "endTime": "12:00"},
@@ -32,32 +31,6 @@ WEEK = [
 def put_hours(client: Any, doctor: User | uuid.UUID, entries: list[dict[str, Any]]) -> Any:
     doctor_id = doctor if isinstance(doctor, uuid.UUID) else doctor.id
     return client.put(f"/api/v1/doctors/{doctor_id}/working-hours", json={"entries": entries})
-
-
-def audit_events(engine: Engine, action: AuditAction, target: str) -> list[AuditEvent]:
-    with Session(engine) as session:
-        return list(
-            session.scalars(
-                select(AuditEvent).where(AuditEvent.action == action, AuditEvent.target == target)
-            )
-        )
-
-
-def book(engine: Engine, doctor: User, patient: User, starts_at: datetime) -> Appointment:
-    with Session(engine, expire_on_commit=False) as session, session.begin():
-        return book_appointment(
-            session,
-            doctor_id=doctor.id,
-            starts_at=starts_at,
-            ends_at=starts_at + timedelta(minutes=15),
-            booked_by_id=patient.id,
-            reason=AppointmentReason.CHECKUP,
-            patient_id=patient.id,
-        )
-
-
-def iso(value: datetime) -> str:
-    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def future_minute(engine: Engine, delta: timedelta) -> datetime:

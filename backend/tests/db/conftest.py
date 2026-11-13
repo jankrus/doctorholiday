@@ -64,7 +64,8 @@ def db_session(db_engine: Engine) -> Iterator[Session]:
 def _new_user(session: Session, role: Role) -> User:
     return create_user(
         session,
-        email=f"{role.lower()}-{uuid.uuid4().hex}@example.test",
+        # Not .test: email-validator rejects special-use domains, e.g. for bookings by e-mail.
+        email=f"{role.lower()}-{uuid.uuid4().hex}@example.com",
         display_name=f"Test {role.lower()}",
         role=role,
         password_hash=DUMMY_PASSWORD_HASH,

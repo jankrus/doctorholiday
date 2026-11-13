@@ -18,46 +18,11 @@ from doctorholiday.models import (
     AppointmentReason,
     Role,
     User,
-    WorkingHours,
 )
 from doctorholiday.repositories.appointments import book_appointment, cancel_appointment
 from doctorholiday.scheduling import PRACTICE_TIME_ZONE as BERLIN
 from tests.db.conftest import ClientFactory, UserFactory, database_now, practice_settings
-
-
-def set_hours(engine: Engine, doctor: User, *entries: tuple[int, time, time]) -> None:
-    with Session(engine) as session, session.begin():
-        session.add_all(
-            WorkingHours(
-                doctor_id=doctor.id,
-                weekday=weekday,
-                start_time=start,
-                end_time=end,
-                updated_by_id=doctor.id,
-            )
-            for weekday, start, end in entries
-        )
-
-
-def every_day(start: time, end: time) -> list[tuple[int, time, time]]:
-    return [(weekday, start, end) for weekday in range(1, 8)]
-
-
-def at(day: date, hour: int, minute: int = 0) -> datetime:
-    """Local time in Berlin on `day`."""
-    return datetime.combine(day, time(hour, minute), tzinfo=BERLIN)
-
-
-def iso(value: datetime) -> str:
-    return value.astimezone(UTC).isoformat().replace("+00:00", "Z")
-
-
-def next_monday(engine: Engine) -> date:
-    """A Monday 7-13 days ahead, so every time on it is in the future."""
-    today = database_now(engine).astimezone(BERLIN).date()
-    monday = today + timedelta(days=7 + (7 - today.weekday()) % 7)
-    assert monday.isoweekday() == 1
-    return monday
+from tests.db.helpers import at, every_day, iso, next_monday, set_hours
 
 
 def query(client: TestClient, starts_from: datetime, starts_before: datetime, **params: Any) -> Any:

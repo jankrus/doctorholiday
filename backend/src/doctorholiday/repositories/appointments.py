@@ -124,3 +124,43 @@ def list_booked_overlapping(
             Appointment.ends_at > ends_after,
         )
     ).all()
+
+
+def count_open_for_patient(session: Session, patient_id: uuid.UUID) -> int:
+    """Booked appointments of the patient that have not started (BR-09: at most 5), whoever
+    booked them."""
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(Appointment)
+            .where(
+                Appointment.patient_id == patient_id,
+                Appointment.status == AppointmentStatus.BOOKED,
+                Appointment.starts_at > func.now(),
+            )
+        )
+        or 0
+    )
+
+
+def count_open_for_guest_phone(session: Session, phone: str) -> int:
+    """Booked guest appointments with this phone number that have not started (BR-24: at most 5)."""
+    return (
+        session.scalar(
+            select(func.count())
+            .select_from(Appointment)
+            .where(
+                Appointment.guest_phone == phone,
+                Appointment.status == AppointmentStatus.BOOKED,
+                Appointment.starts_at > func.now(),
+            )
+        )
+        or 0
+    )
+
+
+def lock_guest_phone(session: Session, phone: str) -> None:
+    """Serialise bookings for one guest phone number until the transaction ends, so concurrent
+    bookings cannot both pass the open-appointment limit (BR-24). A guest has no row to lock, so
+    this takes a transaction-level advisory lock on a hash of the number."""
+    session.execute(select(func.pg_advisory_xact_lock(func.hashtextextended(phone, 0))))
