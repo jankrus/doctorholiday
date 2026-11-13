@@ -98,6 +98,19 @@ running; its pool reconnects.
 - After login the frontend sends each role to its start page: `PATIENT` → `/appointments`, `STAFF`/`DOCTOR` →
   `/staff`, `ADMIN` → `/admin`. "Abmelden" in the header logs out.
 - Use a private window (or a second browser) to be logged in as two accounts at once.
+
+### Patient booking (#25)
+
+Needs the **seeded** state: a fresh database has no doctors and no working hours, so nothing can be booked. Log in
+as `dev-patient-1@example.com` (MFA offer: „Ohne zweiten Faktor fortfahren“). Things worth trying:
+
+- **Book**: „Termin buchen“ → pick a day and time → reason → „Termin verbindlich buchen“. „Blutabnahme (nüchtern)“
+  shows the fasting hint. A time inside the cancellation deadline shows an amber warning in the dialog.
+- **Time just taken (409)**: open the dialog for a time in one window, book the same time as
+  `dev-patient-2@example.com` in a private window, then confirm in the first one. The dialog says the time was
+  just taken and the list reloads without it.
+- **Reschedule / cancel**: on „Meine Termine“. Both disappear inside the deadline (`cancellationDeadlineHours`,
+  default 24) and the card says to contact the practice. A sixth open appointment is refused (BR-09).
 - E-mail addresses need a real-looking domain such as `@example.com`; `.test` and `.localhost` are rejected.
 
 ### Testing the API with curl
@@ -195,7 +208,8 @@ Start with `curl -s http://localhost:8080/readyz`: `{"status":"ready"}` means ba
 | The backend exits at start with `invalid configuration` | Missing or invalid variable in `backend/.env`; the log names the variables, never their values | Compare with `backend/.env.example`; every `CHANGE_ME` must be replaced. |
 | `make -C backend seed` says `refused` | `SEED_DEV_DATA` is not `true`, `DATABASE_URL` is not local, or `SEED_PASSWORD` is too common | See [Seed data](../../backend/README.md#seed-data). |
 | `uv` complains about its version | `backend/pyproject.toml` requires uv 0.12.23 to < 0.13 | `uv self update` or install a matching version. |
-| An app page has no data | Booking and admin screens are placeholders until #17, #25 and #26 | Expected for now. |
+| „Termin buchen“ never shows a free time | No doctor has working hours: fresh database without seed data | `make db-reset && make -C backend seed`. |
+| An app page has no data | Staff and admin screens are placeholders until #26 | Expected for now. |
 
 **Network exposure:** the backend listens on all interfaces (it is built for the container, where the pod network
 is the boundary), so on your laptop other devices in the same network can reach port 8080. Use a trusted network or
