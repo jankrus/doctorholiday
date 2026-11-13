@@ -7,12 +7,12 @@ protection, invitations. Search for MVP-TEMP to find the temporary shortcuts.
 import logging
 import uuid
 from datetime import timedelta
-from ipaddress import ip_address
 
 from fastapi import APIRouter, Depends, Request, Response, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
+from doctorholiday.api.common import NO_STORE, client_ip
 from doctorholiday.auth.dependencies import CurrentSession, reject_session
 from doctorholiday.auth.passwords import (
     hash_password,
@@ -40,7 +40,6 @@ from doctorholiday.errors import ErrorCode, error_response
 from doctorholiday.models import (
     AuditAction,
     AuditOutcome,
-    IPAddress,
     RateLimitScope,
     Role,
     SessionState,
@@ -84,20 +83,6 @@ class SessionInfo(BaseModel):
     # the grants (#18).
 
 
-_NO_STORE = {"Cache-Control": "no-store"}
-
-
-def _client_ip(request: Request) -> IPAddress | None:
-    # The direct peer; behind ingress-nginx that is the proxy until forwarded headers are handled
-    # (#75).
-    if request.client is None:
-        return None
-    try:
-        return ip_address(request.client.host)
-    except ValueError:
-        return None
-
-
 def _rate_limited(request: Request, retry_after: int) -> Response:
     # Returned, not raised, like a failed login: raising would roll back the audit event.
     return error_response(
@@ -133,7 +118,7 @@ def _session_info(db: Session, state: SessionState, user: User) -> SessionInfo:
 )
 def register(body: RegisterRequest, request: Request, db: DbSession) -> Response:
     settings: Settings = request.app.state.settings
-    ip = _client_ip(request)
+    ip = client_ip(request)
     # Every request counts, whatever the e-mail, so the limit reveals no accounts either.
     limiter = RateLimiter(db, (registration_limit(settings), ip_key(ip)))
     if (retry_after := limiter.retry_after()) is not None:
@@ -206,7 +191,7 @@ def register(body: RegisterRequest, request: Request, db: DbSession) -> Response
 )
 def login(body: LoginRequest, request: Request, response: Response, db: DbSession) -> object:
     settings: Settings = request.app.state.settings
-    ip = _client_ip(request)
+    ip = client_ip(request)
     ip_limit, account_limit = login_limits(settings)
     limiter = RateLimiter(db, (ip_limit, ip_key(ip)), (account_limit, account_key(body.email)))
     user = users.get_user_by_email(db, body.email)
@@ -306,7 +291,7 @@ def login(body: LoginRequest, request: Request, response: Response, db: DbSessio
     )
     logger.info("login succeeded", extra={"userId": str(user.id)})
     set_session_cookie(response, token)
-    response.headers.update(_NO_STORE)
+    response.headers.update(NO_STORE)
     return _session_info(db, state, user)
 
 
@@ -319,9 +304,9 @@ def logout(authenticated: CurrentSession, request: Request, db: DbSession) -> Re
         outcome=AuditOutcome.SUCCESS,
         actor_id=authenticated.user.id,
         target=audit_target("user", authenticated.user.id),
-        ip=_client_ip(request),
+        ip=client_ip(request),
     )
-    response = Response(status_code=status.HTTP_204_NO_CONTENT, headers=_NO_STORE)
+    response = Response(status_code=status.HTTP_204_NO_CONTENT, headers=NO_STORE)
     clear_session_cookie(response)
     return response
 
@@ -333,5 +318,5 @@ def logout(authenticated: CurrentSession, request: Request, db: DbSession) -> Re
     response_model_exclude_none=True,
 )
 def me(authenticated: CurrentSession, response: Response, db: DbSession) -> SessionInfo:
-    response.headers.update(_NO_STORE)
+    response.headers.update(NO_STORE)
     return _session_info(db, authenticated.session.state, authenticated.user)

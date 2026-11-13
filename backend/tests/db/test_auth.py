@@ -41,6 +41,7 @@ from doctorholiday.models import (
     User,
     UserSession,
 )
+from tests import contract
 from tests.db.conftest import UserFactory
 
 PASSWORD = "correct horse battery staple"
@@ -113,8 +114,10 @@ def new_client(app: FastAPI, client_ip: str) -> Iterator[ClientFactory]:
     """Independent clients (own cookie jar), e.g. two browsers on the same machine (one IP).
     https: the cookie is Secure."""
     with ExitStack() as stack:
-        yield lambda: stack.enter_context(
-            TestClient(app, base_url="https://testserver", client=(client_ip, 50000))
+        yield lambda: contract.install(
+            stack.enter_context(
+                TestClient(app, base_url="https://testserver", client=(client_ip, 50000))
+            )
         )
 
 

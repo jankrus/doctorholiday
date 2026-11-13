@@ -3,9 +3,15 @@
 - `CurrentSession`: any session state; for `/auth/me` and `/auth/logout` (BR-05).
 - `ActiveUser`: the user of an `ACTIVE` session; every other endpoint that needs a login uses
   this one (e.g. bookings, #17). Other states get `403 MFA_REQUIRED`.
+- `require_roles(...)`: an `ActiveUser` whose role is one of the given ones, else `403 FORBIDDEN`
+  (RBAC, `x-roles` in openapi.yaml). Object-level checks ("own only") stay in the endpoint,
+  which answers `404` for foreign objects. #16 replaces this per-route check with a central,
+  default-deny rule table.
 - `reject_session`: for register and login, which only callers without a session may use.
 """
 
+import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Annotated
@@ -17,8 +23,10 @@ from doctorholiday.auth.sessions import hash_token, token_from_cookie
 from doctorholiday.config import Settings
 from doctorholiday.db import DbSession
 from doctorholiday.errors import ApiError, ErrorCode
-from doctorholiday.models import SessionState, User, UserSession
+from doctorholiday.models import Role, SessionState, User, UserSession
 from doctorholiday.repositories import sessions, users
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -67,6 +75,24 @@ def _require_active_user(authenticated: CurrentSession) -> User:
 
 
 ActiveUser = Annotated[User, Depends(_require_active_user)]
+
+
+def require_roles(*allowed: Role) -> Callable[[User], User]:
+    """Dependency: the active user if their role is allowed, else `403 FORBIDDEN`.
+
+    The role comes from the database row of the session's user, never from the request.
+    """
+    roles = frozenset(allowed)
+
+    def dependency(user: ActiveUser) -> User:
+        if user.role not in roles:
+            logger.info("role not allowed", extra={"userId": str(user.id), "role": user.role})
+            raise ApiError(
+                status.HTTP_403_FORBIDDEN, ErrorCode.FORBIDDEN, "You are not allowed to do this."
+            )
+        return user
+
+    return dependency
 
 
 def reject_session(request: Request, db: DbSession) -> None:
