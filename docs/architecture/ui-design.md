@@ -147,24 +147,66 @@ Used by `AuthLayout` for every step before the app: `/login`, `/register`, `/mfa
 `AppLayout` for everything after login (#25):
 
 ```text
-┌───────────────────────────────────────────────────────────┐
-│ [+] Doctor Holiday │ Praxis am Park        (EM) Name  Abmelden │  white header, gray border
-│ Meine Termine   Termin buchen                             │  TabNav (only for roles with > 1 area)
-├───────────────────────────────────────────────────────────┤
-│                                                           │  gray 2 page background,
-│   Page title, intro, primary action                       │  white cards on it
-│   [Cards …]                                               │
-└───────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────┐
+│ [+] Doctor Holiday │ Praxis am Park           ( EM  Name  ⌄ )  │  white header, gray border
+│ Meine Termine   Termin buchen                  ┌────────────┐  │  TabNav (only for roles with > 1 area)
+├────────────────────────────────────────────────│ EM Name    │──┤
+│                                                │    e-mail  │  │  gray 2 page background,
+│   Page content                                 │ ────────── │  │  white cards on it
+│                                                │ ⏎ Abmelden │  │
+│                                                └────────────┘  │
+└────────────────────────────────────────────────────────────────┘
 ```
 
 - **Header**: logo (links to the start page), the practice name from the settings (A26; hidden below 640 px and when
-  it is still the default), the account's initials in an `Avatar`, its name or e-mail (hidden below 640 px) and a
-  visible „Abmelden“ button. A visible button, not a menu, so nobody has to search for it.
+  it is still the default) and the **account menu** (`UserMenu`): a pill button with the initials (solid `Avatar`,
+  white on jade 9), the name or e-mail (visually hidden below 640 px, but always the button's accessible name) and a
+  chevron. It opens a Radix `DropdownMenu` with the name and e-mail and „Abmelden“. The first version had a visible
+  „Abmelden“ button; review found it cluttered the header. An avatar with name and chevron is the pattern people
+  know from other apps, so logout is still found in one click, and the menu has room for account entries later.
 - **Navigation**: Radix `TabNav` below the header with the role's areas; the current one is marked
   (`aria-current="page"`). Roles with a single area get no tabs.
-- **Content**: `Container size="3"` (max. 880 px), gray 2 background so white cards stand out without shadows.
+- **Content**: `Container size="4"` (max. 1136 px), gray 2 background so white cards stand out without shadows. The
+  first version used 880 px, which left most of a laptop screen empty; the overview now uses the width for a second
+  column, and the booking browser for wider day and time grids.
 - **Data**: the layout's loader (`id: 'app'`) reads the practice settings once; pages read them with
   `usePracticeSettings()` and still work if the request fails (they then hide only the deadline hints).
+
+### Patient overview
+
+`/appointments`, the patient's start page (#25):
+
+```text
+≥ 1024 px
+┌──────────────────────────────────────────────────────────────┐
+│ Samstag, 14. November                                        │  welcome band: gradient and circles
+│ Guten Tag, Erika Mustermann                  [+ Termin buchen]│  like the auth brand panel
+│ Ihr nächster Termin ist morgen um 09:00 Uhr bei …            │
+└──────────────────────────────────────────────────────────────┘
+┌ Offene Termine ──┐ ┌ Nächster freier Termin ┐ ┌ Letzter Besuch ┐  overview tiles
+│ 3 von 5  ▬▬▬▭▭   │ │ Montag, 16. November   │ │ Montag, 2. Nov.│
+└──────────────────┘ └────────────────────────┘ └────────────────┘
+Anstehende Termine                          ┌ Verlauf ──────────┐
+┌ [15] NÄCHSTER TERMIN          Morgen ┐    │ ● Montag, 2. Nov. │  history timeline
+└──────────────────────────────────────┘    │ ○ Abgesagt …      │
+┌ [20] Freitag, 20. November  In 6 Tagen┐   └───────────────────┘
+└──────────────────────────────────────┘    ┌ Gut zu wissen ────┐
+                                            └───────────────────┘
+```
+
+- **Welcome band**: today's date, a greeting by the time of day and the account's name (`h1`), and one sentence
+  about the next appointment („heute“, „morgen“, „übermorgen“, otherwise the date). The greeting follows the
+  practice clock like every other time (`greeting()` in `appointments/time.ts`: „Guten Morgen“ from 5:00, „Guten
+  Tag“ from 11:00, „Guten Abend“ from 18:00). The band reuses the auth brand panel's gradient and circles, so the
+  app and the login look like one product; the text on it follows the contrast rule (step 12 or gray 11).
+- **Overview tiles**: open appointments against the limit of BR-09 (number and a five-segment meter), the next free
+  time with a link to its week in the booking browser (hidden if the request fails; „Derzeit keiner“ if nothing is
+  free within a year), and the last visit (the newest past appointment that was not cancelled). They answer the
+  questions patients come with before they read any list.
+- **Two columns** from 1024 px: upcoming appointments (main) and a 360 px side column with the history and „Gut zu
+  wissen“ (change deadline, the limit, reason categories instead of symptoms, emergency numbers 112 and 116 117 as
+  `tel:` links). Below 1024 px the side cards follow the list. Everything is visible without opening anything:
+  the history is no longer a collapsed `<details>`.
 
 ## 7. Component and form patterns
 
@@ -184,10 +226,12 @@ Used by `AuthLayout` for every step before the app: `/login`, `/register`, `/mfa
 | Primary action | Radix `Button` `size="3"` | One per form, solid, full width, at the end of the form. Shows a spinner (`loading`) while submitting, which also blocks double submits. |
 | Secondary navigation | Radix `Link` | Below the form, as a sentence: „Noch kein Konto? Jetzt registrieren“. |
 | Inputs | Radix `TextField` `size="3"` | 40 px high: a comfortable touch target. Numbers get their unit inside the field („Stunden“, „Minuten“) and the allowed range in the hint. |
-| App page title | `PatientPageHeader` | `h1` (size 7, 8 on wide screens), one intro sentence, optional primary action on the right (stacked on mobile) and an optional „← Meine Termine“ link above. |
+| App page title | `PatientPageHeader` | Booking and rescheduling: `h1` (size 7, 8 on wide screens), one intro sentence, optional primary action on the right (stacked on mobile) and an optional „← Meine Termine“ link above. The overview uses the welcome band instead. |
+| Account menu | `UserMenu` | Pill button (initials, name, chevron) opening a `DropdownMenu` with name, e-mail and „Abmelden“ (logout icon). Logging out submits to the `/logout` action like `LogoutButton`; the chevron turns into a spinner meanwhile. |
 | Availability browser | `AvailabilityBrowser` | Doctor `Select` („Alle Ärztinnen und Ärzte“ first), a highlighted „Nächster freier Termin“ card with a one-click „Diesen Termin wählen“, then one card per week: previous/next week buttons (disabled outside today … 365 days, BR-23), seven day `RadioCards` with the number of free times (days without any are disabled; they scroll sideways on phones), and the chosen day's times as buttons grouped into Vormittag / Nachmittag / Abend. With „Alle“ each time button names the doctor or „2 zur Auswahl“. An empty week offers a jump to the week of the next free time. The first free day is preselected. |
 | Time dialog | `TimeDialog` | Radix `Dialog` that confirms a chosen time: day, time range, doctor (as `RadioCards` if several are free), reason as eight `RadioCards` (booking only; visible at once, no dropdown to discover), the fasting hint for „Blutabnahme (nüchtern)“, and the online change deadline as a sentence (amber if the time already lies inside it). Rescheduling shows the old time struck through and says the old appointment stays until the new one is confirmed. Success replaces the form with a confirmation (tick, time, doctor, deadline). A `409` replaces it with the error and „Andere Uhrzeit wählen“, while the route reloads the free times behind it. |
-| Appointment card | `AppointmentCard` | Calendar tile (month, day, weekday), day, time range, doctor, reason badge plus status badges (nüchtern, booked or cancelled by the practice). The next appointment is labelled „Nächster Termin“. A footer line says until when it can be changed online, or, inside the deadline (BR-11), says so in amber and hides the buttons. Past and cancelled appointments use the muted variant in a collapsed `<details>` history. |
+| Appointment card | `AppointmentCard` | Calendar tile (month, day, weekday), day, time range, doctor, reason badge plus status badges (nüchtern, booked or cancelled by the practice). Every upcoming card has a relative-day badge at the top right („Morgen“, „In 6 Tagen“). The next appointment is the featured variant: „Nächster Termin“, a solid jade date tile and badge, and a jade border. A footer line says until when it can be changed online, or, inside the deadline (BR-11), says so in amber and hides the buttons. |
+| Appointment history | `AppointmentHistory` | Timeline of past and cancelled appointments, newest first: day, time range and doctor, reason badge and, if cancelled, who cancelled it (struck-through day, hollow dot). Past appointments get no „wahrgenommen“ badge, because the system does not record attendance. Shows four entries, then „Alle n anzeigen“ (`aria-expanded`). |
 | Confirm a destructive action | Radix `AlertDialog` | Title as a question („Termin absagen?“), what exactly happens, a softer alternative where one exists („Verschieben Sie den Termin …“), then „Termin behalten“ (default focus, soft gray) and the red confirm button. Errors appear inside the dialog. |
 
 ### Form behaviour
@@ -248,10 +292,10 @@ effort, including older people and people who are unwell. Code, comments and doc
 1. **Done**: `/login` and `/register` as the reference.
 2. **Done**: `/mfa` (code entry, enrolment with QR code and recovery codes) and `/setup` on the same `AuthLayout` and
    form patterns.
-3. **Done**: `AppLayout` (header, navigation, logout) and the patient screens `/appointments`, `/appointments/book`
-   and `/appointments/:id/reschedule` (#25).
-4. **Next**: staff and admin screens (#26) on the same shell; they can reuse `AvailabilityBrowser`, `TimeDialog`
-   and `AppointmentCard`.
+3. **Done**: `AppLayout` (header, navigation, account menu) and the patient screens `/appointments` (overview),
+   `/appointments/book` and `/appointments/:id/reschedule` (#25).
+4. **Next**: staff and admin screens (#26) on the same shell; they can reuse `AvailabilityBrowser`, `TimeDialog`,
+   `AppointmentCard`, `AppointmentHistory` and the overview tiles.
 5. **Later**: dark mode. All colours are tokens, so it is mostly a matter of setting `appearance` on `<Theme>` and
    checking the brand panel.
 

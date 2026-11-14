@@ -41,7 +41,8 @@ reschedule); other API calls get `500`. The e-mail address used to log in picks 
 | `staff@…`, `doctor@…`, `admin@…`                | MFA enrolment first; the first admin then sees `/setup`              |
 | `limit@…`                                       | `429` too many attempts                                              |
 
-The mock keeps its state in memory per e-mail address, like the backend does per account; restarting the dev
+Mock patients are called „Erika Mustermann“ and have a few past and cancelled appointments, so the overview's
+history and tiles have content. The mock keeps its state in memory per e-mail address, like the backend does per account; restarting the dev
 server resets it.
 
 For the patient pages the mock has two doctors with working hours Monday to Friday, 08:00-12:00 and 14:00-17:00
@@ -85,10 +86,10 @@ src/
   auth/validation.ts client-side checks mirroring the API contract (server stays authoritative)
   auth/logout.ts     logout action (POST /auth/logout, back to /login)
   appointments/      practice time zone helpers, reason labels, availability and appointment requests
-  components/        shared UI: form fields, notices, QR code, copy and logout buttons, logo, icons
-  components/appointments/  availability browser, booking/reschedule dialog, appointment card
+  components/        shared UI: form fields, notices, QR code, copy and logout buttons, account menu, logo, icons
+  components/appointments/  availability browser, booking/reschedule dialog, appointment card, history
   pages/auth/        split-screen auth layout; login, register, MFA and setup pages
-  pages/patient/     my appointments, booking and rescheduling (#25)
+  pages/patient/     appointment overview, booking and rescheduling (#25)
   pages/             app layout, error and placeholder pages
   routes.tsx         route table
 ```
@@ -105,8 +106,8 @@ Colours, typography, layout and form patterns are described in the
 | `/login`, `/register`          | no session                                                              | #24      |
 | `/mfa`                         | MFA verification or enrolment pending, or a patient's MFA offer (BR-26) | #24      |
 | `/setup`                       | `ADMIN` whose practice setup is pending (BR-18)                         | #24      |
-| `/logout`                      | form target (`POST`) of every logout button                             | #24      |
-| `/appointments`                | `PATIENT`: own appointments, cancel (A11, A09)                          | #25      |
+| `/logout`                      | form target (`POST`) of every logout button and the account menu        | #24      |
+| `/appointments`                | `PATIENT`: overview of own appointments and history, cancel (A11, A09)  | #25      |
 | `/appointments/book`           | `PATIENT`: availability browser and booking (A07, A08)                  | #25      |
 | `/appointments/:id/reschedule` | `PATIENT`: move an own appointment (A30)                                | #25      |
 | `/staff`                       | `STAFF`, `DOCTOR`                                                       | #26      |
