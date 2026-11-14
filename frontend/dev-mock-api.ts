@@ -15,6 +15,8 @@ const active = (role: string, email = `${role.toLowerCase()}@example.test`) => (
   user: {
     id: '00000000-0000-4000-8000-000000000001',
     email,
+    // A name only for patients, so the header also shows the e-mail fallback for other roles.
+    ...(role === 'PATIENT' ? { displayName: 'Erika Mustermann' } : {}),
     role,
     mfaEnabled: role !== 'PATIENT',
   },
@@ -156,6 +158,14 @@ function seedAppointments(minutes: number): MockAppointment[] {
       cancelledAt: new Date(now - DAY).toISOString(),
       cancelledBy: 'PRACTICE',
     }),
+    make(6, at(-41, 14.5), 0, 'BLOOD_TEST'),
+    make(7, at(-63, 10), 0, 'CONSULTATION', {
+      status: 'CANCELLED',
+      cancelledAt: new Date(now - 65 * DAY).toISOString(),
+      cancelledBy: 'PATIENT',
+    }),
+    make(8, at(-118, 9.25), 1, 'PRESCRIPTION'),
+    make(9, at(-390, 8.5), 0, 'CHECKUP'),
   ];
 }
 
