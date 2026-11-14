@@ -18,6 +18,10 @@ type Props = {
   today: string;
   /** Badge above the date, e.g. „Nächster Termin“. */
   highlight?: string;
+  /** Relative day („morgen“, „in 6 Tagen“), shown as a badge at the top right. */
+  when?: string;
+  /** Stronger look for the next appointment. */
+  featured?: boolean;
   /** Muted look for past and cancelled appointments. */
   muted?: boolean;
   /** Status line, e.g. the change deadline. */
@@ -27,15 +31,28 @@ type Props = {
 };
 
 /** One appointment: date tile, day and time, doctor, reason and status. */
-export function AppointmentCard({ appointment, today, highlight, muted, footer, actions }: Props) {
+export function AppointmentCard({
+  appointment,
+  today,
+  highlight,
+  when,
+  featured,
+  muted,
+  footer,
+  actions,
+}: Props) {
   const day = dateKey(new Date(appointment.startsAt));
   const cancelled = appointment.status === 'CANCELLED';
+  const className = [
+    'appointment-card',
+    featured && 'appointment-card--featured',
+    muted && 'appointment-card--muted',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
-    <Card
-      size="2"
-      className={muted ? 'appointment-card appointment-card--muted' : 'appointment-card'}
-    >
+    <Card size={featured ? '3' : '2'} className={className}>
       <Flex direction="column" gap="4">
         <Flex gap="4" align="start">
           <div className="appointment-card__tile" aria-hidden="true">
@@ -85,6 +102,16 @@ export function AppointmentCard({ appointment, today, highlight, muted, footer, 
               )}
             </Flex>
           </Flex>
+          {when && (
+            <Badge
+              size="2"
+              variant={featured ? 'solid' : 'soft'}
+              color={featured ? undefined : 'gray'}
+              className="appointment-card__when"
+            >
+              {when.charAt(0).toUpperCase() + when.slice(1)}
+            </Badge>
+          )}
         </Flex>
         {(footer || actions) && (
           <Flex

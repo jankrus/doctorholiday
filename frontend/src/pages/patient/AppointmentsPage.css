@@ -1,3 +1,5 @@
+/* Patient overview: see docs/architecture/ui-design.md (layout "patient overview"). */
+
 .appointments__list {
   list-style: none;
   margin: 0;
@@ -30,44 +32,167 @@
   flex-shrink: 0;
 }
 
-.appointments__history > summary {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  min-height: var(--space-7);
-  cursor: pointer;
-  border-radius: var(--radius-3);
-  color: var(--gray-12);
-  list-style: none;
+/* Welcome band: the auth brand panel's gradient and circles, so both halves of the app match. */
+.welcome {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-5);
+  border-radius: var(--radius-5);
+  background: linear-gradient(120deg, var(--accent-2) 0%, var(--accent-4) 100%);
+  box-shadow: inset 0 0 0 1px var(--accent-a5);
 }
 
-.appointments__history > summary::-webkit-details-marker {
-  display: none;
-}
-
-/* Chevron that turns when the section opens. */
-.appointments__history > summary::before {
+.welcome::before,
+.welcome::after {
   content: '';
-  width: 8px;
-  height: 8px;
-  margin: 0 var(--space-1);
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(-45deg);
-  transition: transform 150ms ease;
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
 }
 
-.appointments__history[open] > summary::before {
-  transform: rotate(45deg);
+.welcome::before {
+  width: 460px;
+  height: 460px;
+  right: -140px;
+  top: -260px;
+  background: radial-gradient(circle, var(--accent-a5) 0%, transparent 70%);
 }
 
-.appointments__history > summary:focus-visible {
-  outline: 2px solid var(--focus-8);
-  outline-offset: 2px;
+.welcome::after {
+  width: 280px;
+  height: 280px;
+  right: 120px;
+  bottom: -210px;
+  border: 1px solid var(--accent-a6);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .appointments__history > summary::before {
-    transition: none;
+.welcome__content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Text on the tinted band: step 12 or gray 11 only (section 2, contrast). */
+.welcome__date {
+  color: var(--gray-11);
+}
+
+.welcome__title {
+  color: var(--accent-12);
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+
+.welcome__summary {
+  max-width: 60ch;
+  color: var(--gray-12);
+}
+
+/* Overview tiles. */
+.overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.overview__tile {
+  height: 100%;
+}
+
+.overview__icon,
+.dashboard__side-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-3);
+  background-color: var(--accent-3);
+  color: var(--accent-11);
+}
+
+.overview__value {
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.overview__meter {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--space-1);
+  margin: var(--space-1) 0;
+}
+
+.overview__meter > span {
+  height: 6px;
+  border-radius: 3px;
+  background-color: var(--gray-a4);
+}
+
+.overview__meter > .overview__segment--filled {
+  background-color: var(--accent-9);
+}
+
+.overview__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  align-self: flex-start;
+  margin-top: var(--space-1);
+}
+
+/* Main column with the upcoming appointments, side column with history and hints. */
+.dashboard__columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+
+.dashboard__side {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-4);
+  align-content: start;
+}
+
+@media (min-width: 1024px) {
+  .welcome {
+    padding: var(--space-7);
   }
+
+  .dashboard__columns {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+
+  .dashboard__side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.hints {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.hints__item {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.hints__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  padding-top: 2px;
+  color: var(--gray-11);
+}
+
+.hints__icon--urgent {
+  color: var(--amber-11);
 }

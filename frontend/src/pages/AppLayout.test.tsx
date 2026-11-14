@@ -1,4 +1,5 @@
 import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { baseHandlers } from '../test/appointments';
 import { renderRoute } from '../test/render';
@@ -24,7 +25,25 @@ describe('app layout', () => {
       '/appointments/book',
     );
     expect(await screen.findByText('Praxis am Park')).toBeInTheDocument();
-    expect(screen.getByText('Erika Mustermann')).toBeInTheDocument();
+  });
+
+  it('keeps logout in an account menu that names the user', async () => {
+    const session = activeSession('PATIENT');
+    stubSession(
+      { ...session, user: session.user && { ...session.user, displayName: 'Erika Mustermann' } },
+      baseHandlers,
+    );
+    renderRoute('/appointments');
+
+    const account = await screen.findByRole('button', { name: 'Erika Mustermann' });
+    expect(account).toHaveTextContent('EM');
+    expect(screen.queryByRole('button', { name: 'Abmelden' })).toBeNull();
+
+    await userEvent.click(account);
+    const menu = await screen.findByRole('menu');
+    expect(menu).toHaveTextContent('Erika Mustermann');
+    expect(menu).toHaveTextContent('user@example.test');
+    expect(within(menu).getByRole('menuitem', { name: 'Abmelden' })).toBeVisible();
   });
 
   it('has no tab navigation for roles with a single area', async () => {

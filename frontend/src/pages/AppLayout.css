@@ -27,18 +27,12 @@
   box-shadow: none;
 }
 
-.app-header__practice,
-.app-header__account {
+.app-header__practice {
   display: none;
 }
 
 @media (min-width: 640px) {
   .app-header__practice {
     display: flex;
-  }
-
-  .app-header__account {
-    display: block;
-    max-width: 24ch;
   }
 }

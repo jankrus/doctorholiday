@@ -56,3 +56,24 @@
   text-decoration: line-through;
   text-decoration-color: var(--gray-a8);
 }
+
+.appointment-card__when {
+  flex-shrink: 0;
+}
+
+/* The next appointment: accent ring and a solid date tile (white on jade 9: 4.8:1). */
+/* Radix draws the card border on ::after; this rule comes later, so it wins. */
+.appointment-card--featured::after {
+  box-shadow: 0 0 0 1px var(--accent-a7);
+}
+
+.appointment-card--featured .appointment-card__tile {
+  width: 72px;
+  background-color: var(--accent-9);
+  color: var(--accent-contrast);
+}
+
+.appointment-card--featured .appointment-card__month,
+.appointment-card--featured .appointment-card__weekday {
+  color: var(--accent-contrast);
+}

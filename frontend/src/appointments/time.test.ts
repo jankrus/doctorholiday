@@ -10,8 +10,10 @@ import {
   formatTime,
   formatWeekRange,
   formatWeekdayShort,
+  greeting,
   isDateKey,
   mondayOf,
+  relativeDay,
   startOfDay,
 } from './time';
 
@@ -71,5 +73,29 @@ describe('practice time', () => {
     expect(changeDeadline('2026-11-16T07:00:00Z', 24).toISOString()).toBe(
       '2026-11-15T07:00:00.000Z',
     );
+  });
+});
+
+describe('greeting and relative days', () => {
+  it.each([
+    ['2026-11-13T03:59:00Z', 'Guten Abend'], // 04:59 in Berlin is still night
+    ['2026-11-13T04:00:00Z', 'Guten Morgen'],
+    ['2026-11-13T09:59:00Z', 'Guten Morgen'],
+    ['2026-11-13T10:00:00Z', 'Guten Tag'],
+    ['2026-11-13T16:59:00Z', 'Guten Tag'],
+    ['2026-11-13T17:00:00Z', 'Guten Abend'],
+    ['2026-11-13T23:30:00Z', 'Guten Abend'],
+  ])('greets at %s with „%s“ (practice time)', (iso, expected) => {
+    expect(greeting(new Date(iso))).toBe(expected);
+  });
+
+  it('names nearby days and counts the others', () => {
+    const today = '2026-11-13';
+    expect(relativeDay('2026-11-13', today)).toBe('heute');
+    expect(relativeDay('2026-11-14', today)).toBe('morgen');
+    expect(relativeDay('2026-11-15', today)).toBe('übermorgen');
+    expect(relativeDay('2026-11-20', today)).toBe('in 7 Tagen');
+    expect(relativeDay('2026-11-12', today)).toBe('gestern');
+    expect(relativeDay('2026-11-02', today)).toBe('vor 11 Tagen');
   });
 });

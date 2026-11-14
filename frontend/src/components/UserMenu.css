@@ -1,0 +1,76 @@
+/* Account menu in the app header: see docs/architecture/ui-design.md (layout "app shell"). */
+
+.user-menu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  margin: 0;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
+  border: 1px solid var(--gray-a5);
+  border-radius: 9999px;
+  background-color: var(--color-panel-solid);
+  color: var(--gray-12);
+  font: inherit;
+  font-size: var(--font-size-2);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.user-menu__trigger:hover,
+.user-menu__trigger[data-state='open'] {
+  background-color: var(--gray-a3);
+  border-color: var(--gray-a6);
+}
+
+.user-menu__trigger:focus-visible {
+  outline: 2px solid var(--focus-8);
+  outline-offset: 2px;
+}
+
+.user-menu__chevron {
+  display: inline-flex;
+  color: var(--gray-11);
+  transition: transform 150ms ease;
+}
+
+.user-menu__trigger[data-state='open'] .user-menu__chevron {
+  transform: rotate(180deg);
+}
+
+/* Phones: only initials and chevron; the name stays readable for screen readers. */
+.user-menu__name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.user-menu__content {
+  min-width: 240px;
+  max-width: min(320px, calc(100vw - var(--space-6)));
+}
+
+@media (min-width: 640px) {
+  .user-menu__name {
+    position: static;
+    width: auto;
+    height: auto;
+    max-width: 24ch;
+    overflow: hidden;
+    clip: auto;
+    text-overflow: ellipsis;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .user-menu__trigger,
+  .user-menu__chevron {
+    transition: none;
+  }
+}

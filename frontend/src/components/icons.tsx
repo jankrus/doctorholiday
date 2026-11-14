@@ -165,3 +165,29 @@ export const CalendarEmptyIcon = (props: IconProps) => (
     <path d="M3.5 10h17M8 3v4M16 3v4M9.5 14.5h5" />
   </Icon>
 );
+
+export const ChevronDownIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m6 9.5 6 6 6-6" />
+  </Icon>
+);
+
+export const LogoutIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M14 4.5h3.5a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H14" />
+    <path d="M10 16.5 5.5 12 10 7.5M5.5 12H15" />
+  </Icon>
+);
+
+export const HistoryIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v3.5h3.5" />
+    <path d="M12 8v4l2.5 2" />
+  </Icon>
+);
+
+export const PhoneIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="M8.5 3.5h-3a2 2 0 0 0-2 2.2 16 16 0 0 0 14.8 14.8 2 2 0 0 0 2.2-2v-3l-4-1.5-2 2a12 12 0 0 1-5-5l2-2-1.5-4Z" />
+  </Icon>
+);

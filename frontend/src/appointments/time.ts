@@ -194,3 +194,23 @@ export function dayPart(iso: string): DayPart {
 export function changeDeadline(startsAt: string, deadlineHours: number): Date {
   return new Date(new Date(startsAt).getTime() - deadlineHours * 60 * 60 * 1000);
 }
+
+/**
+ * „Guten Morgen“ from 5:00, „Guten Tag“ from 11:00, „Guten Abend“ from 18:00, by the practice's
+ * clock like every other time in the app.
+ */
+export function greeting(now: Date = new Date()): string {
+  const hour = practiceHour(now);
+  if (hour >= 5 && hour < 11) return 'Guten Morgen';
+  return hour >= 11 && hour < 18 ? 'Guten Tag' : 'Guten Abend';
+}
+
+/** „heute“, „morgen“, „übermorgen“, otherwise „in 5 Tagen“ (or „vor 3 Tagen“ for the past). */
+export function relativeDay(key: string, today: string): string {
+  const days = daysBetween(today, key);
+  if (days === 0) return 'heute';
+  if (days === 1) return 'morgen';
+  if (days === 2) return 'übermorgen';
+  if (days === -1) return 'gestern';
+  return days > 0 ? `in ${days} Tagen` : `vor ${-days} Tagen`;
+}

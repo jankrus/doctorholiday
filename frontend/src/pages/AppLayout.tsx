@@ -1,4 +1,4 @@
-import { Avatar, Container, Flex, Separator, TabNav, Text } from '@radix-ui/themes';
+import { Container, Flex, Separator, TabNav, Text } from '@radix-ui/themes';
 import {
   Link as RouterLink,
   Outlet,
@@ -9,7 +9,7 @@ import {
 import { api, type PracticeSettings, type Role, type SessionInfo } from '../api/client';
 import { loadSession } from '../auth/session';
 import { BrandMark } from '../components/BrandMark';
-import { LogoutButton } from '../components/LogoutButton';
+import { UserMenu } from '../components/UserMenu';
 import './AppLayout.css';
 
 export type AppData = { settings: PracticeSettings | null };
@@ -54,13 +54,7 @@ const NAV_BY_ROLE: Record<Role, NavItem[]> = {
   ADMIN: [{ to: '/admin', label: 'Verwaltung', matches: (path) => path.startsWith('/admin') }],
 };
 
-function initials(name: string | undefined, email: string): string {
-  const words = (name ?? '').split(/\s+/).filter(Boolean);
-  const letters = words.length > 1 ? [words[0], words[words.length - 1]] : [words[0] ?? email];
-  return letters.map((word) => word?.charAt(0).toUpperCase() ?? '').join('');
-}
-
-/** Shell for the app pages: brand, account and logout, the role's navigation, then the page. */
+/** Shell for the app pages: brand, account menu (with logout), the role's navigation, the page. */
 export function AppLayout() {
   const session = useRouteLoaderData<SessionInfo | null>('root');
   const settings = usePracticeSettings();
@@ -72,7 +66,7 @@ export function AppLayout() {
   return (
     <div className="app-layout">
       <header className="app-header">
-        <Container size="3" px={{ initial: '4', sm: '5' }}>
+        <Container size="4" px={{ initial: '4', sm: '6' }}>
           <Flex justify="between" align="center" gap="4" py="3">
             <Flex align="center" gap="4" minWidth="0">
               <RouterLink to="/" className="app-header__home" aria-label="Zur Startseite">
@@ -88,18 +82,8 @@ export function AppLayout() {
               )}
             </Flex>
             {user && (
-              <Flex align="center" gap="3" flexShrink="0">
-                <Avatar
-                  size="2"
-                  radius="full"
-                  variant="soft"
-                  fallback={initials(user.displayName, user.email)}
-                  aria-hidden="true"
-                />
-                <Text size="2" className="app-header__account" truncate>
-                  {user.displayName ?? user.email}
-                </Text>
-                <LogoutButton />
+              <Flex flexShrink="0">
+                <UserMenu user={user} />
               </Flex>
             )}
           </Flex>
@@ -114,7 +98,7 @@ export function AppLayout() {
           )}
         </Container>
       </header>
-      <Container size="3" px={{ initial: '4', sm: '5' }} py={{ initial: '5', sm: '7' }} asChild>
+      <Container size="4" px={{ initial: '4', sm: '6' }} py={{ initial: '5', sm: '6' }} asChild>
         <main>
           <Outlet />
         </main>
