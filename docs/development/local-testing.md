@@ -112,7 +112,9 @@ as `dev-patient-1@example.com` (MFA offer: „Ohne zweiten Faktor fortfahren“)
 - **Overview**: „Meine Termine“ greets by the time of day, sums up open appointments (of 5), the next free time
   and the last visit, and lists the history (past and cancelled appointments) next to the upcoming ones.
 - **Reschedule / cancel**: on „Meine Termine“. Both disappear inside the deadline (`cancellationDeadlineHours`,
-  default 24) and the card says to contact the practice. A sixth open appointment is refused (BR-09).
+  default 24) and the card says to contact the practice. A sixth open appointment is refused (BR-09). After a
+  cancellation the toast „Ihr Termin am … wurde abgesagt.“ appears and the focus is on „Anstehende Termine“; an error
+  of the cancel dialog stays inside the dialog.
 - E-mail addresses need a real-looking domain such as `@example.com`; `.test` and `.localhost` are rejected.
 
 ### Testing the API with curl

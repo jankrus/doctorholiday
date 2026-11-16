@@ -217,7 +217,7 @@ Anstehende Termine                          ┌ Verlauf ────────
 | Live checklist | `Requirement` | Rules that can be met while typing (password length, passwords match). Gray dot → jade tick. Positive feedback only; no red while the user is still typing. |
 | Page title | `PageHeader` | `h1` and one intro paragraph in gray: what this page is for and what happens next. |
 | Toast | `useToast()` from `Toasts.tsx` (`@radix-ui/react-toast` + Radix `Callout`) | The only way to raise a transient message: the result of a submit (errors) or of an action that ends on another page (registered, logged out). Errors: red, announced assertively. Confirmations: accent, announced politely. Always with an icon, always `highContrast`, always a close button („Meldung schließen“). Details below. |
-| Inline message | `Notice` (Radix `Callout`) | Only for messages that are part of the page content and stay as long as the page, e.g. „Die Zwei-Faktor-Authentifizierung ist aktiv.“ next to the recovery codes. Same colours as a toast; errors `role="alert"`, confirmations `role="status"`. |
+| Inline message | `Notice` (Radix `Callout`) | Only for messages that are part of the page content and stay as long as the page, e.g. „Die Zwei-Faktor-Authentifizierung ist aktiv.“ next to the recovery codes or a list that could not be loaded, and for messages inside a modal dialog (see „What stays inline“). Same colours as a toast; errors `role="alert"`, confirmations `role="status"`. |
 | Code input | `OtpInput` (app codes), `CodeInput` in `MfaPage` | One box per digit, two groups of three like the apps show it. Focus moves on with each digit, Backspace goes back, arrows navigate, a pasted or autofilled code fills all boxes; only digits are accepted. Screen readers get one labelled group with „Ziffer 1 von 6“ … per box. Recovery codes keep a single monospace field. After a wrong code the input is cleared and focused. No auto-submit: the user confirms with the button. |
 | Steps | `.mfa-steps` | Numbered accent circles joined by a thin line, for tasks that happen outside the app (scan with the phone, then type the code). |
 | QR code | `QrCode` | Always black on white in a card, whatever the theme (scanners need contrast). Generated locally; the key for manual entry sits in a `<details>` below it, grouped in fours, with a copy button. |
@@ -233,7 +233,7 @@ Anstehende Termine                          ┌ Verlauf ────────
 | Time dialog | `TimeDialog` | Radix `Dialog` that confirms a chosen time: day, time range, doctor (as `RadioCards` if several are free), reason as eight `RadioCards` (booking only; visible at once, no dropdown to discover), the fasting hint for „Blutabnahme (nüchtern)“, and the online change deadline as a sentence (amber if the time already lies inside it). Rescheduling shows the old time struck through and says the old appointment stays until the new one is confirmed. Success replaces the form with a confirmation (tick, time, doctor, deadline). A `409` replaces it with the error and „Andere Uhrzeit wählen“, while the route reloads the free times behind it. |
 | Appointment card | `AppointmentCard` | Calendar tile (month, day, weekday), day, time range, doctor, reason badge plus status badges (nüchtern, booked or cancelled by the practice). Every upcoming card has a relative-day badge at the top right („Morgen“, „In 6 Tagen“). The next appointment is the featured variant: „Nächster Termin“, a solid jade date tile and badge, and a jade border. A footer line says until when it can be changed online, or, inside the deadline (BR-11), says so in amber and hides the buttons. |
 | Appointment history | `AppointmentHistory` | Timeline of past and cancelled appointments, newest first: day, time range and doctor, reason badge and, if cancelled, who cancelled it (struck-through day, hollow dot). Past appointments get no „wahrgenommen“ badge, because the system does not record attendance. Shows four entries, then „Alle n anzeigen“ (`aria-expanded`). |
-| Confirm a destructive action | Radix `AlertDialog` | Title as a question („Termin absagen?“), what exactly happens, a softer alternative where one exists („Verschieben Sie den Termin …“), then „Termin behalten“ (default focus, soft gray) and the red confirm button. Errors appear inside the dialog. |
+| Confirm a destructive action | Radix `AlertDialog` | Title as a question („Termin absagen?“), what exactly happens, a softer alternative where one exists („Verschieben Sie den Termin …“), then „Termin behalten“ (default focus, soft gray) and the red confirm button. Errors appear inside the dialog. After success the dialog closes, the outcome is a toast („Ihr Termin am … wurde abgesagt.“) and the focus moves to the list heading („Anstehende Termine“), since the card and its dialog are gone. |
 
 ### Toasts
 
@@ -259,9 +259,17 @@ message box of their own.
 
 **What stays inline.** A message stays in the page when it is part of the page content rather than the outcome of an
 action: it describes the state the page shows and must still be there when the user looks again. Examples: the
-„Zwei-Faktor-Authentifizierung ist aktiv“ callout next to the recovery codes (`Notice`), the error page's callout
+„Zwei-Faktor-Authentifizierung ist aktiv“ callout next to the recovery codes (`Notice`), a loader error that takes the
+place of the content (appointments that could not be loaded on „Meine Termine“, free times on the booking and
+rescheduling pages), the amber hints (limit of open appointments reached, change deadline passed), the error page's callout
 (`ErrorPage.tsx`), field errors under their field (`FormField`, `aria-describedby`; after a failed submit the focus
 still moves to the first invalid field) and `CopyButton`'s „Kopiert“.
+
+**Inside a modal dialog, messages stay in the dialog.** A modal `Dialog`/`AlertDialog` makes everything outside it
+inert and traps the focus: a toast would not be reachable with F8, and clicking it would count as a click outside and
+close the dialog. So the errors of the cancel dialog and of `TimeDialog` (including the `409` view) and the
+`TimeDialog` success view stay inside the dialog. Once a dialog closes on success, its outcome becomes a toast, as
+after a cancellation.
 
 ### Form behaviour
 
