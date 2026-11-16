@@ -54,7 +54,7 @@ Radix scales are tuned for APCA, and some step combinations miss the WCAG 2 rati
 | White on jade 9 (primary button) | 3.2:1 ✗ | Jade 9/10 overridden to `#1c8164` / `#177a5e` in `global.css`: 4.8:1 / 5.3:1 |
 | Jade 11 on white (links, met requirements) | 4.7:1 ✓ | unchanged |
 | Jade 11 on jade 3-4 (brand panel texts) | 3.9-4.2:1 ✗ | Gray 11 instead: ≥ 4.5:1 on every gradient step |
-| Step 11 on step 3 (soft callouts) | ≈ 4.2:1 ✗ | Callouts use `highContrast` (step 12 text) |
+| Step 11 on step 3 (soft callouts, toasts) | ≈ 4.2:1 ✗ | Callouts and toasts use `highContrast` (step 12 text); toasts sit on an opaque panel, so the page never shines through |
 | Jade 12 on jade 4 (brand claim, highlight titles) | 10.2:1 ✓ | unchanged |
 
 Rule: text on a tinted surface uses step 12 or gray 11; accent 11 only on white or step 1-2.
@@ -97,7 +97,7 @@ Colour never carries meaning alone: every error has an icon and text, every met 
   | :--- | :--- |
   | Label and input, input and hint | 2 |
   | Form fields | 5 |
-  | Page sections (title, message, form, footer links) | 6 |
+  | Page sections (title, form, footer links) | 6 |
   | Panel padding | 5 (mobile), 8 (desktop) |
 
 - **Depth** is used sparingly: flat surfaces, a single `--shadow-2` on the highlight icons. Separation comes from
@@ -152,7 +152,8 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | Password | `PasswordField` | Show/hide toggle (`aria-pressed`), so long passphrases can be checked. Only switches the input type. |
 | Live checklist | `Requirement` | Rules that can be met while typing (password length, passwords match). Gray dot → jade tick. Positive feedback only; no red while the user is still typing. |
 | Page title | `PageHeader` | `h1` and one intro paragraph in gray: what this page is for and what happens next. |
-| Page message | `Notice` (Radix `Callout`) | Above the form, below the intro. Errors: red, `role="alert"`. Confirmations: accent, `role="status"`. Always with an icon, always `highContrast`. |
+| Toast | `useToast()` from `Toasts.tsx` (`@radix-ui/react-toast` + Radix `Callout`) | The only way to raise a transient message: the result of a submit (errors) or of an action that ends on another page (registered, logged out). Errors: red, announced assertively. Confirmations: accent, announced politely. Always with an icon, always `highContrast`, always a close button („Meldung schließen“). Details below. |
+| Inline message | `Notice` (Radix `Callout`) | Only for messages that are part of the page content and stay as long as the page, e.g. „Die Zwei-Faktor-Authentifizierung ist aktiv.“ next to the recovery codes. Same colours as a toast; errors `role="alert"`, confirmations `role="status"`. |
 | Code input | `OtpInput` (app codes), `CodeInput` in `MfaPage` | One box per digit, two groups of three like the apps show it. Focus moves on with each digit, Backspace goes back, arrows navigate, a pasted or autofilled code fills all boxes; only digits are accepted. Screen readers get one labelled group with „Ziffer 1 von 6“ … per box. Recovery codes keep a single monospace field. After a wrong code the input is cleared and focused. No auto-submit: the user confirms with the button. |
 | Steps | `.mfa-steps` | Numbered accent circles joined by a thin line, for tasks that happen outside the app (scan with the phone, then type the code). |
 | QR code | `QrCode` | Always black on white in a card, whatever the theme (scanners need contrast). Generated locally; the key for manual entry sits in a `<details>` below it, grouped in fours, with a copy button. |
@@ -162,6 +163,34 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | Primary action | Radix `Button` `size="3"` | One per form, solid, full width, at the end of the form. Shows a spinner (`loading`) while submitting, which also blocks double submits. |
 | Secondary navigation | Radix `Link` | Below the form, as a sentence: „Noch kein Konto? Jetzt registrieren“. |
 | Inputs | Radix `TextField` `size="3"` | 40 px high: a comfortable touch target. Numbers get their unit inside the field („Stunden“, „Minuten“) and the allowed range in the hint. |
+
+### Toasts
+
+`ToastProvider` is mounted once in `main.tsx`, around the router, so a toast survives navigation. Pages never place a
+message box of their own.
+
+- **Position:** one fixed viewport above the page content, bottom right on wide screens, full width at the bottom
+  below 600 px. Opening a toast never shifts the layout. On narrow screens the auth layout keeps room for a two-line
+  toast below its content, so the form, its primary action and its links can always be scrolled above a toast.
+- **Lifetime:** confirmations close after 5 s; the timer pauses while a toast is hovered or focused (and while the
+  window is in the background). Errors stay until the user closes them, submits again (form or fetcher) or follows a
+  link to another page (`ToastRouteSync` in the root route). A new error replaces the old one instead of stacking.
+  At most three toasts are visible; the oldest goes first.
+- **Keyboard and screen readers:** F8 moves the focus to the toasts („Meldungen (F8)“), Tab reaches each toast and
+  its close button, Escape closes the focused toast. Errors are announced assertively, confirmations politely. The
+  close button's label is not part of the announcement. Swiping right also closes a toast.
+- **Raising one:** components call `useToast()` (`toast.success(text)`, `toast.error(text)`). For an action's error
+  result, `useErrorToast(result)` does that. A route action that ends in a redirect calls `toast` from
+  `toastStore.ts` before redirecting. This replaces flags like `?registered` in the URL, so a reload or a shared link
+  shows no message again.
+- **Content:** plain strings, rendered as text. Error texts come from `api/errors.ts`, never from the server's
+  `message`. Never credentials, codes, recovery codes or MFA secrets.
+
+**What stays inline.** A message stays in the page when it is part of the page content rather than the outcome of an
+action: it describes the state the page shows and must still be there when the user looks again. Examples: the
+„Zwei-Faktor-Authentifizierung ist aktiv“ callout next to the recovery codes (`Notice`), the error page's callout
+(`ErrorPage.tsx`), field errors under their field (`FormField`, `aria-describedby`; after a failed submit the focus
+still moves to the first invalid field) and `CopyButton`'s „Kopiert“.
 
 ### Form behaviour
 
@@ -186,7 +215,8 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | User-facing error texts come from a fixed local map (`api/errors.ts`), never from the server's `message`. | Server details cannot leak into the UI (ADR-004). |
 | Login shows one generic error for every failure. | Does not reveal whether an account exists (BR-03). |
 | The registration confirmation is worded the same whether or not the e-mail was new. | The API answers `202` either way (BR-02); the UI must not hint otherwise. |
-| Nothing from a form is written to `localStorage`/`sessionStorage` or the URL. | Acceptance criterion of #24 (covered by a test); only harmless `?registered` / `?loggedOut` flags are put in the URL. |
+| Nothing from a form is written to `localStorage`/`sessionStorage` or the URL. | Acceptance criterion of #24 (covered by a test). Confirmations after a redirect are toasts held in memory, not URL flags (#72). |
+| Toasts show only fixed texts, rendered as text; never credentials, codes, recovery codes or MFA secrets. | A toast is visible to anyone looking at the screen and is read out by screen readers. |
 | The TOTP secret and recovery codes live only in component state and are shown once. | BR-06, BR-07; they disappear when the user continues. The QR code is drawn locally, never by a web service. |
 | MFA is mandatory for practice roles and offered once to patients; only patients can skip it. | BR-05, BR-26. The skip is stored on the account (A36), not in the browser, so it holds on every device. |
 | No "forgot password" link that promises a reset. | Password reset by e-mail is out of scope; the page says to contact the practice instead. |

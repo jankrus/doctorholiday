@@ -148,9 +148,9 @@ Start: any database state, real backend.
 
 | # | Steps | Expected |
 | :- | :--- | :--- |
-| A1 | Register at `/register`, log in at `/login` | After registering: "Vielen Dank für Ihre Registrierung. Sie können sich jetzt anmelden." Login lands on the start page of the role; the header shows the e-mail and "Abmelden". |
+| A1 | Register at `/register`, log in at `/login` | After registering, `/login` (no query string) shows the toast "Vielen Dank für Ihre Registrierung. Sie können sich jetzt anmelden.", which closes after about 5 s; reloading shows no toast. Login lands on the start page of the role; the header shows the e-mail and "Abmelden". |
 | A2 | DevTools → Application/Storage → Cookies → `localhost:5173` | One cookie `__Host-dh_session`, `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`, no expiry (session cookie). |
-| A3 | Click "Abmelden" | Back on `/login` with "Sie wurden abgemeldet."; the cookie is gone; going back to the start page asks for a login again. |
+| A3 | Click "Abmelden" | Back on `/login` (no query string) with the toast "Sie wurden abgemeldet."; the cookie is gone; going back to the start page asks for a login again. |
 | A4 | Log in with a wrong password, then with an unknown e-mail | Both show "E-Mail-Adresse oder Passwort ist falsch." The API answers `401 INVALID_CREDENTIALS` for both, identical apart from the request ID. |
 | A5 | Register an e-mail that already exists | Same success message as A1; nothing changes (no account enumeration). The old password still works. |
 | A6 | Fail the login of one e-mail 5 times, then try the correct password | The 6th attempt shows "Zu viele Versuche. …" (`429`, header `Retry-After`) and the correct password is refused too, for 15 minutes. |
@@ -178,6 +178,20 @@ IP and its rate limit counter, which already serialises them); `make test-db` co
 
 Not built yet, so not testable: MFA enrolment of the new admin (#21) and the `/setup` page after the bootstrap
 (`setupRequired`, needs `PUT /api/v1/settings`).
+
+### Toasts (#72)
+
+Start: any state; works with the real backend or the dev server's mock (`npm run dev` without `API_PROXY_TARGET`,
+where the password `falsch` fails a login).
+
+| # | Steps | Expected |
+| :- | :--- | :--- |
+| T1 | Log in with a wrong password, twice | One red toast bottom right "E-Mail-Adresse oder Passwort ist falsch."; the second attempt replaces it instead of adding one. It stays until closed. The form does not move when it appears. |
+| T2 | After T1, log in correctly | The error toast is gone on the start page. |
+| T3 | After T1, press F8, then Tab, then Escape | F8 moves the focus to the toasts, Tab to the toast, Escape closes it. The close button („Meldung schließen“) closes it too. |
+| T4 | Log out, hover the toast for 10 s, then move the mouse away | The confirmation stays while hovered and closes about 5 s after the mouse leaves. |
+| T5 | DevTools device mode, 360 px wide: repeat T1 | The toast spans the bottom edge and does not cover the „Anmelden“ button; scrolling down moves every link of the page above it. |
+| T6 | Screen reader (VoiceOver: Cmd+F5): repeat T1 and log out | The error is read out at once, interrupting; the confirmation politely after the current output. |
 
 ## 6. Troubleshooting
 

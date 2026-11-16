@@ -51,6 +51,28 @@ service would receive the secret.
     *   *Pros:* No dependency.
     *   *Cons:* Reed-Solomon coding and masking are easy to get subtly wrong; a broken code locks users out.
 
+### 2.5. Toasts for transient messages (added with #72)
+Radix Themes has no toast component. Page messages were callouts that every page placed itself, and confirmations
+after a redirect travelled as URL flags (`?registered`). Toasts need a live region, a keyboard shortcut, a timer that
+pauses on hover and focus, and focus handling that does not trap the user.
+*   **Option A: `@radix-ui/react-toast`**
+    *   *Pros:* From the same maintainers as Radix Themes and already in the lockfile as a dependency of it (through
+        `radix-ui`), so pinning it directly adds no package to the SBOM. Handles the announcements (assertive or
+        polite per toast), F8 to reach the toasts, Escape, pause on hover/focus/window blur, and swipe to dismiss.
+        Unstyled: it takes the Radix Themes tokens and the existing callout look. Styles it needs (`user-select`,
+        swipe offsets) are set through the DOM style API, not `<style>` tags, so a strict `style-src` CSP (#27)
+        still works.
+    *   *Cons:* Another direct runtime dependency to keep in step with Radix Themes' version of it.
+*   **Option B: Own implementation**
+    *   *Pros:* No dependency, full control.
+    *   *Cons:* Live-region timing (screen readers skip content inserted together with its region), the hotkey,
+        pause and resume of the timer and focus return on close are easy to get subtly wrong, and they are exactly
+        what makes a toast accessible.
+*   **Option C: A toast library such as `sonner` or `react-hot-toast`**
+    *   *Pros:* Popular, little code to write.
+    *   *Cons:* New packages in the SBOM, their own look outside the Radix tokens, and `react-hot-toast` injects
+        styles at runtime (CSS-in-JS), which conflicts with the CSP plan.
+
 ## 3. Decision Outcome
 *   **UI:** Radix Themes (`@radix-ui/themes`), no Tailwind.
 *   **Routing:** React Router 7 in data mode (`createBrowserRouter`); guards are loaders based on
@@ -59,6 +81,9 @@ service would receive the secret.
     same-origin requests with `credentials: 'include'`. Error texts shown to users come from a fixed local map,
     never from the server's `message`.
 *   **QR code:** `uqr`, pinned like every package; rendered as SVG in `frontend/src/components/QrCode.tsx`.
+*   **Toasts:** `@radix-ui/react-toast`, pinned to the version Radix Themes already pulls in; provider, viewport and
+    `useToast()` in `frontend/src/components/Toasts.tsx`, styled with Radix Themes tokens (`ui-design.md`,
+    section 7).
 *   **Tooling:** TypeScript 5, ESLint 8 (flat config) with `typescript-eslint` and `eslint-plugin-react-hooks`,
     Prettier, Vitest with jsdom and Testing Library.
 
@@ -71,9 +96,9 @@ vulnerable tooling contradicts the quality gate's intent (CVSS ≥ 7.0 blocks), 
 `@vitejs/plugin-react` 6 and Vitest 5. React stays at 18 and ESLint at 8 as decided in ADR-001.
 
 ## 4. Consequences
-*   **Security (Pros):** `npm audit` is clean at the time of writing. Only six direct runtime packages
-    (`react`, `react-dom`, `react-router`, `@radix-ui/themes`, `openapi-fetch`, `uqr` and their transitive deps)
-    end up in the bundle. ESLint forbids `dangerouslySetInnerHTML`, `eval` and similar escape hatches. No secrets or
+*   **Security (Pros):** `npm audit` is clean at the time of writing. Only seven direct runtime packages
+    (`react`, `react-dom`, `react-router`, `@radix-ui/themes`, `@radix-ui/react-toast`, `openapi-fetch`, `uqr` and
+    their transitive deps) end up in the bundle; `@radix-ui/react-toast` was already one of the transitive ones. ESLint forbids `dangerouslySetInnerHTML`, `eval` and similar escape hatches. No secrets or
     API keys exist in the frontend; the build reads no `VITE_*` variables.
 *   **Development (Cons):** Node.js ≥ 22.13 is required (Vitest 5, jsdom 29). ESLint 8 is end of life; moving to
     ESLint 9+ needs a follow-up decision. The Radix Themes stylesheet is large; it can be split into its token,
