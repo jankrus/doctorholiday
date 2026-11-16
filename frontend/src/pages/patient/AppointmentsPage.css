@@ -6,7 +6,8 @@
   padding: 0;
 }
 
-.appointments__notice:focus {
+/* Takes the focus after a cancellation; not interactive, so no ring. */
+.appointments__focus-target:focus {
   outline: none;
 }
 

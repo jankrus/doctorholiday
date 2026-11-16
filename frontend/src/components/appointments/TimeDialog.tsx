@@ -140,6 +140,7 @@ export function TimeDialog({ mode, option, current, deadlineHours, today, onClos
                 {text.title}
               </Dialog.Title>
 
+              {/* Inside the modal dialog: a toast outside it would be inert (ui-design.md, section 7). */}
               {failure && !failure.fieldError && <Notice tone="error">{failure.error}</Notice>}
 
               <DataList.Root orientation={{ initial: 'vertical', xs: 'horizontal' }} size="2">

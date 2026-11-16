@@ -48,6 +48,7 @@ import {
   ShieldIcon,
 } from '../../components/icons';
 import { Notice } from '../../components/Notice';
+import { useToast } from '../../components/Toasts';
 import { usePracticeSettings } from '../AppLayout';
 import { OPEN_APPOINTMENT_LIMIT } from './BookPage';
 import './AppointmentsPage.css';
@@ -112,25 +113,31 @@ export function AppointmentsPage() {
   const deadlineHours = settings?.cancellationDeadlineHours ?? null;
   const cancel = useFetcher<CancelResult>({ key: CANCEL_FETCHER });
   const cancelled = cancel.data && 'cancelled' in cancel.data ? cancel.data.cancelled : undefined;
-  const noticeRef = useRef<HTMLDivElement>(null);
+  const upcomingRef = useRef<HTMLHeadingElement>(null);
+  const toast = useToast();
 
-  // The dialog closes with its card; focus moves to the confirmation instead of the page start.
   useEffect(() => {
-    if (cancelled) noticeRef.current?.focus();
-  }, [cancelled]);
+    if (cancelled) {
+      toast.success(`Ihr Termin am ${formatDateTime(cancelled.startsAt, today)} wurde abgesagt.`);
+    }
+  }, [cancelled, today, toast]);
+
+  // The dialog closes with its card, so focus moves to the list it was in instead of the page
+  // start. Radix returns the focus to the (now gone) trigger in a timeout after the dialog
+  // unmounts; this timeout runs after it.
+  const cardGone = cancelled !== undefined && !upcoming.some(({ id }) => id === cancelled.id);
+  useEffect(() => {
+    if (!cardGone) return;
+    const timer = window.setTimeout(() => upcomingRef.current?.focus(), 0);
+    return () => window.clearTimeout(timer);
+  }, [cardGone, cancelled]);
 
   return (
     <Flex direction="column" gap="6">
       <Welcome today={today} next={error ? undefined : (upcoming[0] ?? null)} />
 
+      {/* The list could not be loaded: part of the page content, so it stays inline. */}
       {error && <Notice tone="error">{error}</Notice>}
-      {cancelled && (
-        <div ref={noticeRef} tabIndex={-1} className="appointments__notice">
-          <Notice tone="success">
-            Ihr Termin am {formatDateTime(cancelled.startsAt, today)} wurde abgesagt.
-          </Notice>
-        </div>
-      )}
 
       {!error && (
         <Overview today={today} upcoming={upcoming} history={history} nextFree={nextFree} />
@@ -138,7 +145,15 @@ export function AppointmentsPage() {
 
       <div className="dashboard__columns">
         <section aria-labelledby="upcoming-heading" className="dashboard__main">
-          <Heading as="h2" size="5" mb="3" id="upcoming-heading">
+          <Heading
+            as="h2"
+            size="5"
+            mb="3"
+            id="upcoming-heading"
+            ref={upcomingRef}
+            tabIndex={-1}
+            className="appointments__focus-target"
+          >
             Anstehende Termine
           </Heading>
           {upcoming.length === 0 && !error ? (
@@ -507,6 +522,7 @@ function CancelDialog({ appointment, today }: { appointment: Appointment; today:
               {formatDateTime(appointment.startsAt, today)} bei {appointment.doctor.displayName}.
               Die Uhrzeit wird danach für andere Patientinnen und Patienten freigegeben.
             </AlertDialog.Description>
+            {/* Inside the modal dialog: a toast outside it would be inert (ui-design.md, section 7). */}
             {failure && <Notice tone="error">{failure}</Notice>}
             <Text as="p" size="2" color="gray">
               Sie möchten nur eine andere Uhrzeit?{' '}

@@ -98,7 +98,13 @@ export function AppLayout() {
           )}
         </Container>
       </header>
-      <Container size="4" px={{ initial: '4', sm: '6' }} py={{ initial: '5', sm: '6' }} asChild>
+      <Container
+        size="4"
+        px={{ initial: '4', sm: '6' }}
+        py={{ initial: '5', sm: '6' }}
+        className="app-layout__main"
+        asChild
+      >
         <main>
           <Outlet />
         </main>

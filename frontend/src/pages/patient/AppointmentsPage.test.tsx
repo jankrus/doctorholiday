@@ -12,7 +12,7 @@ import {
   time,
   YILMAZ,
 } from '../../test/appointments';
-import { renderRoute } from '../../test/render';
+import { findToast, renderRoute } from '../../test/render';
 import { activeSession, apiError, stubSession } from '../../test/session';
 
 // Now: Friday 13 November 2026, 10:00 Berlin. The deadline is 24 hours.
@@ -186,9 +186,10 @@ describe('my appointments', () => {
     expect(dialog).toHaveTextContent('Donnerstag, 19. November, 10:30 Uhr bei Dr. Mehmet Yilmaz');
     await userEvent.click(within(dialog).getByRole('button', { name: 'Termin absagen' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
+    expect(await findToast()).toHaveTextContent(
       'Ihr Termin am Donnerstag, 19. November, 10:30 Uhr wurde abgesagt.',
     );
+    expect(screen.getByRole('heading', { name: 'Anstehende Termine' })).toHaveFocus();
     expect(cancelled).toEqual([NEXT_WEEK.id]);
     expect(await upcomingCards()).toHaveLength(1);
     expect(await historyItems()).toHaveLength(3);

@@ -21,6 +21,17 @@
   outline-offset: 4px;
 }
 
+/*
+ * On narrow screens toasts span the bottom edge (components/Toasts.css). The bottom padding keeps
+ * room for a two-line toast, so the end of every page can be scrolled above it. It is there from
+ * the start: opening a toast never shifts the page.
+ */
+@media (max-width: 599px) {
+  .app-layout__main {
+    padding-bottom: calc(var(--space-9) * 1.5);
+  }
+}
+
 /* The tab navigation sits flush on the header's bottom border. */
 .app-header__nav {
   margin-bottom: -1px;
