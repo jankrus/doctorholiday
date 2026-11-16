@@ -1,0 +1,35 @@
+# kind cluster of Doctor Holiday (issues #40, #41, #42). Created by `make cluster`.
+#
+# - One node (control plane) is enough for the demo and keeps `make up` fast.
+# - Node image pinned by digest (the kind release notes list the digest per Kubernetes version).
+#   kubectl may be at most one minor version away from the node's Kubernetes version.
+# - disableDefaultCNI: kind's default network plugin (kindnet) does NOT enforce NetworkPolicies, so
+#   the policies of the namespace would be decorative. `make cni` installs Calico, which does.
+#   The pod subnet is the one Calico's manifest expects.
+# - ingress-ready=true and the port mappings are what the kind ingress-nginx manifest needs: the
+#   controller runs on this node and receives the host's ports 80 and 443. They are bound to
+#   127.0.0.1 only, so the application is reachable from this machine and not from the network.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: doctorholiday
+networking:
+  disableDefaultCNI: true
+  podSubnet: 192.168.0.0/16
+nodes:
+  - role: control-plane
+    image: kindest/node:v1.35.8@sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        listenAddress: 127.0.0.1
+        protocol: TCP
+      - containerPort: 443
+        hostPort: 443
+        listenAddress: 127.0.0.1
+        protocol: TCP

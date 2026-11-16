@@ -199,8 +199,8 @@ Each element of the diagram: purpose, technology, ports, credentials it holds an
 | Frontend SPA | `frontend/` (skeleton, auth UI), `frontend/Dockerfile` | App implemented, image in review (#28), manifests planned |
 | PostgreSQL | migrations in PR #69 | In review |
 | Dockerfiles | `backend/Dockerfile`, `frontend/Dockerfile` ([#28](https://github.com/jankrus/doctorholiday/issues/28)) | In review |
-| Kubernetes manifests, NetworkPolicies, ServiceAccounts | `infrastructure/k8s/` contains only a README | Planned |
-| kind config, ingress, `make up` | `infrastructure/kind/` README; the Makefile target is a `TODO` | Planned |
+| Kubernetes manifests, NetworkPolicies, ServiceAccounts | `infrastructure/k8s/` (namespace, service accounts, backend, frontend, PostgreSQL, migration job, network policies, ingress) | In review (#37 to #41) |
+| kind config, ingress, `make up` | `infrastructure/kind/kind-config.yaml`, `infrastructure/cluster.mk`, `scripts/k8s-*.sh` | In review (#40, #42); signed images from GHCR with #34, #35 |
 | Pipeline | `.github/workflows/` contains only a README | Planned |
 | Evidence | `evidence/<image>/…` folders with READMEs | Planned |
 

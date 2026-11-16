@@ -79,7 +79,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | Frontend API types | `cd frontend && npm run gen:api` (after changing `backend/openapi.yaml`) |
 | SBOM and scans (Docker) | `scripts/scan.sh sbom` / `sast` / `sca` / `secrets`, reports in `reports/` |
 | Pinning check / workflow lint | `make check-pinning` / `make lint-actions` (needs Docker) |
-| Cluster up / down | `make up` / `make down` |
+| Cluster up / down / verify | `make up` / `make down` / `make verify` (needs Docker, kind, kubectl; see `infrastructure/k8s/README.md`) |
 | Local DB up (+ migrations) / down / reset | `make db-up` / `make db-down` / `make db-reset` |
 | Full local stack + manual test scenarios | [docs/development/local-testing.md](docs/development/local-testing.md) |
 

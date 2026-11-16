@@ -1,0 +1,48 @@
+# Ingress (issue #40): the only way in. Host doctorholiday.localhost resolves to 127.0.0.1 without
+# an entry in the hosts file; the kind node maps ports 80 and 443 to localhost only
+# (infrastructure/kind/kind-config.yaml).
+#
+#   /api  ──▶ backend:8080   (the REST API; the health probes /healthz and /readyz are NOT under
+#                             /api and therefore not reachable from outside, on purpose)
+#   /     ──▶ frontend:8080  (the SPA; its /healthz answers "ok" and is public by design)
+#
+# TLS: the certificate is self-signed and created by `make secrets` (Secret `doctorholiday-tls`),
+# never committed. HTTP is redirected to HTTPS. ingress-nginx sends the HSTS header on every HTTPS
+# response by default (max-age one year), so the cookie rule `__Host-` and `Secure` hold.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: doctorholiday
+  labels:
+    app.kubernetes.io/part-of: doctorholiday
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # Defence in depth: a request limit per client IP and a body limit (the API's own limit is
+    # 16 KiB, backend/src/doctorholiday/middleware.py).
+    nginx.ingress.kubernetes.io/limit-rps: "50"
+    nginx.ingress.kubernetes.io/proxy-body-size: 32k
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - doctorholiday.localhost
+      secretName: doctorholiday-tls
+  rules:
+    - host: doctorholiday.localhost
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 8080

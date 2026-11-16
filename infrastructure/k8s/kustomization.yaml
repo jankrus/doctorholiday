@@ -1,0 +1,30 @@
+# Kustomize entry point: `kubectl apply -k infrastructure/k8s` (issue #37). Kustomize was chosen
+# over Helm because it needs no template language and no extra tool: kubectl has it built in, and
+# every manifest stays plain, reviewable YAML.
+#
+# Not in here, on purpose (created by `make up`, see the Makefile):
+#   - Secrets `db-credentials`, `backend-secrets`, `doctorholiday-tls` (never committed, #30),
+#   - ConfigMaps `postgres-init`, `db-migrate-script`, `db-migrations`, made from the files in
+#     infrastructure/postgres and backend/migrations, which stay the only copy (Kustomize cannot
+#     read files outside this directory).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: doctorholiday
+resources:
+  - namespace.yaml
+  - serviceaccounts.yaml
+  - configmap.yaml
+  - backend.yaml
+  - frontend.yaml
+  - postgres.yaml
+  - db-migrate.yaml
+  - networkpolicies.yaml
+  - ingress.yaml
+# Single source of truth for the images of the application. `make images` builds the local tag
+# `dev` and loads it into the cluster; the pipeline replaces it by the digest of the signed image
+# (#43). The postgres image is pinned by digest in postgres.yaml and db-migrate.yaml.
+images:
+  - name: ghcr.io/jankrus/doctorholiday-backend
+    newTag: dev
+  - name: ghcr.io/jankrus/doctorholiday-frontend
+    newTag: dev

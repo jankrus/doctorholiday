@@ -1,14 +1,15 @@
-.PHONY: help up down test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
+.PHONY: help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
 .DEFAULT_GOAL := help
+
+# bash with strict flags, so a failing step stops the target with a clear error (#42).
+SHELL := bash
+.SHELLFLAGS := -euo pipefail -c
+
+# The cluster targets (up, down, cluster, cni, ingress, secrets, deploy, wait, ...).
+include infrastructure/cluster.mk
 
 help: ## List available targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | sed 's/:.*## /\t/'
-
-up: ## Create kind cluster and deploy the app (#42)
-	@echo "TODO: up"
-
-down: ## Delete the kind cluster (#42)
-	@echo "TODO: down"
 
 test: ## Run backend and frontend tests
 	$(MAKE) -C backend test

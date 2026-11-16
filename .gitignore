@@ -31,3 +31,6 @@ Thumbs.db
 
 # Scan and test reports (scripts/scan.sh); the evidence job copies them to evidence/ (#44)
 reports/
+
+# kind image archive for `make images`
+.cache/

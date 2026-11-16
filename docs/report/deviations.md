@@ -31,6 +31,13 @@ Brief §5e ("Erklärung aller nicht-sicheren Parts mit Begründung") draws on th
 - **Consequence:** An image is no longer a pure function of the base digest and the sources: it also depends on the Alpine package index at build time. Reproducibility is restored by the digest of the *built* image (pushed and signed in #34, #35) and by the SBOM, which lists the exact package versions (#32). Two builds on different days can differ in patch versions.
 - **Production alternative:** rebuild images on a schedule and bump the base digest through Dependabot (#46) instead of upgrading inside the build.
 
+## D-08: ingress-nginx stays although upstream published no release after 2026-03-19
+
+- **Decided in:** [#40](https://github.com/jankrus/doctorholiday/issues/40), following [ADR-001](../architecture/adr/ADR-001-tech-stack.md) (`ingress-nginx` with kind).
+- **Why:** The last release of the ingress-nginx controller is `controller-v1.15.1` from 2026-03-19; to my knowledge upstream announced its retirement for March 2026, so no further security fixes are to be expected. The project keeps it because the ADR fixed the stack, `make up` must roll out an ingress, the kind documentation uses it, and the cluster is local and reachable only from the operator's machine (ports bound to `127.0.0.1`). The release is pinned by URL tag and SHA-256, its images by digest.
+- **Consequence:** A future vulnerability in the controller stays open. It is rated in the threat model (TH-12, TH-16, accepted).
+- **Production alternative:** a maintained ingress or the Gateway API implementation of the chosen cloud or distribution.
+
 ## Scanner exceptions (#33)
 
 Findings are never hidden silently. Every ignore entry lives in one of the files below, with a justification, and is listed here. Anything not listed is scanned and counted.
