@@ -20,10 +20,11 @@ import {
   type RegistrationInput,
 } from '../../auth/validation';
 import { FormField, useFocusFirstError } from '../../components/FormField';
-import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { PasswordField } from '../../components/PasswordField';
 import { Requirement } from '../../components/Requirement';
+import { useErrorToast } from '../../components/Toasts';
+import { toast } from '../../components/toastStore';
 
 type RegisterResult = { fieldErrors?: FieldErrors<keyof RegistrationInput>; error?: string };
 
@@ -49,7 +50,11 @@ export async function registerAction({
         displayName: input.displayName || undefined,
       },
     });
-    if (response.ok) return redirect('/login?registered');
+    if (response.ok) {
+      // Raised before the redirect, so the login page shows it and nothing stays in the URL.
+      toast.success('Vielen Dank für Ihre Registrierung. Sie können sich jetzt anmelden.');
+      return redirect('/login');
+    }
     return { error: errorMessage(error) };
   } catch {
     return { error: errorMessage(null) };
@@ -65,6 +70,7 @@ export function RegisterPage() {
   const errors = result?.fieldErrors ?? {};
 
   useFocusFirstError(formRef, result?.fieldErrors);
+  useErrorToast(result);
 
   const length = passwordLength(password);
 
@@ -74,8 +80,6 @@ export function RegisterPage() {
         Mit einem Konto buchen und verwalten Sie Ihre Termine online. Mitarbeitende der Praxis
         erhalten stattdessen eine Einladung.
       </PageHeader>
-
-      {result?.error && <Notice tone="error">{result.error}</Notice>}
 
       <Form method="post" noValidate ref={formRef}>
         <Flex direction="column" gap="5">

@@ -77,7 +77,7 @@ src/
   auth/guards.ts     route guards (UX only; the backend authorises every request)
   auth/validation.ts client-side checks mirroring the API contract (server stays authoritative)
   auth/logout.ts     logout action (POST /auth/logout, back to /login)
-  components/        shared UI: form fields, notices, QR code, copy and logout buttons, logo, icons
+  components/        shared UI: form fields, toasts, notices, QR code, copy and logout buttons, logo, icons
   pages/auth/        split-screen auth layout; login, register, MFA and setup pages
   pages/             app layout, error and placeholder pages
   routes.tsx         route table

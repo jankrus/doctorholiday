@@ -1,8 +1,9 @@
 import { Flex, Spinner } from '@radix-ui/themes';
-import type { RouteObject } from 'react-router';
+import { Outlet, type RouteObject } from 'react-router';
 import { guestOnly, mfaPending, requireRole, toHome } from './auth/guards';
 import { logoutAction } from './auth/logout';
 import { loadSession } from './auth/session';
+import { ToastRouteSync } from './components/Toasts';
 import { AppLayout } from './pages/AppLayout';
 import { AuthLayout } from './pages/auth/AuthLayout';
 import { LoginPage, loginAction } from './pages/auth/LoginPage';
@@ -18,6 +19,12 @@ export const routes: RouteObject[] = [
     id: 'root',
     path: '/',
     loader: () => loadSession(),
+    element: (
+      <>
+        <ToastRouteSync />
+        <Outlet />
+      </>
+    ),
     errorElement: <ErrorPage />,
     hydrateFallbackElement: (
       <Flex justify="center" p="9">

@@ -66,6 +66,12 @@ export const SuccessIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const CloseIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d="m6.5 6.5 11 11M17.5 6.5l-11 11" />
+  </Icon>
+);
+
 export const CalendarIcon = (props: IconProps) => (
   <Icon {...props}>
     <rect x="3.5" y="5" width="17" height="15" rx="2.5" />

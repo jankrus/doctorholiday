@@ -1,22 +1,15 @@
-import { Theme } from '@radix-ui/themes';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import type { SessionInfo } from './api/client';
 import { routes } from './routes';
-import { renderRoute } from './test/render';
+import { findToast, renderRoute } from './test/render';
 import { activeSession, stubSession } from './test/session';
 
 function renderAt(path: string, session: SessionInfo | null) {
   stubSession(session);
-  const router = createMemoryRouter(routes, { initialEntries: [path] });
-  render(
-    <Theme>
-      <RouterProvider router={router} />
-    </Theme>,
-  );
-  return router;
+  return renderRoute(path);
 }
 
 async function expectPage(router: ReturnType<typeof renderAt>, path: string, heading: string) {
@@ -72,9 +65,21 @@ describe('routing', () => {
     const router = renderRoute(path);
     await userEvent.click(await screen.findByRole('button', { name: 'Abmelden' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Sie wurden abgemeldet.');
+    expect(await findToast()).toHaveTextContent('Sie wurden abgemeldet.');
     expect(router.state.location.pathname).toBe('/login');
+    expect(router.state.location.search).toBe('');
     expect(loggedOut).toBe(true);
+  });
+
+  it('says so when the logout request fails and keeps the user signed in', async () => {
+    stubSession(activeSession('PATIENT'), {
+      'POST /api/v1/auth/logout': () => Promise.reject(new TypeError('Failed to fetch')),
+    });
+    const router = renderRoute('/appointments');
+    await userEvent.click(await screen.findByRole('button', { name: 'Abmelden' }));
+
+    expect(await findToast()).toHaveTextContent('Etwas ist schiefgelaufen');
+    expect(router.state.location.pathname).toBe('/appointments');
   });
 
   it('sends an admin away from /setup once it is done', async () => {

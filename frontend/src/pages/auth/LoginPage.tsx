@@ -6,16 +6,15 @@ import {
   redirect,
   useActionData,
   useNavigation,
-  useSearchParams,
   type ActionFunctionArgs,
 } from 'react-router';
 import { api } from '../../api/client';
 import { errorMessage } from '../../api/errors';
 import { homePath } from '../../auth/guards';
 import { FormField } from '../../components/FormField';
-import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
 import { PasswordField } from '../../components/PasswordField';
+import { useErrorToast } from '../../components/Toasts';
 
 type LoginResult = { error: string };
 
@@ -41,8 +40,8 @@ export async function loginAction({
 export function LoginPage() {
   const result = useActionData<LoginResult>();
   const submitting = useNavigation().state === 'submitting';
-  const [params] = useSearchParams();
   const passwordRef = useRef<HTMLInputElement>(null);
+  useErrorToast(result);
 
   // After a failed attempt the e-mail stays, the password is cleared for the next try.
   useEffect(() => {
@@ -57,16 +56,6 @@ export function LoginPage() {
       <PageHeader title="Anmelden">
         Willkommen zurück. Melden Sie sich an, um Ihre Termine zu verwalten.
       </PageHeader>
-
-      {result?.error ? (
-        <Notice tone="error">{result.error}</Notice>
-      ) : params.has('registered') ? (
-        <Notice tone="success">
-          Vielen Dank für Ihre Registrierung. Sie können sich jetzt anmelden.
-        </Notice>
-      ) : (
-        params.has('loggedOut') && <Notice tone="success">Sie wurden abgemeldet.</Notice>
-      )}
 
       <Form method="post" noValidate>
         <Flex direction="column" gap="5">

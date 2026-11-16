@@ -3,8 +3,10 @@ import type { ReactNode } from 'react';
 import { AlertIcon, SuccessIcon } from './icons';
 
 /**
- * Page-level message above a form. Errors are announced immediately (`alert`), confirmations
- * politely (`status`). High contrast keeps the text readable on the tinted background.
+ * Inline message that is part of the page content, e.g. a state the page shows. Transient
+ * messages (the outcome of a submit) are toasts instead (`useToast()`, ui-design.md section 7).
+ * Errors are announced immediately (`alert`), confirmations politely (`status`). High contrast
+ * keeps the text readable on the tinted background.
  */
 export function Notice({ tone, children }: { tone: 'error' | 'success'; children: ReactNode }) {
   const error = tone === 'error';

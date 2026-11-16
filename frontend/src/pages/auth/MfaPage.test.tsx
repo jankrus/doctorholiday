@@ -1,7 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { renderRoute } from '../../test/render';
+import { findToast, renderRoute } from '../../test/render';
 import { activeSession, apiError, patientWithOffer, stubSession } from '../../test/session';
 
 const RECOVERY_CODES = [
@@ -78,7 +78,7 @@ describe('MFA login challenge', () => {
     const user = await typeCode('Bestätigungscode', '654321');
     await user.click(screen.getByRole('button', { name: 'Bestätigen' }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Der Code ist ungültig');
+    expect(await findToast()).toHaveTextContent('Der Code ist ungültig');
     expect(screen.queryByText('Server text.')).not.toBeInTheDocument();
     for (const box of codeBoxes()) expect(box).toHaveValue('');
     expect(screen.getByLabelText('Ziffer 1 von 6')).toHaveFocus();
@@ -168,7 +168,7 @@ describe('MFA enrolment', () => {
     renderEnrolment(() => apiError('INVALID_MFA_CODE', 400));
     await startAndConfirm('999999');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Der Code ist ungültig');
+    expect(await findToast()).toHaveTextContent('Der Code ist ungültig');
     expect(screen.getByRole('img', { name: /QR-Code/ })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText('Ziffer 1 von 6')).toHaveFocus());
     for (const box of codeBoxes()) expect(box).toHaveValue('');
@@ -260,7 +260,7 @@ describe('logout', () => {
     const router = renderRoute('/mfa');
     await userEvent.click(await screen.findByRole('button', { name: 'Abbrechen und abmelden' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Sie wurden abgemeldet.');
+    expect(await findToast()).toHaveTextContent('Sie wurden abgemeldet.');
     expect(router.state.location.pathname).toBe('/login');
     expect(loggedOut).toBe(true);
   });
