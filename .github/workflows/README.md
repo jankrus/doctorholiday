@@ -38,7 +38,7 @@ meta ─┬─ test-backend ──┐
 | `sast` | (b) | **real:** Semgrep (registry packs + `.semgrep/`), JSON and SARIF per component, artifact `sast` | #33 |
 | `sca` | (b) | **real:** Trivy on the lockfiles (`package-lock.json`, `uv.lock`), full report, the gate counts HIGH and CRITICAL, artifact `sca`. `trivy image` follows with #34 | #33 |
 | `secrets` | (b) | **real:** Gitleaks over the full history with `.gitleaks.toml`, values redacted, artifact `secrets` | #33 |
-| `build` | (c) | stub, matrix `frontend` / `backend` | #34 |
+| `build` | (c) | **real:** builds, pushes to GHCR, records the digest; matrix `frontend` / `backend`; artifacts `image-frontend`, `image-backend` (`digest.txt`, `image-ref.txt`); outputs `frontend` and `backend` (digest) | #34 |
 | `sign` | (d) | stub, matrix `frontend` / `backend` | #35 |
 | `quality-gate` | (e) | stub | #36 |
 | `deploy` | deployment | stub | #43 |
@@ -71,6 +71,17 @@ A failed job stops everything behind it through `needs:`. Only `evidence` uses `
 - Ignored findings are listed with a justification in [deviations.md](../../docs/report/deviations.md#scanner-exceptions-33).
 - A fake secret on a throwaway branch is reported by Gitleaks as `github-pat` with the value redacted (demonstrated in the pull request of #33). A push of such a branch to GitHub is blocked by secret push protection, so the demonstration for the gate (#36) needs a test pattern that push protection accepts.
 
+## Images and the registry (#34)
+
+`scripts/build-image.sh frontend|backend` does the work of the `build` job; the same command builds an image on a laptop against any registry (`REGISTRY=localhost:5000`, see the script header). Instead of `docker/setup-buildx-action` and `docker/build-push-action` the job uses the Docker CLI that every runner has: two third-party actions less to pin and keep updated, and the step can be run and tested locally.
+
+- **Names and tags:** `ghcr.io/jankrus/doctorholiday-frontend` and `-backend`; tags `<VERSION>` and `<VERSION>-<shortsha>`, never `latest`. Everything downstream uses the **digest** (`image-ref.txt`: `ghcr.io/...@sha256:...`).
+- **Build:** BuildKit pinned by digest in a `docker-container` builder (so provenance works on every Docker), `--build-arg VERSION` (content of `VERSION.txt`) and `--build-arg REVISION` (full commit SHA), `--provenance=mode=max`, `SOURCE_DATE_EPOCH` (commit time) and `rewrite-timestamp=true`.
+- **Checks in the script:** the registry must know the digest (`docker buildx imagetools inspect`), and the pushed image must carry the labels `org.opencontainers.image.version` = `VERSION.txt` and `org.opencontainers.image.revision` = this commit. The local defaults `0.0.0-dev` and `unknown` fail the job. The release version must be a SemVer, not `0.0.0-dev`.
+- **Login:** `GITHUB_TOKEN` with `packages: write` on this job only, passed through the environment to `docker login --password-stdin`, never on a command line.
+- **Reproducibility:** two builds of the frontend from clean builders give 12 of 13 layers bit-identical (the application layers, nginx configuration and the npm build are identical); the only layer that differs is `RUN apk upgrade` (D-04 in [deviations.md](../../docs/report/deviations.md), follow-up #98). So the image digest differs between builds until `apk upgrade` is replaced by a newer base image. The digest of the pushed, signed image stays the anchor.
+- **Package visibility (decision):** the packages stay **private**, like the repository the brief asks for. A cluster that pulls them needs an `imagePullSecret` with `read:packages`; that belongs to the GHCR mode of `make images` (#42, with #35). The submission carries the final images as `.tar` files anyway (brief §7b). GitHub chooses the visibility of a new package on its first push and links it to this repository through the `org.opencontainers.image.source` label: **check once after the first run** that both packages exist, are linked to the repository and are private (GitHub: profile → Packages → package → settings). Changing the repository to public later does not change the visibility of an existing package by itself.
+
 ## Check locally
 
 ```sh
@@ -96,6 +107,7 @@ Updates come as Dependabot pull requests (#46), which keep the SHA and the comme
 
 - **Evidence commit:** committing reports to `main` is blocked by the branch ruleset (pull request required). #44 decides between an evidence branch and a bot token.
 - **First real run:** the acceptance criterion "a push to `main` runs all jobs in order" can only be checked after this pull request is merged.
+- **First real push:** the `build` job writes to GHCR for the first time on the first run on `main` after this change; it cannot be tested in a pull request. Possible first-run problems: the package is created with another visibility than expected, or the repository setting for workflow permissions forbids package writes (the job asks for `packages: write` itself, which normally suffices).
 - **Image scans:** SBOM per image digest and `trivy image` (also its secret scanner) wait for the images of #34.
 - **Required status checks** for the ruleset (`protect-main`) are added once the first run is green: `meta`, `test (backend)`, `test (frontend)`. Because no path filter applies to pull requests, every pull request starts them.
 - **Pinning check gaps:** `scripts/check-pinning.sh` covers actions in workflows and local composite actions (`.github/actions/*/action.yml`), Dockerfiles (`Dockerfile`, `Dockerfile.*`, `*.Dockerfile`, `Containerfile`), every `image:` key in YAML files (compose, Kubernetes manifests, kind configuration, workflow containers) and image variables (`*_IMAGE`) in the Makefile and shell scripts. A bare name such as `alpine` and a name with a variable tag (`ghcr.io/x/y:${TAG}`) fail; only a value that is just a variable (`${IMAGE}`) is left to the place where that variable is set. An image that is built in the same run can opt out with `# pinning-ignore: <reason>` on its variable line. It does **not** see an image that is only named inside a command line (`docker run <image>`), and not Kustomize `images:` entries (#38). "Passed" therefore means: everything the script can see is pinned, not everything.

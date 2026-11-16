@@ -318,7 +318,9 @@ jobs:
           retention-days: 90
 
   # ---------------------------------------------------------------------------------------------
-  # (c) Build and container build. Not on pull requests.
+  # (c) Build and container build, push to GHCR, record the digest (#34). Not on pull requests.
+  # scripts/build-image.sh does the work, so the same command builds an image on a laptop (against
+  # any registry, see its header). Everything downstream uses the digest, never a tag.
   # ---------------------------------------------------------------------------------------------
   build:
     name: build (${{ matrix.image }})
@@ -330,16 +332,40 @@ jobs:
     permissions:
       contents: read
       packages: write  # push the image to GHCR (#34)
+    # One output per image (a matrix leg sets only its own), digest as `sha256:...`.
+    outputs:
+      frontend: ${{ steps.build.outputs.frontend }}
+      backend: ${{ steps.build.outputs.backend }}
     strategy:
       fail-fast: true
       matrix:
         image: [frontend, backend]
     steps:
-      - name: Build and push the image
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Tags <VERSION> and <VERSION>-<shortsha>, never `latest`; provenance mode=max;
+      # SOURCE_DATE_EPOCH and timestamp rewriting; fails if the pushed image carries the local
+      # default label 0.0.0-dev. The token reaches the script only through the environment.
+      - name: Build, push and record the digest
+        id: build
         env:
           IMAGE: ${{ matrix.image }}
-          TAG: ${{ needs.meta.outputs.tag_sha }}
-        run: 'echo "stub: build ghcr.io/jankrus/doctorholiday-$IMAGE:$TAG and push it in #34"'
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: scripts/build-image.sh "$IMAGE"
+
+      # digest.txt and image-ref.txt (the reference by digest) per image, as the brief's
+      # submission asks; the evidence job (#44) copies them.
+      - name: Upload digest and image reference
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: image-${{ matrix.image }}
+          path: reports/images/${{ matrix.image }}/
+          if-no-files-found: error
+          retention-days: 90
 
   # ---------------------------------------------------------------------------------------------
   # (d) Image signing with cosign. Not on pull requests.
