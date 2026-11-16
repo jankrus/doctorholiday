@@ -96,8 +96,23 @@ running; its pool reconnects.
   `dev-admin@example.com` is the admin and nobody else is promoted.
 - **`STAFF` and `DOCTOR`** accounts exist only through the seed data until invitations (FR-02) are built.
 - After login the frontend sends each role to its start page: `PATIENT` → `/appointments`, `STAFF`/`DOCTOR` →
-  `/staff`, `ADMIN` → `/admin`. "Abmelden" in the header logs out.
+  `/staff`, `ADMIN` → `/admin`. The account menu at the top right (initials and name) holds "Abmelden".
 - Use a private window (or a second browser) to be logged in as two accounts at once.
+
+### Patient booking (#25)
+
+Needs the **seeded** state: a fresh database has no doctors and no working hours, so nothing can be booked. Log in
+as `dev-patient-1@example.com` (MFA offer: „Ohne zweiten Faktor fortfahren“). Things worth trying:
+
+- **Book**: „Termin buchen“ → pick a day and time → reason → „Termin verbindlich buchen“. „Blutabnahme (nüchtern)“
+  shows the fasting hint. A time inside the cancellation deadline shows an amber warning in the dialog.
+- **Time just taken (409)**: open the dialog for a time in one window, book the same time as
+  `dev-patient-2@example.com` in a private window, then confirm in the first one. The dialog says the time was
+  just taken and the list reloads without it.
+- **Overview**: „Meine Termine“ greets by the time of day, sums up open appointments (of 5), the next free time
+  and the last visit, and lists the history (past and cancelled appointments) next to the upcoming ones.
+- **Reschedule / cancel**: on „Meine Termine“. Both disappear inside the deadline (`cancellationDeadlineHours`,
+  default 24) and the card says to contact the practice. A sixth open appointment is refused (BR-09).
 - E-mail addresses need a real-looking domain such as `@example.com`; `.test` and `.localhost` are rejected.
 
 ### Testing the API with curl
@@ -148,9 +163,9 @@ Start: any database state, real backend.
 
 | # | Steps | Expected |
 | :- | :--- | :--- |
-| A1 | Register at `/register`, log in at `/login` | After registering, `/login` (no query string) shows the toast "Vielen Dank für Ihre Registrierung. Sie können sich jetzt anmelden.", which closes after about 5 s; reloading shows no toast. Login lands on the start page of the role; the header shows the e-mail and "Abmelden". |
+| A1 | Register at `/register`, log in at `/login` | After registering, `/login` (no query string) shows the toast "Vielen Dank für Ihre Registrierung. Sie können sich jetzt anmelden.", which closes after about 5 s; reloading shows no toast. Login lands on the start page of the role; the header shows the account menu (initials and name or e-mail) with "Abmelden". |
 | A2 | DevTools → Application/Storage → Cookies → `localhost:5173` | One cookie `__Host-dh_session`, `HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/`, no expiry (session cookie). |
-| A3 | Click "Abmelden" | Back on `/login` (no query string) with the toast "Sie wurden abgemeldet."; the cookie is gone; going back to the start page asks for a login again. |
+| A3 | Open the account menu at the top right, choose "Abmelden" | Back on `/login` (no query string) with the toast "Sie wurden abgemeldet."; the cookie is gone; going back to the start page asks for a login again. |
 | A4 | Log in with a wrong password, then with an unknown e-mail | Both show "E-Mail-Adresse oder Passwort ist falsch." The API answers `401 INVALID_CREDENTIALS` for both, identical apart from the request ID. |
 | A5 | Register an e-mail that already exists | Same success message as A1; nothing changes (no account enumeration). The old password still works. |
 | A6 | Fail the login of one e-mail 5 times, then try the correct password | The 6th attempt shows "Zu viele Versuche. …" (`429`, header `Retry-After`) and the correct password is refused too, for 15 minutes. |
@@ -164,7 +179,7 @@ Start: **fresh database** (`make db-reset`, no seed) for B1 to B4, a reset befor
 
 | # | Steps | Expected |
 | :- | :--- | :--- |
-| B1 | Register A and B. Log in as A, then as B (private window), then as A again | A lands on `/admin` ("Verwaltung"), B on `/appointments` ("Meine Termine"), A again on `/admin`. The login response and `/api/v1/auth/me` show `"role": "ADMIN"` for A right away. |
+| B1 | Register A and B. Log in as A, then as B (private window), then as A again | A lands on `/admin` ("Verwaltung"), B on `/appointments` (greeting „Guten Morgen/Tag/Abend“), A again on `/admin`. The login response and `/api/v1/auth/me` show `"role": "ADMIN"` for A right away. |
 | B1 (DB) | Queries from section 4 | `admin_bootstrap`: `bootstrapped = t`, `admin_id` = A's id. `users`: A `ADMIN`, B `PATIENT`. Exactly one `ADMIN_BOOTSTRAPPED` event: actor and target A, your IP, `details` empty. |
 | B2 | Register X, log in with a wrong password; then register Y and log in correctly | X's failed login changes nothing (`admin_bootstrap.bootstrapped = f`); Y becomes `ADMIN`. |
 | B3 | Register X, fail 5 times, then the correct password (`429`); then register Y and log in | No admin after X; Y becomes `ADMIN`. |
@@ -209,7 +224,8 @@ Start with `curl -s http://localhost:8080/readyz`: `{"status":"ready"}` means ba
 | The backend exits at start with `invalid configuration` | Missing or invalid variable in `backend/.env`; the log names the variables, never their values | Compare with `backend/.env.example`; every `CHANGE_ME` must be replaced. |
 | `make -C backend seed` says `refused` | `SEED_DEV_DATA` is not `true`, `DATABASE_URL` is not local, or `SEED_PASSWORD` is too common | See [Seed data](../../backend/README.md#seed-data). |
 | `uv` complains about its version | `backend/pyproject.toml` requires uv 0.12.23 to < 0.13 | `uv self update` or install a matching version. |
-| An app page has no data | Booking and admin screens are placeholders until #17, #25 and #26 | Expected for now. |
+| „Termin buchen“ never shows a free time | No doctor has working hours: fresh database without seed data | `make db-reset && make -C backend seed`. |
+| An app page has no data | Staff and admin screens are placeholders until #26 | Expected for now. |
 
 **Network exposure:** the backend listens on all interfaces (it is built for the container, where the pod network
 is the boundary), so on your laptop other devices in the same network can reach port 8080. Use a trusted network or

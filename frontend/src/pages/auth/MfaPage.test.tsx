@@ -214,7 +214,7 @@ describe('optional MFA offer for patients', () => {
       await screen.findByRole('button', { name: 'Ohne zweiten Faktor fortfahren' }),
     );
 
-    expect(await screen.findByRole('heading', { name: 'Meine Termine' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Anstehende Termine' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/appointments');
     expect(declined()).toBe(true);
   });
@@ -228,7 +228,7 @@ describe('optional MFA offer for patients', () => {
     await userEvent.click(screen.getByRole('checkbox'));
     await userEvent.click(screen.getByRole('button', { name: 'Weiter' }));
 
-    expect(await screen.findByRole('heading', { name: 'Meine Termine' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Anstehende Termine' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/appointments');
   });
 });

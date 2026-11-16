@@ -36,7 +36,7 @@ describe('login page', () => {
     const { router, sent } = renderLogin(() => Response.json(activeSession('PATIENT')));
     await submit('patient@example.test', 'correct horse battery');
 
-    expect(await screen.findByRole('heading', { name: 'Meine Termine' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Anstehende Termine' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/appointments');
     expect(sent()).toEqual({ email: 'patient@example.test', password: 'correct horse battery' });
   });
@@ -116,7 +116,7 @@ describe('login page', () => {
     await userEvent.type(screen.getByLabelText('Passwort'), 'correct horse battery');
     await userEvent.click(screen.getByRole('button', { name: 'Anmelden' }));
 
-    expect(await screen.findByRole('heading', { name: 'Meine Termine' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Anstehende Termine' })).toBeInTheDocument();
     expect(queryToasts()).toHaveLength(0);
   });
 

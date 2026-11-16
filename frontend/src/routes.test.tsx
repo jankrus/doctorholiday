@@ -12,7 +12,11 @@ function renderAt(path: string, session: SessionInfo | null) {
   return renderRoute(path);
 }
 
-async function expectPage(router: ReturnType<typeof renderAt>, path: string, heading: string) {
+async function expectPage(
+  router: ReturnType<typeof renderAt>,
+  path: string,
+  heading: string | RegExp,
+) {
   expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
   expect(router.state.location.pathname).toBe(path);
 }
@@ -33,7 +37,7 @@ describe('routing', () => {
     await expectPage(
       renderAt('/admin', activeSession('PATIENT')),
       '/appointments',
-      'Meine Termine',
+      /^Guten (Morgen|Tag|Abend)/,
     );
   });
 
@@ -53,7 +57,7 @@ describe('routing', () => {
     ['/appointments', 'PATIENT'],
     ['/staff', 'STAFF'],
     ['/admin', 'ADMIN'],
-  ] as const)('logs out from the header of %s', async (path, role) => {
+  ] as const)('logs out from the account menu of %s', async (path, role) => {
     let loggedOut = false;
     stubSession(activeSession(role), {
       'POST /api/v1/auth/logout': (_, setSession) => {
@@ -63,7 +67,9 @@ describe('routing', () => {
       },
     });
     const router = renderRoute(path);
-    await userEvent.click(await screen.findByRole('button', { name: 'Abmelden' }));
+    // The menu button is named after the account (here without a name, so the e-mail address).
+    await userEvent.click(await screen.findByRole('button', { name: 'user@example.test' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Abmelden' }));
 
     expect(await findToast()).toHaveTextContent('Sie wurden abgemeldet.');
     expect(router.state.location.pathname).toBe('/login');
@@ -76,7 +82,8 @@ describe('routing', () => {
       'POST /api/v1/auth/logout': () => Promise.reject(new TypeError('Failed to fetch')),
     });
     const router = renderRoute('/appointments');
-    await userEvent.click(await screen.findByRole('button', { name: 'Abmelden' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'user@example.test' }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Abmelden' }));
 
     expect(await findToast()).toHaveTextContent('Etwas ist schiefgelaufen');
     expect(router.state.location.pathname).toBe('/appointments');

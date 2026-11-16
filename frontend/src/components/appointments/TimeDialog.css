@@ -1,0 +1,19 @@
+.time-dialog__done-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background-color: var(--accent-3);
+  color: var(--accent-11);
+}
+
+.time-dialog__old {
+  text-decoration: line-through;
+}
+
+.time-dialog__reason {
+  justify-content: flex-start;
+  min-height: var(--space-7);
+}
