@@ -36,7 +36,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 - Auth: server-side sessions in `HttpOnly; Secure; SameSite=Strict` cookies (no JWT in browser storage)
 - Pipeline: GitHub Actions, GHCR, Syft (SBOM), Semgrep (SAST), Trivy (SCA/image), Gitleaks, cosign (key-based)
 - Deploy: local `kind` + `ingress-nginx`, driven by the Makefile
-- Base images: distroless/chainguard (backend), `nginxinc/nginx-unprivileged:alpine`, `postgres:16-alpine`; **pinned by sha256 digest**
+- Base images: `python:3.12-alpine` (backend, see D-03 in `docs/report/deviations.md`), `nginxinc/nginx-unprivileged:alpine`, `postgres:16-alpine`; **pinned by sha256 digest**
 
 ## Naming
 - Kubernetes namespace: `doctorholiday`
@@ -77,6 +77,8 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | Frontend lint | `cd frontend && npm run lint` (ESLint + Prettier) |
 | Frontend build | `cd frontend && npm run build` (static assets in `frontend/dist/`) |
 | Frontend API types | `cd frontend && npm run gen:api` (after changing `backend/openapi.yaml`) |
+| SBOM and scans (Docker) | `scripts/scan.sh sbom` / `sast` / `sca` / `secrets`, reports in `reports/` |
+| Pinning check / workflow lint | `make check-pinning` / `make lint-actions` (needs Docker) |
 | Cluster up / down | `make up` / `make down` |
 | Local DB up (+ migrations) / down / reset | `make db-up` / `make db-down` / `make db-reset` |
 | Full local stack + manual test scenarios | [docs/development/local-testing.md](docs/development/local-testing.md) |

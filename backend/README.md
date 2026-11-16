@@ -192,7 +192,7 @@ The schedule, availability and appointment API of #17 (`api/schedule.py`, `api/a
 - **Data minimisation:** a `PATIENT` never gets `patient` or `guest` in a response. The practice sees the patient (`deleted: true` without e-mail and name after an account deletion) or the guest until its data is erased. `reason` is an enum, no free text (BR-10).
 - **TBAC** (BR-17): `ADMIN` reaches appointment data (A10, A12) only with an active grant in `admin_access_grants`, else `403 ACCESS_GRANT_REQUIRED`; each access is audited as `APPOINTMENT_DATA_ACCESSED` with the grant ID. Creating grants (A19) comes with #55, so until then an admin cannot list or cancel appointments.
 - **Audit:** `WORKING_HOURS_CHANGED` (target the doctor, `details.entries`), `ABSENCE_CREATED`, `ABSENCE_DELETED`, `APPOINTMENT_BOOKED`, `APPOINTMENT_CANCELLED`, `APPOINTMENT_RESCHEDULED` (`details`: old and new start, old and new doctor if changed). Targets are IDs only; guest name and phone never reach the audit log or the logs (BR-19, BR-24). Denials (`ACCESS_DENIED`) are not audited yet, because raising rolls back the request transaction (#16, #20).
-- **Guest data cleanup** (BR-24): `python -m doctorholiday.jobs.guest_cleanup` (`make cleanup-guests`) erases guest name and phone 30 days after the appointment ended or was cancelled and sets `guest_erased_at`. It is idempotent and uses the backend's configuration and role. It must run once a day: locally by hand or cron, in the cluster as a Kubernetes CronJob with the backend image (with the workloads, #38).
+- **Guest data cleanup** (BR-24): `python -m doctorholiday.jobs.guest_cleanup` (`make cleanup-guests`) erases guest name and phone 30 days after the appointment ended or was cancelled and sets `guest_erased_at`. It is idempotent, uses the backend's database role and reads only `DATABASE_URL` and `LOG_LEVEL` (no other secrets, AGENTS.md rule 6). It must run once a day: locally by hand or cron, in the cluster as a Kubernetes CronJob with the backend image (with the workloads, #38).
 
 ### Contract tests
 
@@ -270,3 +270,14 @@ Plain SQL files in [`migrations/`](migrations), named `V<nnn>__<name>.sql` and a
 | `practice_settings`, `admin_bootstrap` | `SELECT, UPDATE` | Single rows created by the migration; the app cannot add or remove them. |
 | `audit_events` | `SELECT, INSERT` | Append-only, the application cannot rewrite the audit log (BR-19). |
 | `schema_migrations` | none | Owned by the migration role. |
+
+## Container image
+
+`backend/Dockerfile` builds the image (issue #28). Multi-stage: `uv sync --locked --no-build` installs the hash-locked wheels into a venv, the runtime stage copies only the venv. The image runs as UID 10001 on port 8080, with a read-only root filesystem and no capabilities. Base images are pinned by digest; why `python:3.12-alpine`: [deviations.md](../docs/report/deviations.md) D-03.
+
+```sh
+docker build -t doctorholiday-backend backend --build-arg VERSION="$(cat VERSION.txt)" --build-arg REVISION="$(git rev-parse HEAD)"
+docker run --rm --read-only --tmpfs /tmp --user 10001 --cap-drop ALL --security-opt no-new-privileges -p 127.0.0.1:8080:8080 --env-file backend/.env doctorholiday-backend
+```
+
+Configuration only comes from environment variables (`.env.example`); the image contains no secrets. The migrations are not part of the image, they run from `make db-up` locally and as a Job in the cluster (#39).

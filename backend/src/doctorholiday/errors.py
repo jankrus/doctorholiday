@@ -65,6 +65,7 @@ PAYLOAD_TOO_LARGE_MESSAGE = "The request is too large."
 UNSUPPORTED_MEDIA_TYPE_MESSAGE = "The request body must be JSON (application/json)."
 WORKING_HOURS_OVERLAP_MESSAGE = "Working hours of one weekday must not overlap."
 NOT_FOUND_MESSAGE = "Not found."
+FORBIDDEN_MESSAGE = "You are not allowed to do this."
 
 
 class ApiError(Exception):
@@ -143,7 +144,7 @@ def _data_conflict(request: Request, exc: DataConflictError) -> JSONResponse:
 # returned: it is framework text, and for a 405 it names the method.
 _HTTP_ERRORS: Mapping[int, tuple[ErrorCode, str]] = {
     status.HTTP_401_UNAUTHORIZED: (ErrorCode.UNAUTHENTICATED, "Please log in."),
-    status.HTTP_403_FORBIDDEN: (ErrorCode.FORBIDDEN, "You are not allowed to do this."),
+    status.HTTP_403_FORBIDDEN: (ErrorCode.FORBIDDEN, FORBIDDEN_MESSAGE),
     status.HTTP_404_NOT_FOUND: (ErrorCode.NOT_FOUND, NOT_FOUND_MESSAGE),
     status.HTTP_405_METHOD_NOT_ALLOWED: (
         ErrorCode.METHOD_NOT_ALLOWED,
@@ -195,3 +196,15 @@ def install_error_handlers(app: FastAPI) -> None:
 def not_found() -> ApiError:
     """Unknown, or someone else's: the same answer, so IDs cannot be probed (AGENTS.md rule 2)."""
     return ApiError(status.HTTP_404_NOT_FOUND, ErrorCode.NOT_FOUND, NOT_FOUND_MESSAGE)
+
+
+def forbidden() -> ApiError:
+    """The role or the request is not allowed (`403 FORBIDDEN`)."""
+    return ApiError(status.HTTP_403_FORBIDDEN, ErrorCode.FORBIDDEN, FORBIDDEN_MESSAGE)
+
+
+def invalid() -> ApiError:
+    """A check the request schema cannot express failed (`422 VALIDATION_ERROR`)."""
+    return ApiError(
+        status.HTTP_422_UNPROCESSABLE_CONTENT, ErrorCode.VALIDATION_ERROR, VALIDATION_MESSAGE
+    )

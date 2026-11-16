@@ -67,7 +67,7 @@ The tree has up to five levels (root, branch, sub-goal, step, leaf) and both gat
 | 2.3.2 | Server accepts a role field | `extra="forbid"` on every request model, registration always creates `PATIENT`, roles only through invitation and the admin endpoint | SR-02, SR-03 | TH-25, TH-33 | #13, #14, #55 | Partly (strict models on the auth endpoints merged) |
 | 2.4.1 | Unescaped output | React escapes by default, ESLint forbids `dangerouslySetInnerHTML` and `eval` | SR-11 | TH-18 | #23, #27 | Partly (ESLint rules merged) |
 | 2.4.2 | No content security policy | CSP without `unsafe-inline` for scripts, other security headers | SR-11 | TH-18 | #19, #27 | Planned |
-| 3.1.1 | Code execution in a pod | Distroless image without shell, SCA of dependencies, read-only root filesystem, non-root, seccomp RuntimeDefault, `capabilities.drop: [ALL]` | SR-06, SR-08 | TH-22, TH-46 | #28, #33, #38 | Planned |
+| 3.1.1 | Code execution in a pod | Minimal Alpine image (non-root, no `pip`, a shell remains, see D-03), SCA of dependencies, read-only root filesystem, non-root, seccomp RuntimeDefault, `capabilities.drop: [ALL]` | SR-06, SR-08 | TH-22, TH-46 | #28, #33, #38 | Planned |
 | 3.1.2 | Mounted token can read secrets | `automountServiceAccountToken: false`, no Role bindings, minimal ServiceAccounts | SR-08 | TH-46, TH-44 | #37 | Planned |
 | 3.2.1 | Secret committed to the repository | `.gitignore`, `.env.example` placeholders, GitHub push protection, Gitleaks in the pipeline and as a gate | SR-05 | TH-57 | #30, #33, #36 | Partly (push protection and `.gitignore` on) |
 | 3.2.2 | Secret printed in a log or error | Config values held as `SecretStr`, log redaction, uniform error schema without internals | SR-04, SR-05 | TH-28, TH-76 | #11, #13 | Partly (redaction and `SecretStr` merged; central error handler partly) |
@@ -105,6 +105,7 @@ These leaves stay open on purpose and have to be named in the final documentatio
 - **1.1.2.2.1 Real-time TOTP phishing:** TOTP is phishable. Production answer: WebAuthn or passkeys.
 - **1.1.3.1 First-admin window:** follows from brief §4. Mitigated by the operator logging in first.
 - **3.3 Database volume and 4.3.2.2 DNS tunnelling:** out of scope for a local single-node demo cluster. Production: encrypted volumes, DNS egress filtering.
+- **3.1.1 Shell in the backend image:** the backend image is Alpine-based and has `/bin/sh` and `apk` ([D-03](../report/deviations.md)); a code execution in the pod gets a shell. Production: a distroless image with a matching Python version.
 - **4.3.1 The image receives the DB credentials:** inherent to the design; the protection lies in keeping malicious images out (4.1, 4.2).
 - **1.2.1 and 1.2.2 Insider use of a legitimate permission:** reduced to detection by audit and TBAC.
 

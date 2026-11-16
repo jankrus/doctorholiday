@@ -1,4 +1,4 @@
-.PHONY: help up down test lint package db-up db-down db-reset test-db sast-sql
+.PHONY: help up down test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
 .DEFAULT_GOAL := help
 
 help: ## List available targets
@@ -25,6 +25,18 @@ SEMGREP_IMAGE := semgrep/semgrep:1.140.0@sha256:4372a1de903521f9f10f877b6caf15d1
 sast-sql: ## Check the backend for SQL built from strings with Semgrep (#12)
 	docker run --rm --network none -v "$(CURDIR):/src:ro" -w /src $(SEMGREP_IMAGE) \
 		semgrep scan --metrics off --disable-version-check --error --config .semgrep/ backend/src
+
+# Pipeline checks (#31). Tool images pinned by digest (AGENTS.md rule 7). zizmor runs offline here;
+# the pipeline can run its online audits (impostor commits, known-vulnerable actions) with a token.
+ACTIONLINT_IMAGE := rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
+ZIZMOR_IMAGE := ghcr.io/zizmorcore/zizmor:1.32.0@sha256:3014cc8f68f663935f69b3c3e0e41f5ce102b268d97db13db0f62208747f860d
+
+check-pinning: ## Fail if an action is not pinned by commit SHA or an image not by digest (SR-06, #31)
+	scripts/check-pinning.sh
+
+lint-actions: check-pinning ## Lint the workflows with actionlint and zizmor (#31)
+	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo $(ACTIONLINT_IMAGE) -color=false
+	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo $(ZIZMOR_IMAGE) --offline --no-progress --persona auditor .github/workflows/
 
 package: ## Build the team-<nr>.zip submission (#51)
 	@echo "TODO: package"

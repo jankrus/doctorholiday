@@ -14,12 +14,12 @@ from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
-from doctorholiday.config import Settings
+from doctorholiday.config import DatabaseSettings
 
 logger = logging.getLogger(__name__)
 
 
-def create_db_engine(settings: Settings) -> Engine:
+def create_db_engine(settings: DatabaseSettings) -> Engine:
     # Lazy: no connection is opened until the first query, so the app starts without a database.
     return create_engine(
         settings.database_url.get_secret_value(),

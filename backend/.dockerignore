@@ -1,0 +1,13 @@
+# Build context for backend/Dockerfile: only what the image needs (pyproject, lockfile, README, src).
+# Everything else stays out so no secret or local state can end up in a layer.
+*
+!pyproject.toml
+!uv.lock
+!.python-version
+!README.md
+!src/
+!src/**
+
+# Even inside src/: no caches, no bytecode.
+**/__pycache__
+**/*.py[cod]

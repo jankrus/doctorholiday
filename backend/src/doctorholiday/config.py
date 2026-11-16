@@ -25,17 +25,30 @@ class LogLevel(StrEnum):
     CRITICAL = "CRITICAL"
 
 
-class Settings(BaseSettings):
+class DatabaseSettings(BaseSettings):
+    """What the one-off jobs (`doctorholiday.jobs`) need: the database and the log level, no
+    other secrets (AGENTS.md rule 6). The API's `Settings` extend it."""
+
     # No env_file: in the cluster the variables come from Kubernetes Secrets, locally from
     # `uv run --env-file .env` (see backend/README.md).
     model_config = SettingsConfigDict(frozen=True, extra="ignore")
 
     database_url: SecretStr
+    log_level: LogLevel = LogLevel.INFO
+
+    @field_validator("database_url")
+    @classmethod
+    def _check_database_url(cls, value: SecretStr) -> SecretStr:
+        if not value.get_secret_value().startswith("postgresql+psycopg://"):
+            raise ValueError("must start with postgresql+psycopg://")
+        return value
+
+
+class Settings(DatabaseSettings):
     session_secret: SecretStr
     mfa_encryption_key: SecretStr
     allowed_origins: Annotated[list[str], NoDecode]
     port: int = Field(default=8080, ge=1024, le=65535)
-    log_level: LogLevel = LogLevel.INFO
     # Login sessions (#14): ended after this long without a request (idle) and at the latest this
     # long after the login (absolute), whatever the activity.
     session_idle_timeout_minutes: int = Field(default=30, ge=1, le=1440)
@@ -51,13 +64,6 @@ class Settings(BaseSettings):
     # window has passed once more.
     registration_max_per_ip: int = Field(default=10, ge=1, le=1000)
     registration_window_minutes: int = Field(default=60, ge=1, le=1440)
-
-    @field_validator("database_url")
-    @classmethod
-    def _check_database_url(cls, value: SecretStr) -> SecretStr:
-        if not value.get_secret_value().startswith("postgresql+psycopg://"):
-            raise ValueError("must start with postgresql+psycopg://")
-        return value
 
     @field_validator("session_secret")
     @classmethod
@@ -122,8 +128,18 @@ class ConfigError(Exception):
 
 
 def load_settings() -> Settings:
+    """The API's settings."""
+    return _load(Settings)
+
+
+def load_database_settings() -> DatabaseSettings:
+    """A job's settings: `DATABASE_URL` and `LOG_LEVEL` only."""
+    return _load(DatabaseSettings)
+
+
+def _load[T: DatabaseSettings](cls: type[T]) -> T:
     try:
-        return Settings()  # type: ignore[call-arg]  # fields are filled from the environment
+        return cls()  # type: ignore[call-arg]  # fields are filled from the environment
     except ValidationError as exc:
         # Only `loc` and `msg`: pydantic's default string form also contains the input value.
         errors = [

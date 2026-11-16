@@ -28,3 +28,6 @@ team-*.zip
 Thumbs.db
 .idea/
 .vscode/
+
+# Scan and test reports (scripts/scan.sh); the evidence job copies them to evidence/ (#44)
+reports/

@@ -22,7 +22,7 @@ from sqlalchemy.orm import Session
 from doctorholiday.auth.sessions import hash_token, token_from_cookie
 from doctorholiday.config import Settings
 from doctorholiday.db import DbSession
-from doctorholiday.errors import ApiError, ErrorCode
+from doctorholiday.errors import ApiError, ErrorCode, forbidden
 from doctorholiday.models import Role, SessionState, User, UserSession
 from doctorholiday.repositories import sessions, users
 
@@ -87,9 +87,7 @@ def require_roles(*allowed: Role) -> Callable[[User], User]:
     def dependency(user: ActiveUser) -> User:
         if user.role not in roles:
             logger.info("role not allowed", extra={"userId": str(user.id), "role": user.role})
-            raise ApiError(
-                status.HTTP_403_FORBIDDEN, ErrorCode.FORBIDDEN, "You are not allowed to do this."
-            )
+            raise forbidden()
         return user
 
     return dependency
