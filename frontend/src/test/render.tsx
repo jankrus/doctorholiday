@@ -1,5 +1,5 @@
 import { Theme } from '@radix-ui/themes';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { createMemoryRouter, RouterProvider } from 'react-router';
 import { ToastProvider } from '../components/Toasts';
@@ -35,9 +35,13 @@ export function toastRegion(): HTMLElement {
   return screen.getByRole('region', { name: 'Meldungen (F8)' });
 }
 
-/** Waits for the one visible toast. */
+/**
+ * Waits for the one visible toast. The region itself is waited for too: while a modal dialog is
+ * open (or still closing), Radix hides everything outside it from assistive technology, the toast
+ * viewport included. The live announcement is not affected.
+ */
 export function findToast(): Promise<HTMLElement> {
-  return within(toastRegion()).findByRole('listitem');
+  return waitFor(() => within(toastRegion()).getByRole('listitem'));
 }
 
 export function queryToasts(): HTMLElement[] {

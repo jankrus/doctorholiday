@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Appointment } from '../../appointments/api';
@@ -40,9 +40,12 @@ const CANCELLED = appointment({
 function setup(
   initial: Appointment[] = [TOMORROW, NEXT_WEEK, PAST, CANCELLED],
   cancel?: () => Response,
+  /** Delays the list reload after a cancellation, so the dialog is still open when it succeeds. */
+  reloadDelayMs = 0,
 ) {
   let appointments = initial;
   const cancelled: string[] = [];
+  const listHandler = myAppointmentsHandler(() => appointments);
   const session = activeSession('PATIENT');
   stubSession(
     { ...session, user: session.user && { ...session.user, displayName: 'Erika Mustermann' } },
@@ -52,7 +55,12 @@ function setup(
         time(BERGER, '2026-11-16T07:00:00Z'),
         time(YILMAZ, '2026-11-16T08:00:00Z'),
       ]),
-      'GET /api/v1/appointments/me': myAppointmentsHandler(() => appointments),
+      'GET /api/v1/appointments/me': async (request) => {
+        if (cancelled.length && reloadDelayMs) {
+          await new Promise((resolve) => setTimeout(resolve, reloadDelayMs));
+        }
+        return listHandler(request);
+      },
       [`POST /api/v1/appointments/${NEXT_WEEK.id}/cancel`]: () => {
         cancelled.push(NEXT_WEEK.id);
         if (cancel) return cancel();
@@ -193,6 +201,26 @@ describe('my appointments', () => {
     expect(cancelled).toEqual([NEXT_WEEK.id]);
     expect(await upcomingCards()).toHaveLength(1);
     expect(await historyItems()).toHaveLength(3);
+  });
+
+  it('confirms the cancellation even while the list still reloads behind the dialog', async () => {
+    // The toast is raised while the dialog is still open, which hides the toast viewport from
+    // assistive technology until it closes; the live announcement is read out anyway.
+    setup(undefined, undefined, 300);
+    await userEvent.click(within(await card(1)).getByRole('button', { name: 'Absagen' }));
+    const dialog = await screen.findByRole('alertdialog', { name: 'Termin absagen?' });
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Termin absagen' }));
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByRole('status').some((el) => el.textContent?.includes('wurde abgesagt')),
+      ).toBe(true),
+    );
+    expect(await findToast()).toHaveTextContent('wurde abgesagt');
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole('heading', { name: 'Anstehende Termine' })).toHaveFocus(),
+    );
   });
 
   it('keeps the appointment when the patient changes their mind', async () => {
