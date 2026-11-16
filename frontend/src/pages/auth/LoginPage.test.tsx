@@ -1,12 +1,10 @@
-import { Theme } from '@radix-ui/themes';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { routes } from '../../routes';
+import { findToast, queryToasts, renderRoute } from '../../test/render';
 import { activeSession, apiError, stubSession } from '../../test/session';
 
-function renderLogin(loginResponse: () => Response | Promise<Response>, path = '/login') {
+function renderLogin(loginResponse: () => Response | Promise<Response>) {
   let sent: unknown;
   const fetchMock = stubSession(null, {
     '/api/v1/auth/login': async (request) => {
@@ -22,13 +20,7 @@ function renderLogin(loginResponse: () => Response | Promise<Response>, path = '
       return response;
     },
   });
-  const router = createMemoryRouter(routes, { initialEntries: [path] });
-  render(
-    <Theme>
-      <RouterProvider router={router} />
-    </Theme>,
-  );
-  return { router, sent: () => sent };
+  return { router: renderRoute('/login'), sent: () => sent };
 }
 
 async function submit(email: string, password: string) {
@@ -44,7 +36,7 @@ describe('login page', () => {
     const { router, sent } = renderLogin(() => Response.json(activeSession('PATIENT')));
     await submit('patient@example.test', 'correct horse battery');
 
-    expect(await screen.findByRole('heading', { name: 'Meine Termine' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Anstehende Termine' })).toBeInTheDocument();
     expect(router.state.location.pathname).toBe('/appointments');
     expect(sent()).toEqual({ email: 'patient@example.test', password: 'correct horse battery' });
   });
@@ -63,9 +55,7 @@ describe('login page', () => {
     renderLogin(() => apiError('INVALID_CREDENTIALS', 401));
     await submit('patient@example.test', 'wrong password');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'E-Mail-Adresse oder Passwort ist falsch.',
-    );
+    expect(await findToast()).toHaveTextContent('E-Mail-Adresse oder Passwort ist falsch.');
     expect(screen.queryByText('Server text.')).not.toBeInTheDocument();
     expect(screen.getByLabelText('E-Mail-Adresse')).toHaveValue('patient@example.test');
     expect(screen.getByLabelText('Passwort')).toHaveValue('');
@@ -76,31 +66,58 @@ describe('login page', () => {
     renderLogin(() => apiError('RATE_LIMITED', 429));
     await submit('patient@example.test', 'wrong password');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Zu viele Versuche');
+    expect(await findToast()).toHaveTextContent('Zu viele Versuche');
   });
 
   it('shows a generic error when the network fails', async () => {
     renderLogin(() => Promise.reject(new TypeError('Failed to fetch')));
     await submit('patient@example.test', 'correct horse battery');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Etwas ist schiefgelaufen');
+    expect(await findToast()).toHaveTextContent('Etwas ist schiefgelaufen');
   });
 
   it('asks for both fields without calling the API', async () => {
     const { sent } = renderLogin(() => Response.json(activeSession('PATIENT')));
     await submit('', '');
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(
+    expect(await findToast()).toHaveTextContent(
       'Bitte geben Sie Ihre E-Mail-Adresse und Ihr Passwort ein.',
     );
     expect(sent()).toBeUndefined();
   });
 
-  it('confirms a registration', async () => {
-    renderLogin(() => Response.json(activeSession('PATIENT')), '/login?registered');
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'Vielen Dank für Ihre Registrierung.',
-    );
+  it('replaces the error of the last attempt instead of stacking it', async () => {
+    let attempts = 0;
+    renderLogin(() => {
+      attempts += 1;
+      return attempts === 1 ? apiError('INVALID_CREDENTIALS', 401) : apiError('RATE_LIMITED', 429);
+    });
+    await submit('patient@example.test', 'wrong password');
+    expect(await findToast()).toHaveTextContent('E-Mail-Adresse oder Passwort ist falsch.');
+
+    await userEvent.type(screen.getByLabelText('Passwort'), 'wrong again');
+    await userEvent.click(screen.getByRole('button', { name: 'Anmelden' }));
+
+    expect(await findToast()).toHaveTextContent('Zu viele Versuche');
+    expect(queryToasts()).toHaveLength(1);
+  });
+
+  it('closes the error once a new attempt succeeds', async () => {
+    let attempts = 0;
+    renderLogin(() => {
+      attempts += 1;
+      return attempts === 1
+        ? apiError('INVALID_CREDENTIALS', 401)
+        : Response.json(activeSession('PATIENT'));
+    });
+    await submit('patient@example.test', 'wrong password');
+    await findToast();
+
+    await userEvent.type(screen.getByLabelText('Passwort'), 'correct horse battery');
+    await userEvent.click(screen.getByRole('button', { name: 'Anmelden' }));
+
+    expect(await screen.findByRole('heading', { name: 'Anstehende Termine' })).toBeInTheDocument();
+    expect(queryToasts()).toHaveLength(0);
   });
 
   it('can show the password', async () => {

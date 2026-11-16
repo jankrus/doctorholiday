@@ -91,10 +91,15 @@
   color: var(--gray-11);
 }
 
+/*
+ * On narrow screens toasts span the bottom edge (components/Toasts.css). The bottom padding keeps
+ * room for a two-line toast, so the form and its links can always be scrolled above it. It is
+ * there from the start: opening a toast never shifts the page.
+ */
 .auth-layout__main {
   display: flex;
   justify-content: center;
-  padding: var(--space-6) var(--space-5) var(--space-8);
+  padding: var(--space-6) var(--space-5) calc(var(--space-9) * 1.5);
 }
 
 .auth-layout__form {
