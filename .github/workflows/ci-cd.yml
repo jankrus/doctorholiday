@@ -380,6 +380,9 @@ jobs:
     if: needs.context.outputs.release == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
+    # The signing key is an environment secret of `signing`, which only the branch `main` may use
+    # (scripts/setup-signing-key.sh creates it): no other branch or workflow can read the key.
+    environment: signing
     # packages: write attaches signature and attestation to the image in GHCR (#35).
     permissions:
       contents: read

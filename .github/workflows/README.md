@@ -39,7 +39,7 @@ meta ─┬─ test-backend ──┐
 | `sca` | (b) | **real:** Trivy on the lockfiles (`package-lock.json`, `uv.lock`), full report, the gate counts HIGH and CRITICAL, artifact `sca`. `trivy image` follows with #34 | #33 |
 | `secrets` | (b) | **real:** Gitleaks over the full history with `.gitleaks.toml`, values redacted, artifact `secrets` | #33 |
 | `build` | (c) | **real:** builds, pushes to GHCR, records the digest; matrix `frontend` / `backend`; artifacts `image-frontend`, `image-backend` (`digest.txt`, `image-ref.txt`); outputs `frontend` and `backend` (digest) | #34 |
-| `sign` | (d) | stub, matrix `frontend` / `backend` | #35 |
+| `sign` | (d) | **real:** matrix `frontend` / `backend`; cosign (key-based) signs the image digest and attaches the CycloneDX SBOM as an attestation (`scripts/sign-image.sh`), then verifies both with the committed public key (`scripts/verify-image.sh`); artifact `signing-<image>` | #35 |
 | `quality-gate` | (e) | stub | #36 |
 | `deploy` | deployment | stub | #43 |
 | `evidence` | §7 evidence | stub, runs even after a failure | #44 |

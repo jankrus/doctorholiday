@@ -7,8 +7,9 @@
 # What it does
 #   1. generates a key pair with cosign (the pinned cosign container, or `cosign` if COSIGN is set)
 #      in a private directory, with a random password that is never printed;
-#   2. stores the private key and the password as the repository secrets COSIGN_PRIVATE_KEY and
-#      COSIGN_PASSWORD (read from files through stdin, never on a command line);
+#   2. creates the environment `signing`, which only the branch `main` may use, and stores the private
+#      key and the password in it as the secrets COSIGN_PRIVATE_KEY and COSIGN_PASSWORD (read from
+#      files through stdin, never on a command line); the sign job declares `environment: signing`;
 #   3. writes the public key to infrastructure/signing/cosign.pub (commit this file, nothing else);
 #   4. deletes the private key and the password from this machine.
 # Afterwards the private key exists only as a GitHub secret. To rotate it, run the script again,
@@ -45,11 +46,16 @@ else
 fi
 [[ -s "$dir/cosign.key" && -s "$dir/cosign.pub" ]] || { echo "key generation failed" >&2; exit 1; }
 
-gh secret set COSIGN_PRIVATE_KEY --repo "$repo" < "$dir/cosign.key"
-gh secret set COSIGN_PASSWORD --repo "$repo" < "$dir/password"
+# Environment limited to the branch main (custom branch policy), so a workflow on another branch
+# cannot get the key even if someone edits the workflow.
+gh api --method PUT "repos/$repo/environments/signing"   -F 'deployment_branch_policy[protected_branches]=false'   -F 'deployment_branch_policy[custom_branch_policies]=true' > /dev/null
+gh api --method POST "repos/$repo/environments/signing/deployment-branch-policies"   -f name=main -f type=branch > /dev/null 2>&1 || true  # already there on a re-run
+
+gh secret set COSIGN_PRIVATE_KEY --repo "$repo" --env signing < "$dir/cosign.key"
+gh secret set COSIGN_PASSWORD --repo "$repo" --env signing < "$dir/password"
 
 mkdir -p "$(dirname "$pub")"
 cp "$dir/cosign.pub" "$pub"
-echo "Secrets COSIGN_PRIVATE_KEY and COSIGN_PASSWORD are set for $repo."
+echo "Environment signing (branch main only) with the secrets COSIGN_PRIVATE_KEY and COSIGN_PASSWORD is set up for $repo."
 echo "Public key written to $pub. Commit it:"
 echo "  git add $pub && git commit -m 'chore(signing): add the cosign public key'"
