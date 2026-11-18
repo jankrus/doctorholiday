@@ -4,7 +4,7 @@
 #   scripts/collect-evidence.sh <artifacts-dir> <evidence-dir> <prefix>
 #
 #   <artifacts-dir>  the downloaded workflow artifacts, one directory per artifact:
-#                    sbom/ sast/ sca/ secrets/ signing/ gate/ image-<image>/ run-logs/
+#                    sbom/ sast/ sca/ secrets/ signing-<image>/ gate/ image-<image>/ run-logs/
 #   <evidence-dir>   destination, normally `evidence/`
 #   <prefix>         names this run, e.g. `0042-a1b2c3d` (run number, short commit)
 #
@@ -74,7 +74,10 @@ sort_dir sbom sbom
 sort_dir sast sast
 sort_dir sca sca
 sort_dir secrets secrets
-sort_dir signing signing
+# One `signing-<image>` artifact per image (cosign bundles, verification output, key fingerprint).
+for dir in "$artifacts"/signing*; do
+  [[ -d "$dir" ]] && sort_dir "$(basename "$dir")" signing
+done
 # Gate result and job logs describe the whole run; the image artifacts (digest, reference by
 # digest, build provenance) belong to one image each.
 sort_dir gate run
