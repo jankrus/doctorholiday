@@ -1,0 +1,88 @@
+/* Toasts: see docs/architecture/ui-design.md (section 7, "Toast"). */
+
+/* Fixed above the page, so opening a toast never shifts the layout. Bottom right on wide screens. */
+.toast-viewport {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  width: 420px;
+  max-width: 100vw;
+  margin: 0;
+  padding: var(--space-5);
+  list-style: none;
+  outline: none;
+  /* Only the toasts take clicks, not the empty padding around them. */
+  pointer-events: none;
+}
+
+/* Full width at the bottom on narrow screens. */
+@media (max-width: 599px) {
+  .toast-viewport {
+    left: 0;
+    width: 100%;
+    padding: var(--space-3);
+  }
+}
+
+/* An opaque panel under the tinted callout: the page must not shine through. */
+.toast {
+  pointer-events: auto;
+  border-radius: var(--radius-4);
+  background-color: var(--color-panel-solid);
+  box-shadow: var(--shadow-4);
+}
+
+.toast:focus-visible {
+  outline: 2px solid var(--focus-8);
+  outline-offset: 2px;
+}
+
+/* Icon, text, close button in one row. */
+.toast__callout {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.toast__callout > .toast__icon {
+  grid-column: 1;
+}
+
+.toast__callout > .toast__text {
+  grid-column: 2;
+  overflow-wrap: anywhere;
+}
+
+/* Ghost button: its padding is clickable but pulled back by negative margins, so the row stays low. */
+.toast__callout > .toast__close {
+  grid-column: 3;
+}
+
+.toast[data-state='open'] {
+  animation: toast-in 150ms ease-out;
+}
+
+.toast[data-swipe='move'] {
+  transform: translateX(var(--radix-toast-swipe-move-x));
+}
+
+.toast[data-swipe='cancel'] {
+  transform: translateX(0);
+  transition: transform 150ms ease-out;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-3));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast[data-state='open'] {
+    animation: none;
+  }
+}

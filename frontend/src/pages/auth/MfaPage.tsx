@@ -24,10 +24,11 @@ import { CopyButton } from '../../components/CopyButton';
 import { FormField, type FieldControlProps } from '../../components/FormField';
 import { DownloadIcon } from '../../components/icons';
 import { LogoutButton } from '../../components/LogoutButton';
-import { OtpInput } from '../../components/OtpInput';
 import { Notice } from '../../components/Notice';
+import { OtpInput } from '../../components/OtpInput';
 import { PageHeader } from '../../components/PageHeader';
 import { QrCode } from '../../components/QrCode';
+import { useErrorToast, useToast } from '../../components/Toasts';
 import './MfaPage.css';
 
 type Mode = 'totp' | 'recovery';
@@ -157,6 +158,8 @@ function MfaChallenge() {
   const [mode, setMode] = useState<Mode>('totp');
   const current = result?.mode === mode ? result : undefined;
   const attempt = useAttemptKey(current);
+  const toast = useToast();
+  useErrorToast(result);
 
   return (
     <Flex direction="column" gap="6">
@@ -165,8 +168,6 @@ function MfaChallenge() {
           ? 'Geben Sie den 6-stelligen Code aus Ihrer Authenticator-App ein.'
           : 'Geben Sie einen Ihrer Wiederherstellungscodes ein. Jeder Code funktioniert nur einmal.'}
       </PageHeader>
-
-      {current?.error && <Notice tone="error">{current.error}</Notice>}
 
       <Form method="post" noValidate key={mode}>
         <input type="hidden" name="mode" value={mode} />
@@ -196,7 +197,11 @@ function MfaChallenge() {
           type="button"
           variant="ghost"
           size="2"
-          onClick={() => setMode(mode === 'totp' ? 'recovery' : 'totp')}
+          onClick={() => {
+            // The error was about the other kind of code.
+            toast.dismissErrors();
+            setMode(mode === 'totp' ? 'recovery' : 'totp');
+          }}
         >
           {mode === 'totp'
             ? 'Kein Zugriff auf die App? Wiederherstellungscode verwenden'
@@ -211,6 +216,7 @@ function MfaChallenge() {
 /** Leaves the flow: optional enrolment declines the offer, mandatory enrolment logs out. */
 function LeaveEnrollment({ optional }: { optional: boolean }) {
   const decline = useFetcher<FormResult>();
+  useErrorToast(decline.data);
   if (!optional) {
     return (
       <Box>
@@ -220,7 +226,6 @@ function LeaveEnrollment({ optional }: { optional: boolean }) {
   }
   return (
     <Flex direction="column" gap="3" align="start">
-      {decline.data?.error && <Notice tone="error">{decline.data.error}</Notice>}
       <decline.Form method="post">
         <input type="hidden" name="intent" value="decline" />
         <Button
@@ -245,6 +250,8 @@ function MfaEnrollment({ optional }: { optional: boolean }) {
   const confirm = useFetcher<ConfirmResult>();
   const attempt = useAttemptKey(confirm.data);
   const enrollment = enroll.data?.enrollment;
+  useErrorToast(enroll.data);
+  useErrorToast(confirm.data);
 
   if (confirm.data?.recoveryCodes && confirm.data.session) {
     return (
@@ -268,7 +275,6 @@ function MfaEnrollment({ optional }: { optional: boolean }) {
             etwa zwei Minuten.
           </PageHeader>
         )}
-        {enroll.data?.error && <Notice tone="error">{enroll.data.error}</Notice>}
         <enroll.Form method="post">
           <input type="hidden" name="intent" value="enroll" />
           <Button type="submit" size="3" loading={enroll.state !== 'idle'} className="mfa-full">
@@ -322,11 +328,6 @@ function MfaEnrollment({ optional }: { optional: boolean }) {
             Code eingeben
           </Text>
           <Box mt="3">
-            {confirm.data?.error && (
-              <Box mb="4">
-                <Notice tone="error">{confirm.data.error}</Notice>
-              </Box>
-            )}
             <confirm.Form method="post" noValidate>
               <input type="hidden" name="intent" value="confirm" />
               <Flex direction="column" gap="5">
@@ -396,6 +397,7 @@ function RecoveryCodes({ codes, next }: { codes: string[]; next: string }) {
         Jeder Code funktioniert nur einmal. Die Codes werden nur jetzt angezeigt.
       </PageHeader>
 
+      {/* Part of the page content, not a transient message: it stays inline (ui-design.md, section 7). */}
       <Notice tone="success">Die Zwei-Faktor-Authentifizierung ist aktiv.</Notice>
 
       <Card size="3">

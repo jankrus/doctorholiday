@@ -19,8 +19,8 @@ import {
 } from '../../auth/validation';
 import { FormField, useFocusFirstError, type FieldControlProps } from '../../components/FormField';
 import { LogoutButton } from '../../components/LogoutButton';
-import { Notice } from '../../components/Notice';
 import { PageHeader } from '../../components/PageHeader';
+import { useErrorToast } from '../../components/Toasts';
 
 type SettingsDefaults = Pick<
   PracticeSettings,
@@ -78,6 +78,7 @@ export function SetupPage() {
   const formRef = useRef<HTMLFormElement>(null);
   const errors = result?.fieldErrors ?? {};
   useFocusFirstError(formRef, result?.fieldErrors);
+  useErrorToast(result);
 
   return (
     <Flex direction="column" gap="6">
@@ -85,8 +86,6 @@ export function SetupPage() {
         Willkommen! Mit Ihrem Konto verwalten Sie diese Praxis. Legen Sie zuerst die
         Grundeinstellungen fest – Sie können sie später jederzeit in der Verwaltung ändern.
       </PageHeader>
-
-      {result?.error && <Notice tone="error">{result.error}</Notice>}
 
       <Form method="post" noValidate ref={formRef}>
         <Flex direction="column" gap="5">

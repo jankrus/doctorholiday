@@ -1,9 +1,8 @@
-import { Theme } from '@radix-ui/themes';
-import { render, screen } from '@testing-library/react';
+import { cleanup, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createMemoryRouter, RouterProvider } from 'react-router';
 import { describe, expect, it } from 'vitest';
-import { routes } from '../../routes';
+import { toast } from '../../components/toastStore';
+import { findToast, queryToasts, renderRoute } from '../../test/render';
 import { apiError, stubSession } from '../../test/session';
 
 function renderRegister(registerResponse: () => Response) {
@@ -14,13 +13,7 @@ function renderRegister(registerResponse: () => Response) {
       return registerResponse();
     },
   });
-  const router = createMemoryRouter(routes, { initialEntries: ['/register'] });
-  render(
-    <Theme>
-      <RouterProvider router={router} />
-    </Theme>,
-  );
-  return { router, sent: () => sent };
+  return { router: renderRoute('/register'), sent: () => sent };
 }
 
 type Input = { name?: string; email?: string; password?: string; confirm?: string };
@@ -52,10 +45,9 @@ describe('register page', () => {
     const { router, sent } = renderRegister(() => new Response(null, { status: 202 }));
     await submit(valid);
 
-    expect(await screen.findByRole('status')).toHaveTextContent(
-      'Vielen Dank für Ihre Registrierung.',
-    );
+    expect(await findToast()).toHaveTextContent('Vielen Dank für Ihre Registrierung.');
     expect(router.state.location.pathname).toBe('/login');
+    expect(router.state.location.search).toBe('');
     expect(sent()).toEqual({
       email: 'erika@example.test',
       password: 'correct horse battery',
@@ -67,8 +59,23 @@ describe('register page', () => {
     const { sent } = renderRegister(() => new Response(null, { status: 202 }));
     await submit({ ...valid, name: '' });
 
-    await screen.findByRole('status');
+    await findToast();
     expect(sent()).toEqual({ email: 'erika@example.test', password: 'correct horse battery' });
+  });
+
+  it('shows the confirmation only once: a reload of the login page shows nothing', async () => {
+    const { router } = renderRegister(() => new Response(null, { status: 202 }));
+    await submit(valid);
+    await findToast();
+    const { pathname, search } = router.state.location;
+
+    // A reload starts the app with an empty queue at the same URL.
+    cleanup();
+    toast.clear();
+    renderRoute(pathname + search);
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Anmelden' })).toBeInTheDocument();
+    expect(queryToasts()).toHaveLength(0);
   });
 
   it('shows field errors, focuses the first one and sends nothing', async () => {
@@ -103,7 +110,7 @@ describe('register page', () => {
     renderRegister(() => apiError('RATE_LIMITED', 429));
     await submit(valid);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Zu viele Versuche');
+    expect(await findToast()).toHaveTextContent('Zu viele Versuche');
     expect(screen.queryByText('Server text.')).not.toBeInTheDocument();
   });
 });

@@ -2,7 +2,7 @@
 
 How the Doctor Holiday frontend looks and why. This guide grows with each screen. It started with `/login` and
 `/register` (#24), which act as the reference implementation: other screens adopt the patterns below once they have
-been reviewed there.
+been reviewed there. The patient screens (#25) added the app shell and the booking patterns (sections 6 and 7).
 
 Built on Radix Themes ([ADR-004](adr/ADR-004-frontend-libraries.md)). Everything below uses the theme's tokens
 (`--accent-*`, `--gray-*`, `--space-*`, `--radius-*`), so a palette or dark-mode change happens in one place.
@@ -54,7 +54,7 @@ Radix scales are tuned for APCA, and some step combinations miss the WCAG 2 rati
 | White on jade 9 (primary button) | 3.2:1 ✗ | Jade 9/10 overridden to `#1c8164` / `#177a5e` in `global.css`: 4.8:1 / 5.3:1 |
 | Jade 11 on white (links, met requirements) | 4.7:1 ✓ | unchanged |
 | Jade 11 on jade 3-4 (brand panel texts) | 3.9-4.2:1 ✗ | Gray 11 instead: ≥ 4.5:1 on every gradient step |
-| Step 11 on step 3 (soft callouts) | ≈ 4.2:1 ✗ | Callouts use `highContrast` (step 12 text) |
+| Step 11 on step 3 (soft callouts, toasts) | ≈ 4.2:1 ✗ | Callouts and toasts use `highContrast` (step 12 text); toasts sit on an opaque panel, so the page never shines through |
 | Jade 12 on jade 4 (brand claim, highlight titles) | 10.2:1 ✓ | unchanged |
 
 Rule: text on a tinted surface uses step 12 or gray 11; accent 11 only on white or step 1-2.
@@ -63,8 +63,11 @@ Rule: text on a tinted surface uses step 12 or gray 11; accent 11 only on white 
 
 - **Accent (jade)**: primary actions, links, confirmations (`role="status"` callouts) and met requirements. A separate
   "success green" is not needed and would compete with the accent.
-- **Red**: errors only (`role="alert"` callouts, field errors). Never decorative.
-- **Amber**: warnings, reserved for later screens (e.g. "appointment within the cancellation deadline").
+- **Red**: errors (`role="alert"` callouts, field errors) and the confirm button of a destructive action („Termin
+  absagen“ in its confirmation dialog). Never decorative.
+- **Amber**: things the patient must know before acting: an appointment inside the change deadline, the fasting
+  reminder (BR-10), the open-appointment limit (BR-09). Always `highContrast` or step 11 on white, always with an
+  icon.
 - **Gray**: secondary text, hints, unmet requirements.
 
 Colour never carries meaning alone: every error has an icon and text, every met requirement turns into a tick.
@@ -97,7 +100,7 @@ Colour never carries meaning alone: every error has an icon and text, every met 
   | :--- | :--- |
   | Label and input, input and hint | 2 |
   | Form fields | 5 |
-  | Page sections (title, message, form, footer links) | 6 |
+  | Page sections (title, form, footer links) | 6 |
   | Panel padding | 5 (mobile), 8 (desktop) |
 
 - **Depth** is used sparingly: flat surfaces, a single `--shadow-2` on the highlight icons. Separation comes from
@@ -141,8 +144,69 @@ Used by `AuthLayout` for every step before the app: `/login`, `/register`, `/mfa
 
 ### App shell
 
-`AppLayout` (header with product name and account, content below) for everything after login. It still has the
-skeleton look and is redesigned once the auth screens are approved (section 10).
+`AppLayout` for everything after login (#25):
+
+```text
+┌────────────────────────────────────────────────────────────────┐
+│ [+] Doctor Holiday │ Praxis am Park           ( EM  Name  ⌄ )  │  white header, gray border
+│ Meine Termine   Termin buchen                  ┌────────────┐  │  TabNav (only for roles with > 1 area)
+├────────────────────────────────────────────────│ EM Name    │──┤
+│                                                │    e-mail  │  │  gray 2 page background,
+│   Page content                                 │ ────────── │  │  white cards on it
+│                                                │ ⏎ Abmelden │  │
+│                                                └────────────┘  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+- **Header**: logo (links to the start page), the practice name from the settings (A26; hidden below 640 px and when
+  it is still the default) and the **account menu** (`UserMenu`): a pill button with the initials (solid `Avatar`,
+  white on jade 9), the name or e-mail (visually hidden below 640 px, but always the button's accessible name) and a
+  chevron. It opens a Radix `DropdownMenu` with the name and e-mail and „Abmelden“. The first version had a visible
+  „Abmelden“ button; review found it cluttered the header. An avatar with name and chevron is the pattern people
+  know from other apps, so logout is still found in one click, and the menu has room for account entries later.
+- **Navigation**: Radix `TabNav` below the header with the role's areas; the current one is marked
+  (`aria-current="page"`). Roles with a single area get no tabs.
+- **Content**: `Container size="4"` (max. 1136 px), gray 2 background so white cards stand out without shadows. The
+  first version used 880 px, which left most of a laptop screen empty; the overview now uses the width for a second
+  column, and the booking browser for wider day and time grids.
+- **Data**: the layout's loader (`id: 'app'`) reads the practice settings once; pages read them with
+  `usePracticeSettings()` and still work if the request fails (they then hide only the deadline hints).
+
+### Patient overview
+
+`/appointments`, the patient's start page (#25):
+
+```text
+≥ 1024 px
+┌──────────────────────────────────────────────────────────────┐
+│ Samstag, 14. November                                        │  welcome band: gradient and circles
+│ Guten Tag, Erika Mustermann                  [+ Termin buchen]│  like the auth brand panel
+│ Ihr nächster Termin ist morgen um 09:00 Uhr bei …            │
+└──────────────────────────────────────────────────────────────┘
+┌ Offene Termine ──┐ ┌ Nächster freier Termin ┐ ┌ Letzter Besuch ┐  overview tiles
+│ 3 von 5  ▬▬▬▭▭   │ │ Montag, 16. November   │ │ Montag, 2. Nov.│
+└──────────────────┘ └────────────────────────┘ └────────────────┘
+Anstehende Termine                          ┌ Verlauf ──────────┐
+┌ [15] NÄCHSTER TERMIN          Morgen ┐    │ ● Montag, 2. Nov. │  history timeline
+└──────────────────────────────────────┘    │ ○ Abgesagt …      │
+┌ [20] Freitag, 20. November  In 6 Tagen┐   └───────────────────┘
+└──────────────────────────────────────┘    ┌ Gut zu wissen ────┐
+                                            └───────────────────┘
+```
+
+- **Welcome band**: today's date, a greeting by the time of day and the account's name (`h1`), and one sentence
+  about the next appointment („heute“, „morgen“, „übermorgen“, otherwise the date). The greeting follows the
+  practice clock like every other time (`greeting()` in `appointments/time.ts`: „Guten Morgen“ from 5:00, „Guten
+  Tag“ from 11:00, „Guten Abend“ from 18:00). The band reuses the auth brand panel's gradient and circles, so the
+  app and the login look like one product; the text on it follows the contrast rule (step 12 or gray 11).
+- **Overview tiles**: open appointments against the limit of BR-09 (number and a five-segment meter), the next free
+  time with a link to its week in the booking browser (hidden if the request fails; „Derzeit keiner“ if nothing is
+  free within a year), and the last visit (the newest past appointment that was not cancelled). They answer the
+  questions patients come with before they read any list.
+- **Two columns** from 1024 px: upcoming appointments (main) and a 360 px side column with the history and „Gut zu
+  wissen“ (change deadline, the limit, reason categories instead of symptoms, emergency numbers 112 and 116 117 as
+  `tel:` links). Below 1024 px the side cards follow the list. Everything is visible without opening anything:
+  the history is no longer a collapsed `<details>`.
 
 ## 7. Component and form patterns
 
@@ -152,7 +216,8 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | Password | `PasswordField` | Show/hide toggle (`aria-pressed`), so long passphrases can be checked. Only switches the input type. |
 | Live checklist | `Requirement` | Rules that can be met while typing (password length, passwords match). Gray dot → jade tick. Positive feedback only; no red while the user is still typing. |
 | Page title | `PageHeader` | `h1` and one intro paragraph in gray: what this page is for and what happens next. |
-| Page message | `Notice` (Radix `Callout`) | Above the form, below the intro. Errors: red, `role="alert"`. Confirmations: accent, `role="status"`. Always with an icon, always `highContrast`. |
+| Toast | `useToast()` from `Toasts.tsx` (`@radix-ui/react-toast` + Radix `Callout`) | The only way to raise a transient message: the result of a submit (errors) or of an action that ends on another page (registered, logged out). Errors: red, announced assertively. Confirmations: accent, announced politely. Always with an icon, always `highContrast`, always a close button („Meldung schließen“). Details below. |
+| Inline message | `Notice` (Radix `Callout`) | Only for messages that are part of the page content and stay as long as the page, e.g. „Die Zwei-Faktor-Authentifizierung ist aktiv.“ next to the recovery codes or a list that could not be loaded, and for messages inside a modal dialog (see „What stays inline“). Same colours as a toast; errors `role="alert"`, confirmations `role="status"`. |
 | Code input | `OtpInput` (app codes), `CodeInput` in `MfaPage` | One box per digit, two groups of three like the apps show it. Focus moves on with each digit, Backspace goes back, arrows navigate, a pasted or autofilled code fills all boxes; only digits are accepted. Screen readers get one labelled group with „Ziffer 1 von 6“ … per box. Recovery codes keep a single monospace field. After a wrong code the input is cleared and focused. No auto-submit: the user confirms with the button. |
 | Steps | `.mfa-steps` | Numbered accent circles joined by a thin line, for tasks that happen outside the app (scan with the phone, then type the code). |
 | QR code | `QrCode` | Always black on white in a card, whatever the theme (scanners need contrast). Generated locally; the key for manual entry sits in a `<details>` below it, grouped in fours, with a copy button. |
@@ -162,6 +227,49 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | Primary action | Radix `Button` `size="3"` | One per form, solid, full width, at the end of the form. Shows a spinner (`loading`) while submitting, which also blocks double submits. |
 | Secondary navigation | Radix `Link` | Below the form, as a sentence: „Noch kein Konto? Jetzt registrieren“. |
 | Inputs | Radix `TextField` `size="3"` | 40 px high: a comfortable touch target. Numbers get their unit inside the field („Stunden“, „Minuten“) and the allowed range in the hint. |
+| App page title | `PatientPageHeader` | Booking and rescheduling: `h1` (size 7, 8 on wide screens), one intro sentence, optional primary action on the right (stacked on mobile) and an optional „← Meine Termine“ link above. The overview uses the welcome band instead. |
+| Account menu | `UserMenu` | Pill button (initials, name, chevron) opening a `DropdownMenu` with name, e-mail and „Abmelden“ (logout icon). Logging out submits to the `/logout` action like `LogoutButton`; the chevron turns into a spinner meanwhile. |
+| Availability browser | `AvailabilityBrowser` | Doctor `Select` („Alle Ärztinnen und Ärzte“ first), a highlighted „Nächster freier Termin“ card with a one-click „Diesen Termin wählen“, then one card per week: previous/next week buttons (disabled outside today … 365 days, BR-23), seven day `RadioCards` with the number of free times (days without any are disabled; they scroll sideways on phones), and the chosen day's times as buttons grouped into Vormittag / Nachmittag / Abend. With „Alle“ each time button names the doctor or „2 zur Auswahl“. An empty week offers a jump to the week of the next free time. The first free day is preselected. |
+| Time dialog | `TimeDialog` | Radix `Dialog` that confirms a chosen time: day, time range, doctor (as `RadioCards` if several are free), reason as eight `RadioCards` (booking only; visible at once, no dropdown to discover), the fasting hint for „Blutabnahme (nüchtern)“, and the online change deadline as a sentence (amber if the time already lies inside it). Rescheduling shows the old time struck through and says the old appointment stays until the new one is confirmed. Success replaces the form with a confirmation (tick, time, doctor, deadline). A `409` replaces it with the error and „Andere Uhrzeit wählen“, while the route reloads the free times behind it. |
+| Appointment card | `AppointmentCard` | Calendar tile (month, day, weekday), day, time range, doctor, reason badge plus status badges (nüchtern, booked or cancelled by the practice). Every upcoming card has a relative-day badge at the top right („Morgen“, „In 6 Tagen“). The next appointment is the featured variant: „Nächster Termin“, a solid jade date tile and badge, and a jade border. A footer line says until when it can be changed online, or, inside the deadline (BR-11), says so in amber and hides the buttons. |
+| Appointment history | `AppointmentHistory` | Timeline of past and cancelled appointments, newest first: day, time range and doctor, reason badge and, if cancelled, who cancelled it (struck-through day, hollow dot). Past appointments get no „wahrgenommen“ badge, because the system does not record attendance. Shows four entries, then „Alle n anzeigen“ (`aria-expanded`). |
+| Confirm a destructive action | Radix `AlertDialog` | Title as a question („Termin absagen?“), what exactly happens, a softer alternative where one exists („Verschieben Sie den Termin …“), then „Termin behalten“ (default focus, soft gray) and the red confirm button. Errors appear inside the dialog. After success the dialog closes, the outcome is a toast („Ihr Termin am … wurde abgesagt.“) and the focus moves to the list heading („Anstehende Termine“), since the card and its dialog are gone. |
+
+### Toasts
+
+`ToastProvider` is mounted once in `main.tsx`, around the router, so a toast survives navigation. Pages never place a
+message box of their own.
+
+- **Position:** one fixed viewport above the page content, bottom right on wide screens, full width at the bottom
+  below 600 px. Opening a toast never shifts the layout. On narrow screens the auth layout keeps room for a two-line
+  toast below its content, so the form, its primary action and its links can always be scrolled above a toast.
+- **Lifetime:** confirmations close after 5 s; the timer pauses while a toast is hovered or focused (and while the
+  window is in the background). Errors stay until the user closes them, submits again (form or fetcher) or follows a
+  link to another page (`ToastRouteSync` in the root route). A new error replaces the old one instead of stacking.
+  At most three toasts are visible; the oldest goes first.
+- **Keyboard and screen readers:** F8 moves the focus to the toasts („Meldungen (F8)“), Tab reaches each toast and
+  its close button, Escape closes the focused toast. Errors are announced assertively, confirmations politely. The
+  close button's label is not part of the announcement. Swiping right also closes a toast.
+- **Raising one:** components call `useToast()` (`toast.success(text)`, `toast.error(text)`). For an action's error
+  result, `useErrorToast(result)` does that. A route action that ends in a redirect calls `toast` from
+  `toastStore.ts` before redirecting. This replaces flags like `?registered` in the URL, so a reload or a shared link
+  shows no message again.
+- **Content:** plain strings, rendered as text. Error texts come from `api/errors.ts`, never from the server's
+  `message`. Never credentials, codes, recovery codes or MFA secrets.
+
+**What stays inline.** A message stays in the page when it is part of the page content rather than the outcome of an
+action: it describes the state the page shows and must still be there when the user looks again. Examples: the
+„Zwei-Faktor-Authentifizierung ist aktiv“ callout next to the recovery codes (`Notice`), a loader error that takes the
+place of the content (appointments that could not be loaded on „Meine Termine“, free times on the booking and
+rescheduling pages), the amber hints (limit of open appointments reached, change deadline passed), the error page's callout
+(`ErrorPage.tsx`), field errors under their field (`FormField`, `aria-describedby`; after a failed submit the focus
+still moves to the first invalid field) and `CopyButton`'s „Kopiert“.
+
+**Inside a modal dialog, messages stay in the dialog.** A modal `Dialog`/`AlertDialog` makes everything outside it
+inert and traps the focus: a toast would not be reachable with F8, and clicking it would count as a click outside and
+close the dialog. So the errors of the cancel dialog and of `TimeDialog` (including the `409` view) and the
+`TimeDialog` success view stay inside the dialog. Once a dialog closes on success, its outcome becomes a toast, as
+after a cancellation.
 
 ### Form behaviour
 
@@ -186,7 +294,11 @@ skeleton look and is redesigned once the auth screens are approved (section 10).
 | User-facing error texts come from a fixed local map (`api/errors.ts`), never from the server's `message`. | Server details cannot leak into the UI (ADR-004). |
 | Login shows one generic error for every failure. | Does not reveal whether an account exists (BR-03). |
 | The registration confirmation is worded the same whether or not the e-mail was new. | The API answers `202` either way (BR-02); the UI must not hint otherwise. |
-| Nothing from a form is written to `localStorage`/`sessionStorage` or the URL. | Acceptance criterion of #24 (covered by a test); only harmless `?registered` / `?loggedOut` flags are put in the URL. |
+| Nothing from a form is written to `localStorage`/`sessionStorage` or the URL. | Acceptance criterion of #24 (covered by a test). Confirmations after a redirect are toasts held in memory, not URL flags (#72). The booking pages add the shown week and the doctor filter (`?week=…&doctor=…`): navigation state, a public doctor ID, no personal data. |
+| Toasts show only fixed texts, rendered as text; never credentials, codes, recovery codes or MFA secrets. | A toast is visible to anyone looking at the screen and is read out by screen readers. |
+| Names and other server data are rendered as React text only. | No `innerHTML`/`dangerouslySetInnerHTML` (ESLint rule); a test renders a doctor name containing HTML and checks that no element is created (#25). |
+| Reasons are categories, never free text. | BR-10: no symptoms or diagnoses are stored, and the field cannot carry injected content. The dialog says so („Details besprechen Sie in der Praxis“). |
+| All dates and times are shown in the practice time zone (`Europe/Berlin`). | Working hours are defined there (BR-08); a patient abroad still sees the practice's clock. Week bounds are converted to UTC per date, so DST weeks work. |
 | The TOTP secret and recovery codes live only in component state and are shown once. | BR-06, BR-07; they disappear when the user continues. The QR code is drawn locally, never by a web service. |
 | MFA is mandatory for practice roles and offered once to patients; only patients can skip it. | BR-05, BR-26. The skip is stored on the account (A36), not in the browser, so it holds on every device. |
 | No "forgot password" link that promises a reset. | Password reset by e-mail is out of scope; the page says to contact the practice instead. |
@@ -218,8 +330,11 @@ effort, including older people and people who are unwell. Code, comments and doc
 1. **Done**: `/login` and `/register` as the reference.
 2. **Done**: `/mfa` (code entry, enrolment with QR code and recovery codes) and `/setup` on the same `AuthLayout` and
    form patterns.
-3. **Next**: redesign `AppLayout` (header, navigation, logout) for the patient, staff and admin areas.
-4. **Later**: dark mode. All colours are tokens, so it is mostly a matter of setting `appearance` on `<Theme>` and
+3. **Done**: `AppLayout` (header, navigation, account menu) and the patient screens `/appointments` (overview),
+   `/appointments/book` and `/appointments/:id/reschedule` (#25).
+4. **Next**: staff and admin screens (#26) on the same shell; they can reuse `AvailabilityBrowser`, `TimeDialog`,
+   `AppointmentCard`, `AppointmentHistory` and the overview tiles.
+5. **Later**: dark mode. All colours are tokens, so it is mostly a matter of setting `appearance` on `<Theme>` and
    checking the brand panel.
 
 Open questions for review: wording of the brand claim and highlights, and whether the name field belongs in

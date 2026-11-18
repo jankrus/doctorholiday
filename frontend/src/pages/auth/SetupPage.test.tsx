@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
-import { renderRoute } from '../../test/render';
+import { findToast, renderRoute } from '../../test/render';
 import { activeSession, apiError, stubSession } from '../../test/session';
 
 const pending = { ...activeSession('ADMIN'), setupRequired: true };
@@ -76,8 +76,6 @@ describe('practice setup', () => {
   it('shows a generic error from the server', async () => {
     renderSetup(() => apiError('VALIDATION_ERROR', 422));
     await userEvent.click(await screen.findByRole('button', { name: 'Speichern und fortfahren' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Bitte überprüfen Sie Ihre Eingaben.',
-    );
+    expect(await findToast()).toHaveTextContent('Bitte überprüfen Sie Ihre Eingaben.');
   });
 });

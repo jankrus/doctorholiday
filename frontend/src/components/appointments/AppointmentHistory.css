@@ -1,0 +1,58 @@
+/* History timeline: see docs/architecture/ui-design.md (pattern "appointment history"). */
+
+.history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* A dot per entry on a thin line that runs down the list. */
+.history__item {
+  position: relative;
+  padding: 0 0 var(--space-4) var(--space-5);
+}
+
+.history__item::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--accent-9);
+  box-shadow: 0 0 0 3px var(--accent-3);
+}
+
+.history__item::after {
+  content: '';
+  position: absolute;
+  top: 22px;
+  bottom: 2px;
+  left: 4px;
+  width: 2px;
+  border-radius: 1px;
+  background-color: var(--gray-a4);
+}
+
+.history__item:last-child {
+  padding-bottom: 0;
+}
+
+.history__item:last-child::after {
+  display: none;
+}
+
+.history__item--cancelled::before {
+  background-color: var(--color-panel-solid);
+  box-shadow: inset 0 0 0 2px var(--gray-8);
+}
+
+.history__struck {
+  text-decoration: line-through;
+  text-decoration-color: var(--gray-a8);
+}
+
+.history__toggle {
+  align-self: flex-start;
+}
