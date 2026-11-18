@@ -1,4 +1,4 @@
-.PHONY: help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
+.PHONY: evidence evidence-sync help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
 .DEFAULT_GOAL := help
 
 # bash with strict flags, so a failing step stops the target with a clear error (#42).
@@ -38,6 +38,23 @@ check-pinning: ## Fail if an action is not pinned by commit SHA or an image not 
 lint-actions: check-pinning ## Lint the workflows with actionlint and zizmor (#31)
 	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo $(ACTIONLINT_IMAGE) -color=false
 	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo $(ZIZMOR_IMAGE) --offline --no-progress --persona auditor .github/workflows/
+
+# Manual fallback of the pipeline's evidence job (#44): rebuilds the evidence of one finished run
+# from its artifacts into evidence/ (the working tree), e.g. `make evidence RUN_ID=123456789`.
+# The signing and gate artifacts only exist once #35 and #36 are in.
+evidence: ## Download the reports of a pipeline run into evidence/ (RUN_ID=<id>, needs gh) (#44)
+	@test -n "$(RUN_ID)" || { echo "usage: make evidence RUN_ID=<workflow run id>"; exit 1; }
+	@mkdir -p .cache/evidence-$(RUN_ID)/run-logs
+	gh run download $(RUN_ID) --dir .cache/evidence-$(RUN_ID)
+	@repo=$$(gh repo view --json nameWithOwner --jq .nameWithOwner); \
+	scripts/fetch-run-logs.sh "$$repo" $(RUN_ID) .cache/evidence-$(RUN_ID)/run-logs; \
+	number=$$(gh run view $(RUN_ID) --json number,headSha --jq '(.number|tostring) + " " + .headSha[0:7]'); \
+	scripts/collect-evidence.sh .cache/evidence-$(RUN_ID) evidence "$$(printf '%05d' $${number% *})-$${number#* }"
+
+evidence-sync: ## Copy the evidence branch into evidence/ of this checkout, for the submission PR (#44)
+	git fetch origin evidence
+	git checkout origin/evidence -- evidence
+	@echo "Copied evidence/ from origin/evidence; review it, commit it on a branch and open a pull request."
 
 package: ## Build the team-<nr>.zip submission (#51)
 	@echo "TODO: package"
