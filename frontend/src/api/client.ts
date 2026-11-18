@@ -10,7 +10,7 @@ export type PracticeSettings = components['schemas']['PracticeSettings'];
 /**
  * Typed client for the API contract in `backend/openapi.yaml` (regenerate with `npm run gen:api`).
  *
- * Requests only ever go to the page's own origin: ingress-nginx (or the Vite dev proxy) routes
+ * Requests only ever go to the page's own origin: the ingress (or the Vite dev proxy) routes
  * `/api` to the backend. The session lives in an HttpOnly cookie that the browser attaches; the
  * frontend never reads or stores it.
  *

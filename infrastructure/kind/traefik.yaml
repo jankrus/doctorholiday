@@ -1,0 +1,251 @@
+# Ingress controller of the cluster: Traefik (issue #40, ADR-005). Applied by `make ingress`, after
+# the Traefik CRDs from versions.env (the Middleware objects of the application need them).
+#
+# Why Traefik: ingress-nginx, the first choice of ADR-001, has had no upstream release since
+# 2026-03-19 and is retired; Traefik is maintained and understands the normal Ingress resource.
+#
+# Hardening (this file is the whole installation, nothing is downloaded at run time):
+#   - own namespace `traefik` with Pod Security `restricted`: no hostPort, no root, no privilege
+#     escalation, no capabilities. The kind node maps host ports 80 and 443 to the NodePorts 30080
+#     and 30443 (kind-config.yaml), so the pod needs no privileged port and no hostPort;
+#   - non-root UID 65532, read-only root filesystem, seccomp RuntimeDefault, only /tmp writable;
+#   - least privilege on the API: Traefik watches only the namespace `doctorholiday` (a Role there)
+#     plus two cluster-scoped, read-only lists (IngressClass and Nodes, which its Kubernetes provider
+#     needs to start). It cannot read the secrets of any other namespace;
+#   - no dashboard, no API, no telemetry, no update check; HTTP is redirected to HTTPS at the
+#     entry point; the TLS certificate comes from the Secret named in the Ingress (never committed).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: traefik
+  labels:
+    app.kubernetes.io/part-of: doctorholiday
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: traefik
+  namespace: traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: doctorholiday
+# Traefik talks to the API server, so unlike the application pods it keeps its token.
+automountServiceAccountToken: true
+---
+# Cluster-scoped, read-only: the controller class and the node list (Traefik's Kubernetes provider
+# does not start without the latter). Nothing else outside its namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: traefik-cluster-reader
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: doctorholiday
+rules:
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingressclasses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: traefik-cluster-reader
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: doctorholiday
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: traefik-cluster-reader
+subjects:
+  - kind: ServiceAccount
+    name: traefik
+    namespace: traefik
+---
+# Namespaced: everything else, only in the application's namespace.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: traefik-ingress-controller
+  namespace: doctorholiday
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: doctorholiday
+rules:
+  - apiGroups: [""]
+    resources: ["services", "secrets", "configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["traefik.io"]
+    resources:
+      - middlewares
+      - middlewaretcps
+      - ingressroutes
+      - ingressroutetcps
+      - ingressrouteudps
+      - traefikservices
+      - tlsoptions
+      - tlsstores
+      - serverstransports
+      - serverstransporttcps
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: traefik-ingress-controller
+  namespace: doctorholiday
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: doctorholiday
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: traefik-ingress-controller
+subjects:
+  - kind: ServiceAccount
+    name: traefik
+    namespace: traefik
+---
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: doctorholiday
+spec:
+  controller: traefik.io/ingress-controller
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traefik
+  namespace: traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: doctorholiday
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: traefik
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: traefik
+        app.kubernetes.io/part-of: doctorholiday
+    spec:
+      serviceAccountName: traefik
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: traefik
+          image: traefik:v3.7.17@sha256:f4bb143d1135a579b630ed491e17ec50f6f7c9c6a30585ff3d385471d2a86f5a
+          imagePullPolicy: IfNotPresent
+          args:
+            - --global.checknewversion=false
+            - --global.sendanonymoususage=false
+            # Unprivileged ports inside the pod; the NodePorts below carry 80 and 443.
+            - --entrypoints.web.address=:8000/tcp
+            - --entrypoints.websecure.address=:8443/tcp
+            - --entrypoints.websecure.http.tls=true
+            # Plain HTTP is only ever answered with a permanent redirect to port 443.
+            - --entrypoints.web.http.redirections.entryPoint.to=:443
+            - --entrypoints.web.http.redirections.entryPoint.scheme=https
+            - --entrypoints.web.http.redirections.entryPoint.permanent=true
+            # Health endpoint for the probes, on its own port, not reachable from outside.
+            - --entrypoints.traefik.address=:9000/tcp
+            - --ping=true
+            - --ping.entryPoint=traefik
+            # Only this namespace is watched; the CRD provider is needed for the Middleware objects.
+            - --providers.kubernetesingress=true
+            - --providers.kubernetesingress.namespaces=doctorholiday
+            - --providers.kubernetesingress.ingressclass=traefik
+            - --providers.kubernetescrd=true
+            - --providers.kubernetescrd.namespaces=doctorholiday
+            - --providers.kubernetescrd.allowcrossnamespace=false
+            - --providers.kubernetescrd.allowexternalnameservices=false
+            - --log.level=INFO
+            - --log.format=json
+            - --accesslog=true
+            - --accesslog.format=json
+          ports:
+            - name: web
+              containerPort: 8000
+            - name: websecure
+              containerPort: 8443
+            - name: ping
+              containerPort: 9000
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            httpGet:
+              path: /ping
+              port: ping
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /ping
+              port: ping
+            periodSeconds: 10
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 192Mi
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 32Mi
+---
+# NodePorts 30080 and 30443 are what kind-config.yaml maps to the host's 127.0.0.1:80 and :443.
+apiVersion: v1
+kind: Service
+metadata:
+  name: traefik
+  namespace: traefik
+  labels:
+    app.kubernetes.io/name: traefik
+    app.kubernetes.io/part-of: doctorholiday
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: traefik
+  ports:
+    - name: web
+      port: 80
+      targetPort: web
+      nodePort: 30080
+    - name: websecure
+      port: 443
+      targetPort: websecure
+      nodePort: 30443

@@ -58,12 +58,12 @@ Abbreviations: `req.` precondition, `Impl.` Implemented, `Part.` Partially, `Not
 
 | ID | Element | STRIDE | Sel. | Bedrohung | Beispielangriff | Voraussetzungen | Gegenmaßnahmen | SR | Risk | Status | Issues |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| TH-11 | P1 ingress-nginx | S | yes | Client spoofs its IP or host so rate limits and audit are wrong or bypassed | Forged `X-Forwarded-For` header | Backend trusts the header blindly | Ingress overwrites the header; backend reads the real client IP only from the trusted proxy | SR-01, SR-10 | Medium | Not impl. | #75, #40 |
-| TH-12 | P1 ingress-nginx | T | no | Ingress configuration or controller version is tampered with or vulnerable | Annotation injection; unpatched controller CVE | Write access to Ingress objects; old version | Pinned upstream manifest with explicit version, only operator and pipeline apply manifests, Trivy scan of the image | SR-06, SR-08 | Medium | Not impl. | #40, #33 |
-| TH-13 | P1 ingress-nginx | R | no | Edge requests are not logged | Attack leaves no trace at the edge | Default log level off | Ingress access log plus backend access log with request ID | SR-10 | Low | Part. (backend access log with request ID is on `main`) | #40, #11 |
-| TH-14 | P1 ingress-nginx | I | yes | Private TLS key or version banner leaks; plain HTTP is served | TLS key in the repository; downgrade to HTTP | Key committed or HTTP allowed | Key generated at `make up` and stored as a Secret, redirect to HTTPS, HSTS, server tokens off | SR-05, SR-11 | Medium | Not impl. | #40, #30 |
-| TH-15 | P1 ingress-nginx | D | no | Request flood or slow requests take the entry point down | Slowloris, many large bodies | Reachable port 443 | Rate-limit annotations, body-size and timeout limits, ports mapped to localhost only | SR-11 | Low | Not impl. | #40 |
-| TH-16 | P1 ingress-nginx | E | yes | Compromised controller reads secrets of other namespaces | Controller CVE leads to cluster-wide secret read | Vulnerable controller version | Pinned patched version, own namespace, NetworkPolicy; residual risk accepted for a local cluster | SR-08 | Medium | Accepted | #40, #41 |
+| TH-11 | P1 Traefik | S | yes | Client spoofs its IP or host so rate limits and audit are wrong or bypassed | Forged `X-Forwarded-For` header | Backend trusts the header blindly | Ingress overwrites the header; backend reads the real client IP only from the trusted proxy | SR-01, SR-10 | Medium | Not impl. | #75, #40 |
+| TH-12 | P1 Traefik | T | no | Ingress configuration or controller version is tampered with or vulnerable | Annotation injection; unpatched controller CVE | Write access to Ingress objects; old version | Traefik image pinned by digest, CRDs verified by checksum, only operator and pipeline apply manifests, Trivy scan of the image | SR-06, SR-08 | Medium | Not impl. | #40, #33 |
+| TH-13 | P1 Traefik | R | no | Edge requests are not logged | Attack leaves no trace at the edge | Default log level off | Ingress access log plus backend access log with request ID | SR-10 | Low | Part. (backend access log with request ID is on `main`) | #40, #11 |
+| TH-14 | P1 Traefik | I | yes | Private TLS key or version banner leaks; plain HTTP is served | TLS key in the repository; downgrade to HTTP | Key committed or HTTP allowed | Key generated at `make up` and stored as a Secret, redirect to HTTPS at the entry point, HSTS middleware | SR-05, SR-11 | Medium | Not impl. | #40, #30 |
+| TH-15 | P1 Traefik | D | no | Request flood or slow requests take the entry point down | Slowloris, many large bodies | Reachable port 443 | Rate-limit and body-limit middlewares, ports mapped to localhost only | SR-11 | Low | Not impl. | #40 |
+| TH-16 | P1 Traefik | E | yes | Compromised controller reads secrets of other namespaces | Controller vulnerability leads to cluster-wide secret read | Vulnerable controller version, cluster-wide secret rights | Namespaced Role: Traefik reads only the namespace `doctorholiday` (no cluster-wide secret access), own namespace under Pod Security `restricted`, non-root, read-only filesystem, image pinned by digest | SR-08 | Medium | Not impl. | #40, #41 |
 | TH-17 | P2 Frontend | S | yes | Fake copy of the frontend collects credentials | Look-alike site on another host | Users follow a link | Only the cluster host is served; `__Host-` cookie is bound to the exact host; local scope | SR-11 | Low | Accepted | – |
 | TH-18 | P2 Frontend | T | no | Served bundle is modified (malicious dependency, tampered image) or XSS injects script | Compromised npm package; stored XSS | Dependency compromised; unsafe rendering | `package-lock.json`, `npm ci`, SCA and SBOM, image signing, no `dangerouslySetInnerHTML` or `eval` (ESLint), CSP | SR-06, SR-07, SR-11 | High | Part. (lockfile and ESLint rules on `main`) | #27, #32, #33, #35 |
 | TH-19 | P2 Frontend | R | no | Frontend actions cannot be traced | – | – | The SPA holds no state or authority; every action is an API call that the backend audits (SR-10) | SR-10 | Low | Accepted | #20 |
@@ -158,7 +158,7 @@ Every applicable pair of element and STRIDE category has at least one threat row
 | E3 Admin | TH-05 | – | TH-06 | – | – | – |
 | E4 Developer | TH-07 | – | TH-08 | – | – | – |
 | E5 Operator | TH-09 | – | TH-10 | – | – | – |
-| P1 ingress-nginx | TH-11 | TH-12 | TH-13 | TH-14 | TH-15 | TH-16 |
+| P1 Traefik | TH-11 | TH-12 | TH-13 | TH-14 | TH-15 | TH-16 |
 | P2 Frontend | TH-17 | TH-18 | TH-19 | TH-20 | TH-21 | TH-22 |
 | P3 Backend API | TH-23, TH-24 | TH-25, TH-26 | TH-27 | TH-28, TH-29 | TH-30, TH-31 | TH-32, TH-33, TH-34 |
 | P4 Pipeline | TH-35 | TH-36 | TH-37 | TH-38 | TH-39 | TH-40 |
@@ -203,8 +203,8 @@ Every applicable pair of element and STRIDE category has at least one threat row
 | --- | --- |
 | Implemented | 2 |
 | Partially | 25 |
-| Not implemented | 48 |
-| Accepted | 13 |
+| Not implemented | 49 |
+| Accepted | 12 |
 
 | Risk (inherent) | Threats |
 | --- | --- |
@@ -216,7 +216,7 @@ Every applicable pair of element and STRIDE category has at least one threat row
 
 | Selection | Threats | Implemented | Partially | Not implemented | Accepted |
 | --- | --- | --- | --- | --- | --- |
-| Selected (S, E, I) | 45 | 2 | 11 | 25 | 7 |
+| Selected (S, E, I) | 45 | 2 | 11 | 26 | 6 |
 | Not selected (T, R, D only) | 43 | 0 | 14 | 23 | 6 |
 
 A threat with several categories counts as selected if one of them is selected, so flows with T, I and D belong to the selected group through I.

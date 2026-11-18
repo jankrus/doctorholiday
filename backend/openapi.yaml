@@ -35,7 +35,7 @@ info:
     identifier: LicenseRef-Proprietary
 servers:
   - url: /
-    description: Same origin as the frontend; ingress-nginx routes `/api` and the probes to the backend (#40)
+    description: Same origin as the frontend; the ingress (Traefik) routes `/api` to the backend, the probes stay inside the cluster (#40)
 security:
   - sessionCookie: []
 tags:

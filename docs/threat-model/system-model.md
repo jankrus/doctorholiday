@@ -75,7 +75,7 @@ Level 1 opens `P0` into five processes and five data stores. Each flow carries o
 | ID | Element | Technology | Port | Architecture reference |
 | --- | --- | --- | --- | --- |
 | P0 | Doctor Holiday system | Level 0 only | – | whole diagram |
-| P1 | ingress-nginx | ingress-nginx, self-signed TLS | 80, 443 | ingress-nginx |
+| P1 | Ingress controller | Traefik, self-signed TLS | 80, 443 | Traefik |
 | P2 | Frontend | React SPA, `nginx-unprivileged` | 8080 | Frontend pod |
 | P3 | Backend API | FastAPI, Python 3.12 | 8080 | Backend pod |
 | P4 | Pipeline | GitHub Actions runner (Syft, Semgrep, Trivy, Gitleaks, Buildx, cosign) | – | Pipeline steps 1–8 |

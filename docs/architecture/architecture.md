@@ -25,7 +25,7 @@ Doctor Holiday is a booking system for **one** medical practice (patients, staff
 | Session | Server-side session, cookie `__Host-dh_session` (`HttpOnly; Secure; SameSite=Strict`) | ADR-001 |
 | Container images | `python:3.12-alpine` (backend, [D-03](../report/deviations.md)), `nginx-unprivileged:alpine` (frontend), `postgres:16-alpine`, all pinned by digest | ADR-001 §3.2 |
 | Pipeline | GitHub Actions, Syft, Semgrep, Trivy, Gitleaks, cosign, GHCR | ADR-001 §3.3 |
-| Runtime | local `kind` cluster with `ingress-nginx` and an enforcing CNI (Calico), driven by the Makefile | ADR-001, [#40](https://github.com/jankrus/doctorholiday/issues/40), [#41](https://github.com/jankrus/doctorholiday/issues/41) |
+| Runtime | local `kind` cluster with the ingress controller Traefik ([ADR-005](adr/ADR-005-ingress-controller.md)) and an enforcing CNI (Calico), driven by the Makefile | ADR-001, [#40](https://github.com/jankrus/doctorholiday/issues/40), [#41](https://github.com/jankrus/doctorholiday/issues/41) |
 
 ## Diagram
 
@@ -70,7 +70,7 @@ flowchart TB
 
     subgraph ZH["Zone 2: Operator machine (Docker)"]
         subgraph KIND["kind cluster (local Kubernetes), created by make up"]
-            ING["ingress-nginx<br/>namespace ingress-nginx<br/>TLS termination, self-signed"]:::infra
+            ING["Traefik<br/>namespace traefik<br/>TLS termination, self-signed"]:::infra
             subgraph NS["Zone 3: namespace doctorholiday (default-deny NetworkPolicy)"]
                 direction TB
                 FE["frontend pod<br/>React SPA on nginx-unprivileged<br/>:8080, UID non-root, read-only FS"]:::app
@@ -116,7 +116,7 @@ The zones are the trust boundaries of the threat model; every arrow that crosses
 | Zone | Contains | Trust level |
 | --- | --- | --- |
 | Zone 1: untrusted | Browsers of patients, staff, doctors and admins | None. Every request is validated and authorised server-side. |
-| Zone 2: operator machine | Docker, the kind cluster, ingress-nginx | Controlled by the operator; ingress is reachable only from this machine (ports 80/443 mapped to localhost). |
+| Zone 2: operator machine | Docker, the kind cluster, Traefik | Controlled by the operator; ingress is reachable only from this machine (ports 80/443 mapped to localhost). |
 | Zone 3: namespace `doctorholiday` | Frontend, backend, PostgreSQL, Secrets, ServiceAccounts | Trusted workloads, separated by a default-deny NetworkPolicy. The database is reachable only from the backend. |
 | Zone 4: GitHub | Repository, Actions runners, secrets, GHCR | Trusted for building, but a supply-chain target: protected by review, pinned actions, signing and the quality gate. |
 
@@ -124,9 +124,9 @@ The zones are the trust boundaries of the threat model; every arrow that crosses
 
 | # | From → to | Protocol, port | Data | Crosses zone | Protection |
 | --- | --- | --- | --- | --- | --- |
-| F1 | Browser → ingress-nginx | HTTPS 443 | Credentials, session cookie, booking data | 1 → 2 | TLS (self-signed), HSTS, `Secure` cookie |
-| F2 | ingress-nginx → frontend | HTTP 8080 | Static SPA files | 2 → 3 | NetworkPolicy allows only the ingress namespace |
-| F3 | ingress-nginx → backend | HTTP 8080, path `/api` | JSON API requests | 2 → 3 | NetworkPolicy, validation, authentication, RBAC |
+| F1 | Browser → Traefik | HTTPS 443 | Credentials, session cookie, booking data | 1 → 2 | TLS (self-signed), HSTS, `Secure` cookie |
+| F2 | Traefik → frontend | HTTP 8080 | Static SPA files | 2 → 3 | NetworkPolicy allows only the ingress namespace |
+| F3 | Traefik → backend | HTTP 8080, path `/api` | JSON API requests | 2 → 3 | NetworkPolicy, validation, authentication, RBAC |
 | F4 | backend → PostgreSQL | PostgreSQL 5432 | SQL with bound parameters | inside 3 | NetworkPolicy (only backend), DB user without superuser rights, password from a Secret |
 | F5 | Developer → repository | HTTPS (git) | Source code | 1 → 4 | Pull request, review, secret push protection |
 | F6 | Repository → pipeline | GitHub internal | Source, `VERSION.txt` | inside 4 | Trigger on `main` only, least-privilege `permissions` |
@@ -154,7 +154,7 @@ Each element of the diagram: purpose, technology, ports, credentials it holds an
 
 ### Runtime
 
-**ingress-nginx** (*planned*, [#40](https://github.com/jankrus/doctorholiday/issues/40)). Entry point of the cluster, installed from a pinned upstream manifest in its own namespace. Terminates TLS (self-signed certificate generated at `make up`, never committed) for host `doctorholiday.localhost`, routes `/` to the frontend and `/api` to the backend, redirects HTTP to HTTPS. Ports 80 and 443 are mapped to localhost only. Holds the TLS private key as a Secret. Also provides the client IP that the backend uses for rate limits and audit ([#75](https://github.com/jankrus/doctorholiday/issues/75)).
+**Traefik** (*in review*, [#40](https://github.com/jankrus/doctorholiday/issues/40), [ADR-005](adr/ADR-005-ingress-controller.md)). Ingress controller of the cluster, installed by `make ingress` from `infrastructure/kind/traefik.yaml` (image pinned by digest, CRDs by checksum) in its own namespace `traefik` under Pod Security `restricted`: non-root, read-only root filesystem, no hostPort. It watches only the namespace `doctorholiday` through a namespaced Role, so a compromised controller cannot read other namespaces' secrets. Terminates TLS (self-signed certificate generated at `make up`, never committed) for host `doctorholiday.localhost`, routes `/` to the frontend and `/api` to the backend, redirects HTTP to HTTPS and adds HSTS, a request limit per client IP and a body limit through middlewares. The kind node maps the host's ports 80 and 443 (bound to `127.0.0.1`) to its NodePorts. Holds the TLS private key as a Secret. Also provides the client IP that the backend uses for rate limits and audit ([#75](https://github.com/jankrus/doctorholiday/issues/75)).
 
 **Frontend pod** (*app implemented*, image built by `frontend/Dockerfile` in [#28](https://github.com/jankrus/doctorholiday/issues/28), *in review*; Kubernetes manifests *planned* in [#38](https://github.com/jankrus/doctorholiday/issues/38)). React single-page application built by Vite, served as static files by `nginx-unprivileged` on port 8080. Talks only to the same origin (`/api`), so no CORS and no cross-site cookies. Holds no secrets: the build reads no `VITE_*` variables. Controls: CSP and safe rendering ([#27](https://github.com/jankrus/doctorholiday/issues/27)), ESLint bans `dangerouslySetInnerHTML` and `eval`, route guards are UX only (the backend authorises), error texts come from a fixed local map. Container: `nginx-unprivileged` (Alpine) as UID 101, which also starts under another numeric UID such as 10001 (checked); read-only root filesystem, pid file and temporary files only in `/tmp` (an `emptyDir`), no capabilities. The image has a shell (`/bin/sh`) and `apk` ([D-03/D-04](../report/deviations.md)).
 
@@ -199,8 +199,8 @@ Each element of the diagram: purpose, technology, ports, credentials it holds an
 | Frontend SPA | `frontend/` (skeleton, auth UI), `frontend/Dockerfile` | App implemented, image in review (#28), manifests planned |
 | PostgreSQL | migrations in PR #69 | In review |
 | Dockerfiles | `backend/Dockerfile`, `frontend/Dockerfile` ([#28](https://github.com/jankrus/doctorholiday/issues/28)) | In review |
-| Kubernetes manifests, NetworkPolicies, ServiceAccounts | `infrastructure/k8s/` contains only a README | Planned |
-| kind config, ingress, `make up` | `infrastructure/kind/` README; the Makefile target is a `TODO` | Planned |
+| Kubernetes manifests, NetworkPolicies, ServiceAccounts | `infrastructure/k8s/` (namespace, service accounts, backend, frontend, PostgreSQL, migration job, network policies, ingress) | In review (#37 to #41) |
+| kind config, ingress, `make up` | `infrastructure/kind/kind-config.yaml`, `infrastructure/cluster.mk`, `scripts/k8s-*.sh` | In review (#40, #42); signed images from GHCR with #34, #35 |
 | Pipeline | `.github/workflows/` contains only a README | Planned |
 | Evidence | `evidence/<image>/…` folders with READMEs | Planned |
 

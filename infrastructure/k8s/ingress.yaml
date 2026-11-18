@@ -1,0 +1,49 @@
+# Ingress (issue #40): the only way in. Host doctorholiday.localhost resolves to 127.0.0.1 without
+# an entry in the hosts file; the kind node maps ports 80 and 443 to localhost only
+# (infrastructure/kind/kind-config.yaml), Traefik receives them on its NodePorts.
+#
+#   /api  ──▶ backend:8080   (the REST API; the health probes /healthz and /readyz are NOT under
+#                             /api and therefore not reachable from outside, on purpose)
+#   /     ──▶ frontend:8080  (the SPA; its /healthz answers "ok" and is public by design)
+#
+# TLS: the certificate is self-signed and created by `make secrets` (Secret `doctorholiday-tls`),
+# never committed. HTTP is redirected to HTTPS at Traefik's entry point (permanent). The
+# middlewares of middlewares.yaml add HSTS, a request limit per client IP and a body limit.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: doctorholiday
+  labels:
+    app.kubernetes.io/part-of: doctorholiday
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+    # <namespace>-<name>@kubernetescrd, in this order.
+    traefik.ingress.kubernetes.io/router.middlewares: >-
+      doctorholiday-security-headers@kubernetescrd,
+      doctorholiday-rate-limit@kubernetescrd,
+      doctorholiday-request-limit@kubernetescrd
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - doctorholiday.localhost
+      secretName: doctorholiday-tls
+  rules:
+    - host: doctorholiday.localhost
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 8080

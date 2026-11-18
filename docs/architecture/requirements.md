@@ -149,7 +149,7 @@ These conventions apply to every endpoint in [`backend/openapi.yaml`](../../back
   | `422` | Schema validation failed, including malformed JSON, unknown fields and undeclared query parameters (`VALIDATION_ERROR`) |
   | `429` | Rate limit hit (`RATE_LIMITED`, with `Retry-After`) |
   | `500` | `INTERNAL_ERROR`, details only in the log |
-  | `503` | Only from `/readyz` (BR-21); while no pod is ready, ingress-nginx answers itself |
+  | `503` | Only from `/readyz` (BR-21); while no pod is ready, the ingress controller answers itself |
 
 - **Caching:** Responses that contain personal data, secrets or tokens set `Cache-Control: no-store`.
 

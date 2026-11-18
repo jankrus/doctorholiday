@@ -84,7 +84,7 @@ All components will pass through the strictly defined CI/CD pipeline:
 *   **SAST:** Semgrep (scanning React and Python code)
 *   **SCA & Image Scan:** Trivy
 *   **Secret Scanning:** Gitleaks
-*   **Deployment:** Local `kind` cluster with `ingress-nginx` via Makefile automation.
+*   **Deployment:** Local `kind` cluster with an ingress controller via Makefile automation (`ingress-nginx` was chosen here; replaced by Traefik, see [ADR-005](ADR-005-ingress-controller.md)).
 
 ## 4. Consequences (Pros & Cons)
 

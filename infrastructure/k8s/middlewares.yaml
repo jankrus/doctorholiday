@@ -1,0 +1,44 @@
+# Traefik middlewares of the application (issue #40): what ingress-nginx did with annotations.
+# The Ingress (ingress.yaml) chains them with the annotation
+# `traefik.ingress.kubernetes.io/router.middlewares`; they need the Traefik CRDs that `make
+# ingress` installs before the application is applied.
+#
+# - security-headers: HSTS on every HTTPS response (one year, subdomains), so a browser never falls
+#   back to HTTP; the cookie rules `__Host-` and `Secure` rely on HTTPS only.
+# - rate-limit: defence in depth in front of the API's own limits (backend, BR-03): 50 requests per
+#   second per client IP, burst 100.
+# - request-limit: request bodies above 32 KiB are rejected before they reach the backend, whose own
+#   limit is 16 KiB (backend/src/doctorholiday/middleware.py).
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: security-headers
+  labels:
+    app.kubernetes.io/part-of: doctorholiday
+spec:
+  headers:
+    stsSeconds: 31536000
+    stsIncludeSubdomains: true
+    forceSTSHeader: true
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: rate-limit
+  labels:
+    app.kubernetes.io/part-of: doctorholiday
+spec:
+  rateLimit:
+    average: 50
+    period: 1s
+    burst: 100
+---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: request-limit
+  labels:
+    app.kubernetes.io/part-of: doctorholiday
+spec:
+  buffering:
+    maxRequestBodyBytes: 32768

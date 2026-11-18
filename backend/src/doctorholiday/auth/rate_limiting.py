@@ -12,7 +12,7 @@ once. What counts as an attempt is the endpoint's choice:
 
 The other scopes of BR-03 (MFA verification, invitation acceptance, password reset,
 re-authentication) exist in the schema; their endpoints add a `Limit` here when they are built
-(#76-#79). Per-IP limits need the real client IP behind ingress-nginx (#75).
+(#76-#79). Per-IP limits need the real client IP behind the ingress (#75).
 
 Login counts failures twice: per client IP (guessing against many accounts) and per e-mail
 (guessing one account from many IPs). A successful login resets the e-mail counter, never the IP

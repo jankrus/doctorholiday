@@ -41,7 +41,7 @@ flowchart TB
 
     subgraph ZH["Zone 2: Operator machine (Docker)"]
         subgraph KIND["kind cluster (local Kubernetes), created by make up"]
-            ING["ingress-nginx<br/>namespace ingress-nginx<br/>TLS termination, self-signed"]:::infra
+            ING["Traefik<br/>namespace traefik<br/>TLS termination, self-signed"]:::infra
             subgraph NS["Zone 3: namespace doctorholiday (default-deny NetworkPolicy)"]
                 direction TB
                 FE["frontend pod<br/>React SPA on nginx-unprivileged<br/>:8080, UID non-root, read-only FS"]:::app

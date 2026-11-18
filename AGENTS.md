@@ -35,7 +35,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 - DB: PostgreSQL 16
 - Auth: server-side sessions in `HttpOnly; Secure; SameSite=Strict` cookies (no JWT in browser storage)
 - Pipeline: GitHub Actions, GHCR, Syft (SBOM), Semgrep (SAST), Trivy (SCA/image), Gitleaks, cosign (key-based)
-- Deploy: local `kind` + `ingress-nginx`, driven by the Makefile
+- Deploy: local `kind` + Traefik (ingress, ADR-005), driven by the Makefile
 - Base images: `python:3.12-alpine` (backend, see D-03 in `docs/report/deviations.md`), `nginxinc/nginx-unprivileged:alpine`, `postgres:16-alpine`; **pinned by sha256 digest**
 
 ## Naming
@@ -80,7 +80,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 | Build and push an image (needs a registry login) | `scripts/build-image.sh frontend` / `backend`, optionally `REGISTRY=localhost:5000` for a test registry |
 | SBOM and scans (Docker) | `scripts/scan.sh sbom` / `sast` / `sca` / `secrets`, reports in `reports/` |
 | Pinning check / workflow lint | `make check-pinning` / `make lint-actions` (needs Docker) |
-| Cluster up / down | `make up` / `make down` |
+| Cluster up / down / verify | `make up` / `make down` / `make verify` (needs Docker, kind, kubectl; see `infrastructure/k8s/README.md`) |
 | Local DB up (+ migrations) / down / reset | `make db-up` / `make db-down` / `make db-reset` |
 | Full local stack + manual test scenarios | [docs/development/local-testing.md](docs/development/local-testing.md) |
 

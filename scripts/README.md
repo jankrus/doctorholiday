@@ -10,4 +10,8 @@ Helper scripts used by the Makefile and the pipeline (quality gate, packaging).
 | [`build-image.sh`](build-image.sh) | Builds one image with a pinned BuildKit, pushes it with the tags `<VERSION>` and `<VERSION>-<shortsha>` and provenance, checks digest and labels in the registry, and writes `digest.txt` and `image-ref.txt`. Run by the `build` job. | #34 |
 | [`report_stats.py`](report_stats.py) | Counts findings in the reports and validates them (fails on a missing, empty or malformed report); reads the digest of a build and checks image labels. | #32, #33, #34 |
 
-Planned: `quality-gate.sh` (#36), `smoke-test.sh` and `test-netpol.sh` (#43), packaging (#51).
+| [`k8s-apply-pinned.sh`](k8s-apply-pinned.sh) | Downloads an upstream manifest (Calico, the Traefik CRDs), verifies its SHA-256 and only then applies it. | #40, #41 |
+| [`k8s-secrets.sh`](k8s-secrets.sh) | Generates the cluster secrets at deploy time (database passwords, MFA key, session secret, TLS certificate); idempotent, never overwrites, never prints values. | #30, #39, #42 |
+| [`test-netpol.sh`](test-netpol.sh) | Proves that the NetworkPolicies are enforced: three connections that must be blocked, three that must work. Run by `make verify`. | #41 |
+
+Planned: `quality-gate.sh` (#36), `smoke-test.sh` (#43), packaging (#51).

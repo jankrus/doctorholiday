@@ -13,7 +13,8 @@
 #         `FOO_IMAGE := ...`).
 #
 # What it does NOT see (listed in .github/workflows/README.md): images that are only named inside
-# a command line (`docker run <image> ...`), and Kustomize `images:` entries (#38).
+# a command line (`docker run <image> ...`); an image marked `# kustomize-image` only has to be
+# listed under `images:` in the kustomization.yaml next to the file.
 #
 # Exit code 0 = all pinned, 1 = at least one mutable reference. Run from anywhere: `make
 # check-pinning`, and in the `meta` job of the pipeline.
@@ -96,7 +97,18 @@ while IFS= read -r file; do
   while IFS= read -r line; do
     line_no=$((line_no + 1))
     if [[ "$line" =~ ^[[:space:]]*-?[[:space:]]*image:[[:space:]]*[\"\']?([^\"\'[:space:]#]+) ]]; then
-      check_image "$file" "$line_no" "${BASH_REMATCH[1]}"
+      image="${BASH_REMATCH[1]}"
+      # A Kubernetes manifest may leave the tag or digest to Kustomize: the line carries the marker
+      # `# kustomize-image` and the image must be listed under `images:` in the kustomization.yaml
+      # next to the file, which is where the tag (local) or digest (pipeline, #43) is set.
+      if [[ "$line" == *'# kustomize-image'* ]]; then
+        kustomization="$(dirname "$file")/kustomization.yaml"
+        if ! grep -q -E "^[[:space:]]*-[[:space:]]*name:[[:space:]]*${image}[[:space:]]*$" "$kustomization" 2> /dev/null; then
+          fail "$file:$line_no: image '$image' is marked '# kustomize-image' but not listed under images: in $kustomization"
+        fi
+        continue
+      fi
+      check_image "$file" "$line_no" "$image"
     fi
   done < "$file"
 done < <(git ls-files '*.yaml' '*.yml' | sort -u)

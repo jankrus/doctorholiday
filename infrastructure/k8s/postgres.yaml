@@ -1,0 +1,146 @@
+# PostgreSQL 16 (issue #39). One instance with a persistent volume, reachable only by the backend
+# and the migration job (networkpolicies.yaml), never through the ingress.
+#
+# Same image, user and mounts as compose.yaml (local development), so what is tested there is what
+# runs here:
+#   - UID/GID 70 (the postgres user of the Alpine image), never root; Pod Security `restricted`;
+#   - readOnlyRootFilesystem: the data volume, /var/run/postgresql (socket) and /tmp are the only
+#     writable paths, the latter two are emptyDirs;
+#   - credentials come from the Secret `db-credentials` (made by `make secrets`, never committed)
+#     and are read from files, not from environment variables;
+#   - the first start (empty volume) runs the init script: it creates the database, the owner role
+#     that applies the migrations and the application role (no superuser, no CREATEROLE/CREATEDB),
+#     see infrastructure/postgres/init/00-roles.sh. Tables and grants come from the migrations.
+# The init script and the migrations are ConfigMaps made from the files in the repository
+# (`make db-config`), so there is a single source for both.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: doctorholiday
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgres
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: postgres
+        app.kubernetes.io/part-of: doctorholiday
+    spec:
+      serviceAccountName: postgres
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: postgres
+          image: postgres:16.15-alpine3.24@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgres
+              containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_PASSWORD_FILE
+              value: /run/secrets/db_superuser_password
+            - name: POSTGRES_INITDB_ARGS
+              value: --auth-local=scram-sha-256 --auth-host=scram-sha-256
+            # A subdirectory: the volume root belongs to root:70 and contains lost+found.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          securityContext:
+            allowPrivilegeEscalation: false
+            privileged: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          startupProbe:
+            exec:
+              command: ["pg_isready", "--host=127.0.0.1", "--dbname=doctorholiday", "--username=postgres"]
+            periodSeconds: 3
+            failureThreshold: 60
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "--host=127.0.0.1", "--dbname=doctorholiday", "--username=postgres"]
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            tcpSocket:
+              port: postgres
+            periodSeconds: 10
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+            - name: run
+              mountPath: /var/run/postgresql
+            - name: tmp
+              mountPath: /tmp
+            - name: secrets
+              mountPath: /run/secrets
+              readOnly: true
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d
+              readOnly: true
+      volumes:
+        - name: run
+          emptyDir:
+            sizeLimit: 16Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+        - name: secrets
+          secret:
+            secretName: db-credentials
+            defaultMode: 0440
+        - name: init
+          configMap:
+            name: postgres-init
+            defaultMode: 0555
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app.kubernetes.io/name: postgres
+          app.kubernetes.io/part-of: doctorholiday
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: standard
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  labels:
+    app.kubernetes.io/name: postgres
+    app.kubernetes.io/part-of: doctorholiday
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: postgres
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
