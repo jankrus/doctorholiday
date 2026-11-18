@@ -1,8 +1,8 @@
 # NetworkPolicies (issue #41, brief §4d): everything is denied, then exactly the flows of the
 # architecture are allowed (docs/architecture/architecture.md, flows F2 to F4):
 #
-#   ingress-nginx ──8080──▶ frontend
-#   ingress-nginx ──8080──▶ backend
+#   Traefik       ──8080──▶ frontend
+#   Traefik       ──8080──▶ backend
 #   backend       ──5432──▶ postgres
 #   db-migrate    ──5432──▶ postgres
 #   every pod     ──53────▶ kube-dns            (name resolution only)
@@ -61,11 +61,10 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: ingress-nginx
+              kubernetes.io/metadata.name: traefik
           podSelector:
             matchLabels:
-              app.kubernetes.io/name: ingress-nginx
-              app.kubernetes.io/component: controller
+              app.kubernetes.io/name: traefik
       ports:
         - protocol: TCP
           port: 8080
@@ -85,11 +84,10 @@ spec:
     - from:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: ingress-nginx
+              kubernetes.io/metadata.name: traefik
           podSelector:
             matchLabels:
-              app.kubernetes.io/name: ingress-nginx
-              app.kubernetes.io/component: controller
+              app.kubernetes.io/name: traefik
       ports:
         - protocol: TCP
           port: 8080

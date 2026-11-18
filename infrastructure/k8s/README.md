@@ -18,7 +18,7 @@ Then open <https://doctorholiday.localhost> (self-signed certificate: accept the
 | `make check-tools` | checks that the tools are installed and Docker runs |
 | `make cluster` | creates the kind cluster from `infrastructure/kind/kind-config.yaml` if it does not exist |
 | `make cni` | installs Calico (enforces NetworkPolicies) from a pinned, checksum-verified manifest |
-| `make ingress` | installs ingress-nginx from a pinned, checksum-verified manifest and waits for the controller |
+| `make ingress` | installs the ingress controller Traefik (CRDs verified by checksum, Deployment pinned by digest in `infrastructure/kind/traefik.yaml`) and waits for it |
 | `make namespace` | creates the namespace with Pod Security `restricted` |
 | `make secrets` | generates the secrets (database passwords, MFA key, session secret, TLS certificate); never overwrites existing ones |
 | `make db-config` | ConfigMaps for the database init script and the migrations, made from the files in the repository |
@@ -64,7 +64,7 @@ Pod Security Admission `restricted` enforces the settings of c on every pod of t
 ### Allowed network flows
 
 ```
- browser ──443──▶ ingress-nginx ──8080──▶ frontend
+ browser ──443──▶ Traefik ──8080──▶ frontend
                        │
                        └─────────8080──▶ backend ──5432──▶ postgres ◀──5432── db-migrate
  every pod ──53──▶ kube-dns                          (nothing else leaves the namespace)
@@ -72,8 +72,8 @@ Pod Security Admission `restricted` enforces the settings of c on every pod of t
 
 | From | To | Port | Policy |
 | :--- | :--- | :--- | :--- |
-| ingress-nginx controller | frontend | 8080 | `frontend-allow-ingress-controller` |
-| ingress-nginx controller | backend | 8080 | `backend-allow-ingress-controller` |
+| Traefik | frontend | 8080 | `frontend-allow-ingress-controller` |
+| Traefik | backend | 8080 | `backend-allow-ingress-controller` |
 | backend | postgres | 5432 | `backend-allow-egress-postgres` and `postgres-allow-backend-and-migrate` |
 | db-migrate | postgres | 5432 | `db-migrate-allow-egress-postgres` and `postgres-allow-backend-and-migrate` |
 | every pod | kube-dns | 53 UDP/TCP | `allow-dns-egress` |
@@ -95,7 +95,7 @@ An existing secret is never overwritten. To rotate one, delete it and run `make 
 
 ## Ingress
 
-`/api` goes to the backend, `/` to the frontend. The backend's health probes `/healthz` and `/readyz` are **not** under `/api` and therefore not reachable from outside, on purpose; the frontend's own `/healthz` (only the word `ok`) is. HTTP is redirected to HTTPS, ingress-nginx adds HSTS to every HTTPS response by default, and the ingress limits requests per client IP and the body size as defence in depth.
+`/api` goes to the backend, `/` to the frontend. The backend's health probes `/healthz` and `/readyz` are **not** under `/api` and therefore not reachable from outside, on purpose; the frontend's own `/healthz` (only the word `ok`) is. HTTP is redirected to HTTPS at Traefik's entry point, and three middlewares (`middlewares.yaml`) add HSTS to every HTTPS response, a request limit per client IP and a body limit as defence in depth. Traefik runs in its own namespace `traefik` under Pod Security `restricted` (non-root, read-only filesystem, no hostPort: the kind node maps host ports 80 and 443 to its NodePorts) and watches only the namespace `doctorholiday` through a namespaced Role, so it cannot read other namespaces' secrets ([ADR-005](../../docs/architecture/adr/ADR-005-ingress-controller.md)).
 
 ## Images
 
@@ -112,7 +112,7 @@ An existing secret is never overwritten. To rotate one, delete it and run `make 
 
 - **Images by tag, locally:** the local build is tagged `dev` (a build of this checkout, not a registry reference). The pipeline replaces the tag by the digest of the signed image (#43). The database image is pinned by digest.
 - **Calico images by tag:** the upstream manifest references its images by tag, not by digest. The manifest itself is pinned by URL tag and SHA-256.
-- **ingress-nginx:** upstream published its last release on 2026-03-19. It stays because [ADR-001](../../docs/architecture/adr/ADR-001-tech-stack.md) decided it and because the demo cluster is local; no new security fixes will arrive. See [deviations.md](../../docs/report/deviations.md).
+- **Traefik is ours to update:** its Deployment is a manifest in this repository (not an upstream bundle), so a new release means a new image digest in `infrastructure/kind/traefik.yaml` and, if the CRDs changed, a new URL and checksum in `versions.env`.
 - **No TLS inside the cluster:** traffic from the ingress to the pods and from the backend to the database is plain, protected by the NetworkPolicies (TH-71, TH-74 in the threat model).
 - **Self-signed certificate:** browsers warn once; there is no public CA for a local name.
 

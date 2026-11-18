@@ -1,5 +1,5 @@
 # Namespace of the application (issue #37, brief §4a). Everything of Doctor Holiday lives here and
-# nowhere else; ingress-nginx runs in its own namespace.
+# nowhere else; the ingress controller (Traefik) runs in its own namespace.
 #
 # Pod Security Admission: the `restricted` profile is the strictest built-in one. It rejects a pod
 # that runs as root, may escalate privileges, keeps capabilities or has no seccomp profile, so the

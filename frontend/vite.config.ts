@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 import { mockApi } from './dev-mock-api.ts';
 
 // Dev server only: with API_PROXY_TARGET set (e.g. http://localhost:8080), /api is forwarded to that
-// backend, so the browser sees a single origin as it does behind ingress-nginx. Without it, a mock
+// backend, so the browser sees a single origin as it does behind the ingress. Without it, a mock
 // answers /api (see dev-mock-api.ts). Neither is exposed to client code (no VITE_ prefix).
 const apiProxyTarget = process.env.API_PROXY_TARGET;
 

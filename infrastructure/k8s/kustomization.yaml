@@ -19,6 +19,7 @@ resources:
   - postgres.yaml
   - db-migrate.yaml
   - networkpolicies.yaml
+  - middlewares.yaml
   - ingress.yaml
 # Single source of truth for the images of the application. `make images` builds the local tag
 # `dev` and loads it into the cluster; the pipeline replaces it by the digest of the signed image

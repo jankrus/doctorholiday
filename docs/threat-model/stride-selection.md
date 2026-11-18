@@ -42,7 +42,7 @@ For every selected category: threats, implementing issues, how to verify them, a
 
 ### 2.2 Elevation of privilege (E)
 
-**Threats:** TH-16 (accepted), TH-22, TH-32, TH-33, TH-34, TH-40, TH-46.
+**Threats:** TH-16, TH-22, TH-32, TH-33, TH-34, TH-40, TH-46.
 
 | Threat | Mitigation | Issues | Verification | State |
 | --- | --- | --- | --- | --- |
@@ -51,7 +51,7 @@ For every selected category: threats, implementing issues, how to verify them, a
 | TH-34 Admin reads health data | 30-minute TBAC grant with a purpose, checked on every request, audited | #55 | Test: `403 ACCESS_GRANT_REQUIRED` without a grant and after expiry | Not implemented |
 | TH-22, TH-46 Container escape, ServiceAccount token abuse | `runAsNonRoot`, read-only root filesystem, `allowPrivilegeEscalation: false`, `capabilities.drop: [ALL]`, seccomp RuntimeDefault, no mounted API token, no Role bindings | [#28](https://github.com/jankrus/doctorholiday/issues/28), [#37](https://github.com/jankrus/doctorholiday/issues/37), [#38](https://github.com/jankrus/doctorholiday/issues/38) | Manifest check in CI for the four security-context fields; `kubectl auth can-i --list` for the ServiceAccounts | Not implemented |
 | TH-40 Over-privileged CI token | Top-level `permissions: {}`, write rights per job only | #31 | Workflow lint: no job has broader permissions than listed | Not implemented |
-| TH-16 Controller compromise | Pinned patched ingress version, own namespace, NetworkPolicy; residual risk accepted | [#40](https://github.com/jankrus/doctorholiday/issues/40), [#41](https://github.com/jankrus/doctorholiday/issues/41) | Version pin in the manifest; Trivy scan | Accepted |
+| TH-16 Controller compromise | Traefik (maintained, [ADR-005](../architecture/adr/ADR-005-ingress-controller.md)) watches only the namespace `doctorholiday` through a namespaced Role, so it has no access to other namespaces' secrets; own namespace under Pod Security `restricted`, non-root, read-only filesystem, image pinned by digest | [#40](https://github.com/jankrus/doctorholiday/issues/40), [#41](https://github.com/jankrus/doctorholiday/issues/41) | `kubectl auth can-i` for the controller's ServiceAccount shows no cluster-wide secret access; manifest check for the security context | Not implemented (PR #105) |
 
 **Merged issues for this category: none yet.** [#15](https://github.com/jankrus/doctorholiday/issues/15), [#16](https://github.com/jankrus/doctorholiday/issues/16) and the Kubernetes issues are open. The acceptance criterion "at least one merged implementation issue" is therefore open for this category (see [section 5](#5-open-points)).
 

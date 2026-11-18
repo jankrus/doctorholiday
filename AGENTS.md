@@ -35,7 +35,7 @@ Deviations from the brief are allowed only if justified in `docs/report/deviatio
 - DB: PostgreSQL 16
 - Auth: server-side sessions in `HttpOnly; Secure; SameSite=Strict` cookies (no JWT in browser storage)
 - Pipeline: GitHub Actions, GHCR, Syft (SBOM), Semgrep (SAST), Trivy (SCA/image), Gitleaks, cosign (key-based)
-- Deploy: local `kind` + `ingress-nginx`, driven by the Makefile
+- Deploy: local `kind` + Traefik (ingress, ADR-005), driven by the Makefile
 - Base images: `python:3.12-alpine` (backend, see D-03 in `docs/report/deviations.md`), `nginxinc/nginx-unprivileged:alpine`, `postgres:16-alpine`; **pinned by sha256 digest**
 
 ## Naming

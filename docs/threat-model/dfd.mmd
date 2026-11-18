@@ -34,7 +34,7 @@ flowchart TB
             P5(("P5<br/>API server<br/>+ kubelet")):::proc
             DS2[("DS2 Kubernetes<br/>Secrets")]:::store
         end
-        P1(("P1<br/>ingress-nginx")):::proc
+        P1(("P1<br/>Traefik")):::proc
         subgraph NSAPP["namespace doctorholiday"]
             P2(("P2<br/>Frontend<br/>nginx")):::proc
             P3(("P3<br/>Backend API")):::proc

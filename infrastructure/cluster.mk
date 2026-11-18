@@ -27,7 +27,7 @@ BUILD_FLAGS := $(shell docker build --help 2> /dev/null | grep -q -e --provenanc
 # The targets of `up` must run in this order.
 .NOTPARALLEL:
 
-up: check-tools cluster cni ingress namespace secrets db-config images deploy wait ## Create the kind cluster and deploy the app; prints Ready (#42)
+up: check-tools cluster cni namespace ingress secrets db-config images deploy wait ## Create the kind cluster and deploy the app; prints Ready (#42)
 	@echo
 	@echo "Ready"
 	@echo "  $(APP_URL)  (self-signed certificate: accept the browser warning or use curl -k)"
@@ -58,9 +58,12 @@ cni: ## Install Calico, which enforces NetworkPolicies (kindnet does not) (#41)
 	$(KUBECTL) --namespace kube-system rollout status daemonset/calico-node --timeout=300s
 	$(KUBECTL) wait --for=condition=Ready nodes --all --timeout=300s
 
-ingress: ## Install ingress-nginx and wait for the controller (#40)
-	scripts/k8s-apply-pinned.sh $(CTX) "$(INGRESS_NGINX_URL)" "$(INGRESS_NGINX_SHA256)"
-	$(KUBECTL) --namespace ingress-nginx wait --for=condition=Ready pod --selector=app.kubernetes.io/component=controller --timeout=300s
+# Needs the namespace: Traefik's Role and RoleBinding live there (it may only read that namespace).
+ingress: namespace ## Install the ingress controller Traefik and wait for it (#40)
+	scripts/k8s-apply-pinned.sh $(CTX) "$(TRAEFIK_CRDS_URL)" "$(TRAEFIK_CRDS_SHA256)" server-side
+	$(KUBECTL) wait --for=condition=Established crd/middlewares.traefik.io --timeout=120s
+	$(KUBECTL) apply --filename infrastructure/kind/traefik.yaml
+	$(KUBECTL) --namespace traefik rollout status deployment/traefik --timeout=300s
 
 namespace: ## Create the namespace with Pod Security `restricted` (#37)
 	$(KUBECTL) apply --filename infrastructure/k8s/namespace.yaml
