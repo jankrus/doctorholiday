@@ -42,9 +42,11 @@ meta ─┬─ test-backend ──┐
 | `sign` | (d) | **real:** matrix `frontend` / `backend`; cosign (key-based) signs the image digest and attaches the CycloneDX SBOM as an attestation (`scripts/sign-image.sh`), then verifies both with the committed public key (`scripts/verify-image.sh`); artifact `signing-<image>` | #35 |
 | `quality-gate` | (e) | stub | #36 |
 | `deploy` | deployment | stub | #43 |
-| `evidence` | §7 evidence | stub, runs even after a failure | #44 |
+| `evidence` | §7 evidence | **real:** downloads all artifacts, saves the logs of the finished jobs, sorts everything into `evidence/<image>/<type>/<run>-<sha>-<file>` (`scripts/collect-evidence.sh`) and pushes it to the `evidence` branch (`scripts/publish-evidence.sh`); runs even after a failure | #44 |
 
 A failed job stops everything behind it through `needs:`. Only `evidence` uses `if: !cancelled() && release`: it runs after a failure of any job, also of `meta` (a failed pinning check is a blocked run, and a blocked run is evidence too), but not after a run was cancelled by hand, because it holds `contents: write`.
+
+**Evidence goes to the `evidence` branch, not to `main`.** The ruleset of `main` requires a reviewed pull request and has no bypass; a bot allowed to push to `main` would be a hole in it (deviation D-09). The branch holds only the `evidence/` tree (an orphan branch, created by the first run) and every run adds files with names of its own (`<run number>-<short sha>-<file>`), so runs never overwrite each other. Before the submission `make evidence-sync` copies the branch into `main`'s `evidence/` for a normal pull request. The `signing` artifact (#35) and the `gate` artifact (#36) are picked up automatically as soon as those jobs upload them; `make evidence RUN_ID=<id>` rebuilds the evidence of one run by hand.
 
 ## Rules for every change
 

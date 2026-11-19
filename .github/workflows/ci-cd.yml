@@ -32,8 +32,9 @@ name: ci-cd
 on:
   push:
     branches: [main]
-    # The evidence job commits reports back (#44); ignoring them avoids a loop. Nothing else is
-    # ignored, so every other change to main (also documentation) triggers a run (brief §3).
+    # `evidence/**` is only a safety net: the evidence job publishes to the `evidence` branch (#44),
+    # which does not trigger this workflow. Nothing else is ignored, so every other change to main
+    # (also documentation) triggers a run (brief §3).
     paths-ignore: ["evidence/**"]
   pull_request:
     branches: [main]
@@ -490,10 +491,12 @@ jobs:
         run: 'echo "stub: verify again, create the kind cluster and apply the manifests in #43"'
 
   # ---------------------------------------------------------------------------------------------
-  # Evidence of every run (#44): run log, SAST, SBOM, SCA, secrets and signing reports.
+  # Evidence of every run (#44): run log, SAST, SBOM, SCA, secrets and signing reports, sorted into
+  # evidence/<image>/<type>/<run>-<sha>-<file> by scripts/collect-evidence.sh.
   # Runs also when an earlier job failed (even `meta`), because a blocked run is evidence too, but
-  # not when the run was cancelled by hand. Committing to main needs a way around the branch
-  # ruleset (evidence branch or app token), decided in #44.
+  # not when the run was cancelled by hand. The reports go to the `evidence` branch, not to main:
+  # the ruleset of main requires a reviewed pull request and has no bypass (deviations.md, D-09).
+  # The artifacts `signing` (#35) and `gate` (#36) are picked up as soon as those jobs upload them.
   # ---------------------------------------------------------------------------------------------
   evidence:
     name: evidence
@@ -501,8 +504,45 @@ jobs:
     if: ${{ !cancelled() && needs.context.outputs.release == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    # One evidence job at a time; they only add files, so a waiting one is never dropped.
+    concurrency:
+      group: evidence
+      cancel-in-progress: false
     permissions:
-      contents: write  # commit the evidence reports (#44)
+      contents: write  # push the evidence branch (#44)
+      actions: read  # download the artifacts and the job logs of this run
     steps:
-      - name: Collect and commit the reports
-        run: 'echo "stub: collect the reports into evidence/<image>/ and commit them in #44"'
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # A run that stopped early has fewer artifacts; that is fine, so no artifact is required.
+      - name: Download the artifacts of this run
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        continue-on-error: true
+        with:
+          path: artifacts
+
+      - name: Collect the reports of this run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          SHORT_SHA: ${{ needs.meta.outputs.short_sha }}
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          mkdir -p artifacts/run-logs artifacts/gate
+          # Result of every job of this run, written by the pipeline itself.
+          echo "$NEEDS" > artifacts/run-logs/job-results.json
+          scripts/fetch-run-logs.sh "$REPO" "$RUN_ID" artifacts/run-logs
+          sha="${SHORT_SHA:-${GITHUB_SHA::7}}"
+          scripts/collect-evidence.sh artifacts evidence-out "$(printf '%05d' "$RUN_NUMBER")-$sha"
+
+      - name: Publish to the evidence branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: scripts/publish-evidence.sh "$REPO" evidence-out "evidence run $RUN_NUMBER"
