@@ -1,4 +1,4 @@
-.PHONY: evidence evidence-sync help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
+.PHONY: test-gate evidence evidence-sync help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
 .DEFAULT_GOAL := help
 
 # bash with strict flags, so a failing step stops the target with a clear error (#42).
@@ -38,6 +38,9 @@ check-pinning: ## Fail if an action is not pinned by commit SHA or an image not 
 lint-actions: check-pinning ## Lint the workflows with actionlint and zizmor (#31)
 	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo $(ACTIONLINT_IMAGE) -color=false
 	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo $(ZIZMOR_IMAGE) --offline --no-progress --persona auditor .github/workflows/
+
+test-gate: ## Test the quality gate (each failure mode on fixture reports) (#36)
+	python3 scripts/test_quality_gate.py
 
 # Manual fallback of the pipeline's evidence job (#44): rebuilds the evidence of one finished run
 # from its artifacts into evidence/ (the working tree), e.g. `make evidence RUN_ID=123456789`.
