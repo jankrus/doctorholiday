@@ -103,7 +103,7 @@ make lint-actions    # check-pinning + actionlint + zizmor (needs Docker; tool i
 | `astral-sh/setup-uv` | v10.3.3 | `68559e99cc807c1eb7e9238fd43a15bba460eec2` |
 | `actions/upload-artifact` | v7.0.2 | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` |
 
-Updates come as Dependabot pull requests (#46), which keep the SHA and the comment together.
+Updates come as Dependabot pull requests (#46, `.github/dependabot.yml`), which keep the SHA and the comment together. Dependabot checks weekly: `uv` (`backend/`), `npm` (`frontend/`), both Dockerfiles (base image tag and digest) and `github-actions`. Minor and patch updates are grouped; major versions get their own PR. Update PRs run the scan jobs through the `pull_request` trigger and never deploy or sign, because only runs on `main` are release runs.
 
 ## Open points
 
