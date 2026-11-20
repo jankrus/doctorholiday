@@ -1,0 +1,40 @@
+# Automated dependency updates (#46). One weekly update PR per ecosystem and component; minor and
+# patch versions are grouped, major versions come as separate PRs. Update PRs run the scan jobs of
+# the pipeline (pull_request trigger); they never deploy or sign (only runs on main are release runs).
+# Dependabot rewrites lockfiles together with the manifest (uv.lock, package-lock.json), keeps the
+# `@sha256:` digest of Docker base images and the `# vX.Y.Z` comment of SHA-pinned actions in sync.
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /backend
+    schedule:
+      interval: weekly
+    groups:
+      backend-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+    groups:
+      frontend-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: docker
+    directory: /backend
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: docker
+    directory: /frontend
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions-minor-patch:
+        update-types: [minor, patch]
