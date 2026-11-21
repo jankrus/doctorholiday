@@ -1,0 +1,5 @@
+📦 Supply Chain Security Related artifacts for an image: ghcr.io/jankrus/doctorholiday-frontend@sha256:70f975d2a9f1581163fc0e11f5a76bc5130601fceb9582457b4fae137032b32d
+└── 🔗 https://sigstore.dev/cosign/sign/v1 artifacts via OCI referrer: ghcr.io/jankrus/doctorholiday-frontend@sha256:401956a9fd4206db22faacf76975608c825607b8bcbea754e68caa3d1f7111c3
+   └── 🍒 sha256:94be66420a0bc5babd6fd45d48e40122b7c9a50434ec5ca41e30ff96ecac8305
+└── 🔗 https://cyclonedx.org/bom artifacts via OCI referrer: ghcr.io/jankrus/doctorholiday-frontend@sha256:d525ca8d31a46616a843af2f91d0cc7f24a5046b015fe9064fe615e9e43d5482
+   └── 🍒 sha256:626795fb4eebb836ecd1ac985eb89a7c722b097f2efffba2977c03a1ff3e4c8b
