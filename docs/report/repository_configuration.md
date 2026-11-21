@@ -24,7 +24,7 @@ The default branch, `main`, serves as the reference for release-ready code. To p
 The following native GitHub security features have been enabled in the repository settings:
 
 * **Secret Scanning & Push Protection:** Prevents API keys, tokens, or private certificates from being accidentally committed before a Git push is completed.
-* **Dependabot Alerts & Security Updates:** Automatically monitors third-party libraries (React/Node.js, Python/FastAPI) for known CVEs and suggests security patches.
+* **Dependabot Alerts & Security Updates:** Automatically monitors third-party libraries (React/Node.js, Python/FastAPI) for known CVEs and suggests security patches. Regular version updates (weekly, all ecosystems) are configured in `.github/dependabot.yml` ([#46](https://github.com/jankrus/doctorholiday/issues/46)).
 
 ---
 
