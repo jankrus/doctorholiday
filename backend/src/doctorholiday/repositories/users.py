@@ -3,7 +3,7 @@
 import uuid
 from collections.abc import Iterable, Sequence
 
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import ColumnElement, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -37,6 +37,15 @@ def get_user(session: Session, user_id: uuid.UUID) -> User | None:
 def get_user_by_email(session: Session, email: str) -> User | None:
     # citext column: the comparison is case-insensitive. Deleted users have no e-mail (BR-13).
     return session.scalars(select(User).where(User.email == email)).one_or_none()
+
+
+def set_password_hash(session: Session, user_id: uuid.UUID, password_hash: str) -> None:
+    """Replace the user's password hash (must already be Argon2id) and stamp the change."""
+    session.execute(
+        update(Credential)
+        .where(Credential.user_id == user_id)
+        .values(password_hash=password_hash, password_changed_at=func.now())
+    )
 
 
 def get_credential(session: Session, user_id: uuid.UUID) -> Credential | None:

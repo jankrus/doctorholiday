@@ -1182,3 +1182,234 @@ def test_secrets_never_appear_in_responses_or_logs(
             assert secret not in str(response.headers)
     assert token not in log_text
     assert email not in log_text
+
+
+# ---------- Password change (A23, #66) ----------
+
+NEW_PASSWORD = "another long passphrase 2026"  # test value
+WRONG_PASSWORD = "not the current password"  # test value
+
+
+def change_password(
+    client: TestClient, current: str = PASSWORD, new: str = NEW_PASSWORD
+) -> Response:
+    return client.post(
+        "/api/v1/auth/password", json={"currentPassword": current, "newPassword": new}
+    )
+
+
+def password_hash(engine: Engine, email: str) -> tuple[str, datetime]:
+    user = user_by_email(engine, email)
+    assert user is not None
+    with Session(engine) as session:
+        credential = session.get_one(Credential, user.id)
+        return credential.password_hash, credential.password_changed_at
+
+
+def test_password_change_replaces_the_password(
+    new_client: ClientFactory, email: str, db_engine: Engine
+) -> None:
+    client = new_client()
+    registered_and_logged_in(client, email)
+    old_hash, old_changed_at = password_hash(db_engine, email)
+
+    response = change_password(client)
+
+    assert response.status_code == 204
+    assert response.content == b""
+    assert response.headers["cache-control"] == "no-store"
+    new_hash, new_changed_at = password_hash(db_engine, email)
+    assert new_hash != old_hash
+    assert new_hash.startswith("$argon2id$")
+    assert new_changed_at > old_changed_at
+    other = new_client()
+    assert login(other, email, PASSWORD).status_code == 401
+    assert login(other, email, NEW_PASSWORD).status_code == 200
+
+
+def test_password_change_rotates_the_session_and_ends_all_others(
+    new_client: ClientFactory, email: str, db_engine: Engine
+) -> None:
+    client, other_device = new_client(), new_client()
+    assert register(client, email).status_code == 202
+    token = login(client, email).cookies[COOKIE_NAME]
+    other_token = login(other_device, email).cookies[COOKIE_NAME]
+
+    response = change_password(client)
+
+    assert response.status_code == 204
+    new_token = response.cookies[COOKIE_NAME]
+    assert new_token not in (token, other_token)
+    assert response.headers["set-cookie"] == f"{COOKIE_NAME}={new_token}; {COOKIE_ATTRIBUTES}"
+    # The current session lives on under the new token; the old cookie value is rejected.
+    assert client.get("/api/v1/auth/me").status_code == 200
+    assert session_row(db_engine, token) is None
+    assert session_row(db_engine, new_token) is not None
+    use_cookie(client, token)
+    assert client.get("/api/v1/auth/me").status_code == 401
+    assert other_device.get("/api/v1/auth/me").status_code == 401
+    assert session_row(db_engine, other_token) is None
+
+
+def test_wrong_current_password_changes_nothing(
+    client: TestClient, email: str, db_engine: Engine
+) -> None:
+    token = registered_and_logged_in(client, email)
+    before = password_hash(db_engine, email)
+
+    response = change_password(client, current=WRONG_PASSWORD)
+
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "REAUTHENTICATION_FAILED"
+    assert password_hash(db_engine, email) == before
+    assert session_row(db_engine, token) is not None
+    assert client.get("/api/v1/auth/me").status_code == 200
+
+
+def test_repeated_wrong_current_passwords_are_rate_limited(
+    client: TestClient, email: str, db_engine: Engine
+) -> None:
+    registered_and_logged_in(client, email)
+    before = password_hash(db_engine, email)
+
+    for _ in range(5):
+        assert change_password(client, current=WRONG_PASSWORD).status_code == 403
+    # Locked: not even the right password gets through.
+    response = change_password(client)
+
+    assert response.status_code == 429
+    assert response.json()["error"]["code"] == "RATE_LIMITED"
+    assert int(response.headers["retry-after"]) > 0
+    assert password_hash(db_engine, email) == before
+
+
+def test_reauthentication_limit_is_per_user_and_reset_by_success(
+    new_client: ClientFactory, email: str
+) -> None:
+    client, other = new_client(), new_client()
+    registered_and_logged_in(client, email)
+    registered_and_logged_in(other, f"other-{email}")
+    for _ in range(4):
+        assert change_password(client, current=WRONG_PASSWORD).status_code == 403
+    # Another user is not affected, and a success resets the counter.
+    assert change_password(other, current=WRONG_PASSWORD).status_code == 403
+    assert change_password(client).status_code == 204
+    for _ in range(4):
+        assert change_password(client, current=WRONG_PASSWORD, new=PASSWORD).status_code == 403
+    assert change_password(client, current=NEW_PASSWORD, new=PASSWORD).status_code == 204
+
+
+@pytest.mark.parametrize(
+    ("new_password", "code"),
+    [
+        ("elevenchars", "VALIDATION_ERROR"),
+        ("x" * 129, "VALIDATION_ERROR"),
+        ("passwordpassword", "PASSWORD_TOO_COMMON"),
+        ("doctorholiday 2026", "PASSWORD_TOO_COMMON"),
+    ],
+)
+def test_new_password_must_follow_the_policy(
+    client: TestClient, email: str, db_engine: Engine, new_password: str, code: str
+) -> None:
+    registered_and_logged_in(client, email)
+    before = password_hash(db_engine, email)
+
+    response = change_password(client, new=new_password)
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == code
+    assert password_hash(db_engine, email) == before
+    assert client.get("/api/v1/auth/me").status_code == 200
+
+
+def test_new_password_equal_to_the_email_is_rejected(
+    client: TestClient, email: str, db_engine: Engine
+) -> None:
+    registered_and_logged_in(client, email)
+    before = password_hash(db_engine, email)
+
+    response = change_password(client, new=email)
+
+    assert response.status_code == 422
+    assert password_hash(db_engine, email) == before
+
+
+def test_password_change_rejects_unknown_fields(client: TestClient, email: str) -> None:
+    registered_and_logged_in(client, email)
+    response = client.post(
+        "/api/v1/auth/password",
+        json={
+            "currentPassword": PASSWORD,
+            "newPassword": NEW_PASSWORD,
+            "userId": str(uuid.uuid4()),
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_password_change_needs_a_session(client: TestClient) -> None:
+    response = change_password(client)
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "UNAUTHENTICATED"
+
+
+@pytest.mark.parametrize("state", [SessionState.MFA_PENDING, SessionState.MFA_ENROLLMENT_REQUIRED])
+def test_password_change_needs_an_active_session(
+    client: TestClient, email: str, db_engine: Engine, state: SessionState
+) -> None:
+    token = registered_and_logged_in(client, email)
+    change_session(db_engine, token, state=state)
+    before = password_hash(db_engine, email)
+
+    response = change_password(client)
+
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "MFA_REQUIRED"
+    assert password_hash(db_engine, email) == before
+
+
+def test_password_change_is_audited(client: TestClient, email: str, db_engine: Engine) -> None:
+    registered_and_logged_in(client, email)
+    assert change_password(client, current=WRONG_PASSWORD).status_code == 403
+    assert change_password(client).status_code == 204
+
+    user = user_by_email(db_engine, email)
+    assert user is not None
+    events = audit_events(db_engine, AuditAction.PASSWORD_CHANGED, user)
+    assert [(e.outcome, e.actor_id) for e in events] == [
+        (AuditOutcome.FAILURE, user.id),
+        (AuditOutcome.SUCCESS, user.id),
+    ]
+    assert events[0].details == {"reason": "WRONG_PASSWORD"}
+    assert events[1].details is None
+
+
+def test_passwords_never_appear_in_logs_audit_or_responses(
+    client: TestClient, email: str, db_engine: Engine, caplog: pytest.LogCaptureFixture
+) -> None:
+    caplog.set_level(logging.DEBUG)
+    token = registered_and_logged_in(client, email)
+    old_hash, _ = password_hash(db_engine, email)
+    responses = [
+        change_password(client, current=WRONG_PASSWORD),
+        change_password(client, new="passwordpassword"),
+        change_password(client),
+    ]
+    new_hash, _ = password_hash(db_engine, email)
+
+    user = user_by_email(db_engine, email)
+    assert user is not None
+    with Session(db_engine) as session:
+        audit_text = json.dumps(
+            [
+                [e.target, e.details]
+                for e in session.scalars(select(AuditEvent).where(AuditEvent.actor_id == user.id))
+            ]
+        )
+    log_text = "\n".join(JsonFormatter().format(record) for record in caplog.records)
+    assert "password changed" in log_text  # the capture works
+    for secret in (PASSWORD, NEW_PASSWORD, WRONG_PASSWORD, old_hash, new_hash, token):
+        assert secret not in log_text
+        assert secret not in audit_text
+        for response in responses:
+            assert secret not in response.text

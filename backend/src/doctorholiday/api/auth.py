@@ -1,4 +1,4 @@
-"""Register, login, logout and the current session (A01, A03, A06, A22; #14).
+"""Register, login, logout, the current session and password change (A01, A03, A06, A22, A23).
 
 The first successful login while no admin exists becomes ADMIN (#15). Not here yet: MFA, CSRF
 protection, invitations. Search for MVP-TEMP to find the temporary shortcuts.
@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from doctorholiday.api.common import NO_STORE, client_ip
-from doctorholiday.auth.dependencies import CurrentSession, reject_session
+from doctorholiday.auth.dependencies import ActiveUser, CurrentSession, reject_session
 from doctorholiday.auth.passwords import (
     hash_password,
     is_common_password,
@@ -25,7 +25,9 @@ from doctorholiday.auth.rate_limiting import (
     account_key,
     ip_key,
     login_limits,
+    reauthentication_limit,
     registration_limit,
+    user_key,
 )
 from doctorholiday.auth.sessions import (
     clear_session_cookie,
@@ -64,6 +66,11 @@ class RegisterRequest(RequestModel):
 class LoginRequest(RequestModel):
     email: Email
     password: Password
+
+
+class PasswordChangeRequest(RequestModel):
+    current_password: Password = Field(alias="currentPassword")
+    new_password: NewPassword = Field(alias="newPassword")
 
 
 class CurrentUser(BaseModel):
@@ -320,3 +327,86 @@ def logout(authenticated: CurrentSession, request: Request, db: DbSession) -> Re
 def me(authenticated: CurrentSession, response: Response, db: DbSession) -> SessionInfo:
     response.headers.update(NO_STORE)
     return _session_info(db, authenticated.session.state, authenticated.user)
+
+
+@router.post("/password", operation_id="changePassword", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(
+    body: PasswordChangeRequest,
+    user: ActiveUser,
+    authenticated: CurrentSession,
+    request: Request,
+    db: DbSession,
+) -> Response:
+    settings: Settings = request.app.state.settings
+    ip = client_ip(request)
+    target = audit_target("user", user.id)
+    limiter = RateLimiter(db, (reauthentication_limit(settings), user_key(user.id)))
+    # Before the password check: a locked user gets no further guesses, not even a correct one.
+    if (retry_after := limiter.retry_after()) is not None:
+        record_event(
+            db,
+            action=AuditAction.PASSWORD_CHANGED,
+            outcome=AuditOutcome.FAILURE,
+            actor_id=user.id,
+            target=target,
+            ip=ip,
+            details={"reason": "RATE_LIMITED"},
+        )
+        logger.info("password change rate limited", extra={"userId": str(user.id)})
+        return _rate_limited(request, retry_after)
+
+    credential = users.get_credential(db, user.id)
+    if credential is None or not verify_password(
+        credential.password_hash, body.current_password.get_secret_value()
+    ):
+        if locked := limiter.count():
+            logger.warning("re-authentication lockout started", extra={"scopes": locked})
+        record_event(
+            db,
+            action=AuditAction.PASSWORD_CHANGED,
+            outcome=AuditOutcome.FAILURE,
+            actor_id=user.id,
+            target=target,
+            ip=ip,
+            details={"reason": "WRONG_PASSWORD"},
+        )
+        logger.info("password change failed: re-authentication", extra={"userId": str(user.id)})
+        # Returned, not raised: raising would roll back the audit event and the counter.
+        return error_response(
+            request,
+            status.HTTP_403_FORBIDDEN,
+            ErrorCode.REAUTHENTICATION_FAILED,
+            "The current password is incorrect.",
+        )
+    limiter.reset(RateLimitScope.REAUTHENTICATION_USER)
+
+    # After the re-authentication, so only the account's owner learns that a password is rejected.
+    new_password = body.new_password.get_secret_value()
+    if is_common_password(new_password, email=user.email or ""):
+        logger.info("password change with a common password rejected")
+        return error_response(
+            request,
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            ErrorCode.PASSWORD_TOO_COMMON,
+            "This password is too common. Please choose another one.",
+        )
+
+    # One transaction: new hash, all other sessions gone, current session under a new token, so
+    # a session fixed or stolen before the change is useless (BR-05, BR-15).
+    users.set_password_hash(db, user.id, hash_password(new_password))
+    old_token_hash = authenticated.session.token_hash
+    sessions.delete_other_sessions(db, user_id=user.id, keep_token_hash=old_token_hash)
+    token = new_token()
+    sessions.rotate_token(db, old_token_hash=old_token_hash, new_token_hash=hash_token(token))
+    record_event(
+        db,
+        action=AuditAction.PASSWORD_CHANGED,
+        outcome=AuditOutcome.SUCCESS,
+        actor_id=user.id,
+        target=target,
+        ip=ip,
+    )
+    logger.info("password changed", extra={"userId": str(user.id)})
+    response = Response(status_code=status.HTTP_204_NO_CONTENT, headers=NO_STORE)
+    set_session_cookie(response, token)
+    return response
