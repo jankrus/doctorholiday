@@ -5,6 +5,10 @@
 #   scripts/scan.sh sast      static analysis (Semgrep), JSON + SARIF per component
 #   scripts/scan.sh sca       known vulnerabilities in the lockfiles (Trivy fs), JSON + SARIF
 #   scripts/scan.sh secrets   secrets in the whole git history (Gitleaks), JSON + SARIF
+#   scripts/scan.sh image <frontend|backend>
+#                             known vulnerabilities in a pushed image (Trivy image, by digest from
+#                             reports/images/<c>/image-ref.txt), JSON + SARIF in reports/gate/ (#36);
+#                             a private registry login comes from TRIVY_USERNAME / TRIVY_PASSWORD
 #
 # The pipeline calls exactly this script, so every report can be reproduced on a laptop with
 # Docker. All tools run as pinned container images (AGENTS.md rule 7). The scans report findings
@@ -15,8 +19,7 @@
 # REPORTS_DIR overrides `reports`. In GitHub Actions the script also writes `findings=<n>` (or
 # `components=<n>`) to $GITHUB_OUTPUT and a table to $GITHUB_STEP_SUMMARY.
 #
-# Not here yet: the scans of the built images (SBOM per digest, `trivy image`), they need the
-# images from #34.
+# The SBOM of the built images is made by the `sbom` job; `trivy image` runs in the quality gate (#36).
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
@@ -168,10 +171,34 @@ secrets() {
   output findings "$count"
 }
 
+image() {
+  local component="${1:-}" ref_file ref count all
+  case "$component" in
+    frontend | backend) ;;
+    *)
+      echo "usage: $0 image frontend|backend" >&2
+      exit 2
+      ;;
+  esac
+  ref_file="$REPORTS/images/$component/image-ref.txt"
+  [[ -s "$ref_file" ]] || { echo "missing $ref_file" >&2; exit 1; }
+  ref="$(tr -d '[:space:]' < "$ref_file")"
+  [[ "$ref" =~ @sha256:[0-9a-f]{64}$ ]] || { echo "not a reference by digest: $ref" >&2; exit 1; }
+  mkdir -p "$REPORTS/gate"
+  # The registry login (if any) is passed by name only, never on a command line.
+  docker run --rm "${user_args[@]}" -e HOME=/tmp --tmpfs /tmp:exec -e TRIVY_USERNAME -e TRIVY_PASSWORD     -v "$MOUNT:/src" -w /src "$TRIVY_IMAGE" image --image-src remote --scanners vuln     --no-progress --skip-version-check --ignorefile .trivyignore --exit-code 0     --format json --output "$REPORTS/gate/trivy-image-$component.json" "$ref"
+  docker_run "$TRIVY_IMAGE" convert --format sarif     --output "$REPORTS/gate/trivy-image-$component.sarif" "$REPORTS/gate/trivy-image-$component.json"
+  all="$(stats trivy-all "$REPORTS/gate/trivy-image-$component.json")"
+  count="$(stats trivy "$REPORTS/gate/trivy-image-$component.json")"
+  echo "trivy image $component: $all vulnerabilities, $count HIGH or CRITICAL"
+  summary "| $component (image) | $all | $count |"
+}
+
 case "${1:-}" in
   sbom | sast | sca | secrets) "$1" ;;
+  image) image "${2:-}" ;;
   *)
-    echo "usage: $0 sbom|sast|sca|secrets" >&2
+    echo "usage: $0 sbom|sast|sca|secrets|image <frontend|backend>" >&2
     exit 2
     ;;
 esac
