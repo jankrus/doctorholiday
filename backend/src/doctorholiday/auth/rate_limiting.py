@@ -9,10 +9,11 @@ once. What counts as an attempt is the endpoint's choice:
 | --- | --- | --- | --- |
 | Login | `LOGIN_IP`, `LOGIN_ACCOUNT` | failures | 20 per IP, 5 per e-mail / 15 min, 15 min lock |
 | Registration | `REGISTRATION_IP` | every request | 10 per IP / 60 min, 60 min lock |
+| Re-authentication | `REAUTHENTICATION_USER` | wrong passwords | 5 per user / 15 min, 15 min lock |
 
-The other scopes of BR-03 (MFA verification, invitation acceptance, password reset,
-re-authentication) exist in the schema; their endpoints add a `Limit` here when they are built
-(#76-#79). Per-IP limits need the real client IP behind the ingress (#75).
+The other scopes of BR-03 (MFA verification, invitation acceptance, password reset) exist in the
+schema; their endpoints add a `Limit` here when they are built (#76-#78). Account deletion reuses
+the re-authentication limit (#79). Per-IP limits need the real client IP behind the ingress (#75).
 
 Login counts failures twice: per client IP (guessing against many accounts) and per e-mail
 (guessing one account from many IPs). A successful login resets the e-mail counter, never the IP
@@ -26,6 +27,7 @@ pods, and they are compared with the database clock (repositories/clock.py).
 
 import hashlib
 import math
+import uuid
 from dataclasses import dataclass
 from datetime import timedelta
 from ipaddress import IPv6Address, ip_network
@@ -65,6 +67,20 @@ def registration_limit(settings: Settings) -> Limit:
     """Per client IP; the lock lasts as long as the window."""
     window = timedelta(minutes=settings.registration_window_minutes)
     return Limit(RateLimitScope.REGISTRATION_IP, settings.registration_max_per_ip, window, window)
+
+
+def reauthentication_limit(settings: Settings) -> Limit:
+    """Per user: wrong current passwords at password change (and later account deletion)."""
+    return Limit(
+        RateLimitScope.REAUTHENTICATION_USER,
+        settings.reauth_max_failures_per_user,
+        timedelta(minutes=settings.reauth_window_minutes),
+        timedelta(minutes=settings.reauth_lockout_minutes),
+    )
+
+
+def user_key(user_id: uuid.UUID) -> str:
+    return str(user_id)
 
 
 def ip_key(ip: IPAddress | None) -> str:

@@ -52,6 +52,24 @@ def refresh_session(
     ).one_or_none()
 
 
+def delete_other_sessions(session: Session, *, user_id: uuid.UUID, keep_token_hash: bytes) -> None:
+    """Delete every session of the user except the one with this token (BR-15)."""
+    session.execute(
+        delete(UserSession).where(
+            UserSession.user_id == user_id, UserSession.token_hash != keep_token_hash
+        )
+    )
+
+
+def rotate_token(session: Session, *, old_token_hash: bytes, new_token_hash: bytes) -> None:
+    """Give the session a new token, so the old cookie value stops working (BR-05)."""
+    session.execute(
+        update(UserSession)
+        .where(UserSession.token_hash == old_token_hash)
+        .values(token_hash=new_token_hash)
+    )
+
+
 def delete_session(session: Session, *, token_hash: bytes) -> None:
     """Delete the session with this token, whether or not it has timed out."""
     session.execute(delete(UserSession).where(UserSession.token_hash == token_hash))

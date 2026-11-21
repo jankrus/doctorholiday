@@ -64,6 +64,11 @@ class Settings(DatabaseSettings):
     # window has passed once more.
     registration_max_per_ip: int = Field(default=10, ge=1, le=1000)
     registration_window_minutes: int = Field(default=60, ge=1, le=1440)
+    # Re-authentication (password change, account deletion): this many wrong passwords per user
+    # within the window lock that user's re-authentication for the lockout time.
+    reauth_max_failures_per_user: int = Field(default=5, ge=1, le=100)
+    reauth_window_minutes: int = Field(default=15, ge=1, le=1440)
+    reauth_lockout_minutes: int = Field(default=15, ge=1, le=1440)
 
     @field_validator("session_secret")
     @classmethod
