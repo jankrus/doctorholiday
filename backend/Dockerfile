@@ -14,7 +14,7 @@
 # uv: backend/pyproject.toml requires >=0.12.23,<0.13; only its binary is copied.
 # The interpreter of the runtime stage is the same image as in the build stage, so the venv's
 # symlinks stay valid.
-FROM ghcr.io/astral-sh/uv:0.12.24@sha256:3af4716e991d6956a41e573eab705d0ee08500cd829ed30293eb8472f372c65a AS uv
+FROM ghcr.io/astral-sh/uv:0.13.9@sha256:d3b601f0c7b118bc1753febf7c41cc80981df678445e0254284eecf84db79a7d AS uv
 
 FROM python:3.12-alpine@sha256:e064671ca452259bab50e8e2c7bd896e39e9a343bb06ca25234adf6fe18d0fc7 AS build
 COPY --from=uv /uv /usr/local/bin/uv
