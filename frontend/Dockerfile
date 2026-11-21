@@ -15,7 +15,7 @@
 # see package.json) and nginx-unprivileged `alpine` (mainline nginx 1.31, ADR-001). The 1.28 stable
 # line was rejected: its nginx package has open HIGH/CRITICAL findings without a fix in that repo.
 
-FROM node:22.22-alpine@sha256:e58326d0d441090181ac150dc2078d3e2cf6a0d42e809aebba3ef5880935ffdd AS build
+FROM node:22.23-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS build
 WORKDIR /app
 # Layer 1: dependencies from the lockfile. `npm ci` installs exactly package-lock.json (with
 # integrity hashes) and fails if package.json and the lockfile disagree. --ignore-scripts: no
