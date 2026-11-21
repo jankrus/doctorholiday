@@ -30,7 +30,7 @@ updates:
     ignore:
       - dependency-name: python
         versions: [">=3.13"]
-      - dependency-name: ghcr.io/astral-sh/uv
+      - dependency-name: astral-sh/uv
         versions: [">=0.13"]
 
   - package-ecosystem: docker
