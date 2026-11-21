@@ -36,7 +36,7 @@ if exists db-credentials; then
   echo "secret db-credentials exists, left unchanged"
 else
   for name in db_superuser_password db_owner_password db_app_password; do
-    openssl rand -hex 32 > "$tmp/$name" # 64 hex characters, no padding or special characters
+    openssl rand -hex 32 | tr -d '\r' > "$tmp/$name" # 64 hex characters, no padding or special characters
   done
   "${kubectl[@]}" create secret generic db-credentials \
     --from-file="db_superuser_password=$tmp/db_superuser_password" \
