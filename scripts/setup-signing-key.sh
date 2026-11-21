@@ -36,7 +36,7 @@ cleanup() {
 trap cleanup EXIT
 
 umask 077
-openssl rand -hex 32 > "$dir/password"
+openssl rand -hex 32 | tr -d '\r' > "$dir/password"
 if [[ -n "${COSIGN:-}" ]]; then
   (cd "$dir" && COSIGN_PASSWORD="$(cat password)" "$COSIGN" generate-key-pair > /dev/null)
 else
