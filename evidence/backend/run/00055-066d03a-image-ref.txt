@@ -1,0 +1,1 @@
+ghcr.io/jankrus/doctorholiday-backend@sha256:3ffb1d6138196c0095eaa6d5b0219169be03a5e82e07d7daa5418fadb6a0a84e
