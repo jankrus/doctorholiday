@@ -25,11 +25,22 @@ updates:
     directory: /backend
     schedule:
       interval: weekly
+    # Pins fixed elsewhere: requires-python >=3.12,<3.13 and backend/.python-version (D-03 in
+    # docs/report/deviations.md), required-version >=0.12.23,<0.13 in backend/pyproject.toml.
+    ignore:
+      - dependency-name: python
+        versions: [">=3.13"]
+      - dependency-name: ghcr.io/astral-sh/uv
+        versions: [">=0.13"]
 
   - package-ecosystem: docker
     directory: /frontend
     schedule:
       interval: weekly
+    # Node 22 is fixed in frontend/.nvmrc and AGENTS.md.
+    ignore:
+      - dependency-name: node
+        versions: [">=23"]
 
   - package-ecosystem: github-actions
     directory: /

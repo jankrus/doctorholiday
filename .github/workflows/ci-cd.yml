@@ -319,6 +319,32 @@ jobs:
           retention-days: 90
 
   # ---------------------------------------------------------------------------------------------
+  # Findings check for pull requests and manual runs on other branches (#46). The scans above
+  # report and succeed, and the quality gate runs on main only. Without this job a Dependabot PR
+  # that adds a HIGH/CRITICAL vulnerability stays green and only the release run blocks. It
+  # applies the same counts as the gate (Rule 1 and 2 of #36: SCA and secrets); the signature
+  # check needs built images and stays in the gate.
+  # ---------------------------------------------------------------------------------------------
+  pr-findings:
+    name: findings check (pull requests)
+    needs: [context, sca, secrets]
+    if: needs.context.outputs.release != 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    env:
+      SCA_FINDINGS: ${{ needs.sca.outputs.findings }}
+      SECRETS_FINDINGS: ${{ needs.secrets.outputs.findings }}
+    steps:
+      - name: Fail on HIGH/CRITICAL vulnerabilities and on secrets
+        run: |
+          echo "SCA (HIGH or CRITICAL): ${SCA_FINDINGS:-missing}, secrets: ${SECRETS_FINDINGS:-missing}"
+          case "${SCA_FINDINGS:-x}:${SECRETS_FINDINGS:-x}" in
+            0:0) ;;
+            *) echo "::error::Findings above the gate threshold (or a scan reported no count); see the sca and secrets reports"; exit 1 ;;
+          esac
+
+  # ---------------------------------------------------------------------------------------------
   # (c) Build and container build, push to GHCR, record the digest (#34). Not on pull requests.
   # scripts/build-image.sh does the work, so the same command builds an image on a laptop (against
   # any registry, see its header). Everything downstream uses the digest, never a tag.

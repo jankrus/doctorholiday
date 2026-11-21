@@ -40,6 +40,7 @@ meta ─┬─ test-backend ──┐
 | `secrets` | (b) | **real:** Gitleaks over the full history with `.gitleaks.toml`, values redacted, artifact `secrets` | #33 |
 | `build` | (c) | **real:** builds, pushes to GHCR, records the digest; matrix `frontend` / `backend`; artifacts `image-frontend`, `image-backend` (`digest.txt`, `image-ref.txt`); outputs `frontend` and `backend` (digest) | #34 |
 | `sign` | (d) | **real:** matrix `frontend` / `backend`; cosign (key-based) signs the image digest and attaches the CycloneDX SBOM as an attestation (`scripts/sign-image.sh`), then verifies both with the committed public key (`scripts/verify-image.sh`); artifact `signing-<image>` | #35 |
+| `pr-findings` | (e) | **real:** PR-only check of the SCA and secret counts (same threshold as the gate, no signature check) | #46 |
 | `quality-gate` | (e) | stub | #36 |
 | `deploy` | deployment | stub | #43 |
 | `evidence` | §7 evidence | **real:** downloads all artifacts, saves the logs of the finished jobs, sorts everything into `evidence/<image>/<type>/<run>-<sha>-<file>` (`scripts/collect-evidence.sh`) and pushes it to the `evidence` branch (`scripts/publish-evidence.sh`); runs even after a failure | #44 |
@@ -103,7 +104,9 @@ make lint-actions    # check-pinning + actionlint + zizmor (needs Docker; tool i
 | `astral-sh/setup-uv` | v10.3.3 | `68559e99cc807c1eb7e9238fd43a15bba460eec2` |
 | `actions/upload-artifact` | v7.0.2 | `cf430e030ddbb5b0abf93d22962f4752f3646cd9` |
 
-Updates come as Dependabot pull requests (#46, `.github/dependabot.yml`), which keep the SHA and the comment together. Dependabot checks weekly: `uv` (`backend/`), `npm` (`frontend/`), both Dockerfiles (base image tag and digest) and `github-actions`. Minor and patch updates are grouped; major versions get their own PR. Update PRs run the scan jobs through the `pull_request` trigger and never deploy or sign, because only runs on `main` are release runs.
+Updates come as Dependabot pull requests (#46, `.github/dependabot.yml`), which keep the SHA and the comment together. Dependabot checks weekly: `uv` (`backend/`), `npm` (`frontend/`), both Dockerfiles (base image tag and digest) and `github-actions`. Minor and patch updates are grouped; major versions get their own PR. Update PRs run the scan jobs through the `pull_request` trigger and never deploy or sign, because only runs on `main` are release runs. The job `pr-findings` fails a pull request (or a manual run on another branch) when the SCA scan finds a HIGH/CRITICAL vulnerability or the secret scan finds a secret, so a Dependabot PR cannot be merged green with a finding that the quality gate would block on `main`; the signature check stays in the gate (#36).
+
+The Docker entries ignore versions that conflict with the pins fixed elsewhere: Python 3.13 and later (`requires-python`, `backend/.python-version`, D-03), uv 0.13 and later (`required-version` in `backend/pyproject.toml`) and Node 23 and later (`frontend/.nvmrc`, AGENTS.md). **A uv bump in `backend/Dockerfile` has to be mirrored by hand in the `setup-uv` `version` in `ci-cd.yml`** (and the reverse), because Dependabot does not update that input.
 
 ## Open points
 
