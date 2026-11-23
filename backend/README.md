@@ -147,7 +147,7 @@ Conventions for new code:
 
 ## Authentication
 
-MVP subset of #14: register, login, logout and `/me` with a server-side session (ADR-001, BR-01 to BR-05), and login rate limiting with temporary lockout. The first-admin bootstrap (#15) is in place. Still missing: MFA, CSRF protection, invitations, rate limiting of the other endpoints BR-03 names (registration etc.). Temporary shortcuts are marked `MVP-TEMP` in the code and in `openapi.yaml`:
+MVP subset of #14: register, login, logout and `/me` with a server-side session (ADR-001, BR-01 to BR-05), and login rate limiting with temporary lockout. The first-admin bootstrap (#15) is in place. Still missing: MFA, invitations, rate limiting of the other endpoints BR-03 names (registration etc.). Temporary shortcuts are marked `MVP-TEMP` in the code and in `openapi.yaml`:
 
 - Every session is `ACTIVE`; there is no MFA step yet.
 - `GET /auth/me` never returns `setupRequired`, because `PUT /api/v1/settings` does not exist yet.
@@ -169,6 +169,22 @@ How it works:
 - **Audit:** `USER_REGISTERED`, `LOGIN` (`SUCCESS`/`FAILURE` with `details.reason`), `LOGOUT`, `ADMIN_BOOTSTRAPPED` (the promoted account as actor and target), with the user as target and the client IP; never an e-mail address. A rate-limited request is audited as `LOGIN` or `USER_REGISTERED` `FAILURE` with `reason: RATE_LIMITED`; the start of a lockout is logged as a warning. The IP is the direct peer; behind the ingress that is the proxy until forwarded headers are handled (#75), and until then all clients share one IP counter.
 - Responses with session data send `Cache-Control: no-store`.
 - E-mail addresses are validated with `email-validator`, which rejects special-use domains such as `.test` or `.localhost`; use e.g. `@example.com` for test accounts.
+
+## HTTP hardening
+
+Implemented in #19 as ASGI middleware (`middleware.py`, order in `main.py`):
+
+- **CSRF:** `SameSite=Strict` on the session cookie plus `CsrfMiddleware`. Every request except `GET`, `HEAD` and `OPTIONS` is answered with `403 FORBIDDEN` unless it comes from an allowed origin. If `Origin` is present it must equal one of `ALLOWED_ORIGINS` exactly (`null` and look-alikes are rejected); without `Origin`, `Sec-Fetch-Site` must be `same-origin` or `none`. Requests with neither header do not come from a browser, so no ambient cookie can be abused; they still need a valid session. Chosen over a token because browsers always send one of the two headers on cross-site writes, and it needs no extra state or frontend change. In development the Vite dev server origin (`http://localhost:5173`) is in `ALLOWED_ORIGINS` of `.env.example`.
+- **CORS:** disabled. The frontend and the API share one origin via the ingress, so no response carries `Access-Control-*` headers and a browser rejects cross-origin reads and preflighted requests. `ALLOWED_ORIGINS` is the list for the CSRF check only.
+- **Security headers** on every response, also errors (`SecurityHeadersMiddleware`): `X-Content-Type-Options: nosniff`, `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, `Strict-Transport-Security: max-age=31536000; includeSubDomains` (also set by the ingress; browsers ignore it over plain HTTP) and `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`.
+- **Forwarded headers:** the client IP behind the ingress is not handled here; it is tracked in #75.
+
+Check on a running API (the cluster uses `-k` for the self-signed certificate):
+
+```sh
+curl -I http://localhost:8080/healthz
+curl -i -X POST -H 'Origin: https://evil.example.org' http://localhost:8080/api/v1/auth/logout   # 403
+```
 
 ## Schedule and appointments
 

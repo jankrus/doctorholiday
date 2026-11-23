@@ -4,17 +4,21 @@
   generic `500` for unhandled exceptions.
 - `RequestBodyMiddleware`: body size limit (`413`) and JSON-only bodies (`415`), checked before
   anything parses the body.
+- `SecurityHeadersMiddleware`: the same protective headers on every response (#19).
+- `CsrfMiddleware`: rejects state-changing requests from a foreign origin with `403` (#19).
 """
 
 import logging
 import time
 import uuid
+from collections.abc import Collection
 
 from starlette.datastructures import Headers, MutableHeaders
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from doctorholiday.errors import (
+    FORBIDDEN_MESSAGE,
     INTERNAL_MESSAGE,
     PAYLOAD_TOO_LARGE_MESSAGE,
     UNSUPPORTED_MEDIA_TYPE_MESSAGE,
@@ -174,5 +178,88 @@ class RequestBodyMiddleware:
         _body_logger.info("request body rejected", extra={"status": status_code})
         response = JSONResponse(
             error_body(code, message, scope["state"]["request_id"]), status_code=status_code
+        )
+        await response(scope, receive, send)
+
+
+# Every response is JSON (or empty), never a document: nothing may be loaded, framed or cached.
+# HSTS is also set by the ingress; browsers ignore it on plain HTTP, so it is harmless locally.
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "Cache-Control": "no-store",
+    "Referrer-Policy": "no-referrer",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
+}
+
+
+class SecurityHeadersMiddleware:
+    """Adds `SECURITY_HEADERS` to every response, also errors answered by other middleware.
+
+    Outermost middleware, so it also covers the generic `500` of `RequestContextMiddleware`.
+    """
+
+    def __init__(self, app: ASGIApp) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        async def send_with_headers(message: Message) -> None:
+            if message["type"] == "http.response.start":
+                headers = MutableHeaders(scope=message)
+                for name, value in SECURITY_HEADERS.items():
+                    headers[name] = value
+            await send(message)
+
+        await self.app(scope, receive, send_with_headers)
+
+
+_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+
+class CsrfMiddleware:
+    """CSRF defence for the cookie session (#19): `SameSite=Strict` plus a strict origin check.
+
+    A state-changing request (any method except GET, HEAD, OPTIONS) is answered with
+    `403 FORBIDDEN` unless it comes from an allowed origin:
+    - `Origin` present (browsers send it on every cross-origin and every non-GET request): it must
+      be one of `ALLOWED_ORIGINS` exactly; `null` and everything else is rejected.
+    - No `Origin`, but `Sec-Fetch-Site` present: it must be `same-origin` or `none`.
+    - Neither header: not a browser, so no ambient cookie to abuse (curl, tests, the probes).
+    No token is needed because a browser always sends one of the two headers; the origin check
+    does not depend on state, so the API stays stateless apart from the session.
+
+    There is no CORS at all: the frontend is served from the same origin via the ingress, so no
+    response carries `Access-Control-*` headers and a browser blocks cross-origin reads and
+    preflighted requests.
+    """
+
+    def __init__(self, app: ASGIApp, allowed_origins: Collection[str]) -> None:
+        self.app = app
+        self.allowed_origins = frozenset(allowed_origins)
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http" or scope["method"] in _SAFE_METHODS:
+            await self.app(scope, receive, send)
+            return
+
+        headers = Headers(scope=scope)
+        origin = headers.get("origin")
+        if origin is not None:
+            allowed = origin in self.allowed_origins
+        else:
+            allowed = headers.get("sec-fetch-site", "same-origin") in ("same-origin", "none")
+        if allowed:
+            await self.app(scope, receive, send)
+            return
+
+        # Neither header value is logged: they come from the client.
+        _body_logger.warning("cross-site request rejected", extra={"status": 403})
+        response = JSONResponse(
+            error_body(ErrorCode.FORBIDDEN, FORBIDDEN_MESSAGE, scope["state"]["request_id"]),
+            status_code=403,
         )
         await response(scope, receive, send)
