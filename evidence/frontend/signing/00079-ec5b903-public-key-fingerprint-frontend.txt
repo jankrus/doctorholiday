@@ -1,0 +1,1 @@
+sha256:16e0a53165b00217b67a85df74ca62a2a9571cb85b0a843398cc443e62aba6a1  infrastructure/signing/cosign.pub
