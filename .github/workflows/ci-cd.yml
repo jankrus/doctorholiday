@@ -642,8 +642,8 @@ jobs:
       - name: Pod security check
         run: |
           mkdir -p reports/deploy
-          kubectl --context kind-doctorholiday --namespace doctorholiday get pods --output yaml > reports/deploy/pods.yaml
-          python3 scripts/check_pod_security.py < reports/deploy/pods.yaml | tee reports/deploy/pod-security.txt
+          kubectl --context kind-doctorholiday --namespace doctorholiday get pods --output json > reports/deploy/pods.json
+          python3 scripts/check_pod_security.py < reports/deploy/pods.json | tee reports/deploy/pod-security.txt
 
       - name: Summary
         if: ${{ !cancelled() }}

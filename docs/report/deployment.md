@@ -21,8 +21,8 @@ Decision: **A**. What the deployment has to show is that the pipeline deploys ex
 3. `make up IMAGE_SOURCE=registry`, the same targets as on a laptop: cluster, Calico, Traefik, secrets, then **`registry-images`**: `scripts/verify-image.sh` for both images (signature and SBOM attestation with `infrastructure/signing/cosign.pub`; the job stops here if one fails) and the overlay with the digests. The cluster pulls the images itself; with `GHCR_USER` / `GHCR_TOKEN` it gets a pull secret, so private packages work too. Then the manifests, the migration and the wait for Ready.
 4. `scripts/smoke-test.sh` (the first login on the fresh cluster must make the first account `ADMIN`).
 5. `make verify`: the NetworkPolicy test (`scripts/test-netpol.sh`).
-6. `scripts/check_pod_security.py` on `kubectl get pods -o yaml`: not privileged, no privilege escalation, read-only root file system, non-root, capabilities dropped, seccomp `RuntimeDefault`, no host namespaces, no mounted service account token. The pods' `imageID` shows which digest runs.
-7. Uploads the artifact `deploy` (smoke test, NetworkPolicy report, pod YAML and security check); the `evidence` job sorts it into `evidence/<image>/run/`. The deployed digests are also in the job summary.
+6. `scripts/check_pod_security.py` on `kubectl get pods -o json`: not privileged, no privilege escalation, read-only root file system, non-root, capabilities dropped, seccomp `RuntimeDefault`, no host namespaces, no mounted service account token. The pods' `imageID` shows which digest runs.
+7. Uploads the artifact `deploy` (smoke test, NetworkPolicy report, pod JSON and security check); the `evidence` job sorts it into `evidence/<image>/run/`. The deployed digests are also in the job summary.
 
 The job `needs` the quality gate and has no `always()`: a run whose gate fails never reaches it.
 
