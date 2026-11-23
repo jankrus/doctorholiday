@@ -1,0 +1,212 @@
+{
+  "passed": false,
+  "run": "45212878779",
+  "sha": "a133dcc59e0b1b5c2f75ee6aba0168c76b2d39c4",
+  "rules": [
+    {
+      "rule": "jobs",
+      "description": "every job the gate depends on succeeded",
+      "passed": true,
+      "violations": []
+    },
+    {
+      "rule": "secrets",
+      "description": "Gitleaks found no secret in the history",
+      "passed": false,
+      "violations": [
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/backend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1372,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/backend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1406,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/backend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1440,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/backend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1474,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/backend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1508,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/backend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1542,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/backend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1576,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/backend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1610,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/backend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1644,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/backend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1678,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/frontend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1372,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/frontend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1406,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/frontend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1440,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/frontend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1474,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/frontend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1508,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/frontend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1542,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/frontend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1576,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/frontend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1610,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/frontend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1644,
+            "commit": "f4bd44f5aca6"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "sourcegraph-access-token",
+            "file": "evidence/frontend/secrets/00078-006a7a2-gitleaks.sarif",
+            "line": 1678,
+            "commit": "f4bd44f5aca6"
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vulnerabilities",
+      "description": "no HIGH/CRITICAL or CVSS >= 7.0 finding",
+      "passed": true,
+      "violations": []
+    },
+    {
+      "rule": "signatures",
+      "description": "every image has a valid signature and SBOM attestation",
+      "passed": true,
+      "violations": []
+    }
+  ]
+}
