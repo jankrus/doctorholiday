@@ -16,4 +16,6 @@ Helper scripts used by the Makefile and the pipeline (quality gate, packaging).
 | [`k8s-secrets.sh`](k8s-secrets.sh) | Generates the cluster secrets at deploy time (database passwords, MFA key, session secret, TLS certificate); idempotent, never overwrites, never prints values. | #30, #39, #42 |
 | [`test-netpol.sh`](test-netpol.sh) | Proves that the NetworkPolicies are enforced: three connections that must be blocked, three that must work. Run by `make verify`. | #41 |
 
-Planned: `quality-gate.sh` (#36), `smoke-test.sh` (#43), packaging (#51).
+| [`gate-demo.sh`](gate-demo.sh) | Gate demonstration (workflow `gate-demo.yml`): `prepare` puts one fault into the checkout (`secret`, `vulnerability`, `unsigned`; `clean` is the control), `assert` checks that the gate blocked for exactly that reason. Nothing is committed or pushed. | #36 |
+
+Planned: `smoke-test.sh` (#43), packaging (#51).

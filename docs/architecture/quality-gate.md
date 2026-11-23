@@ -37,12 +37,15 @@ make test-gate                     # unit tests: each failure mode and the clean
 
 ## Demonstration runs (acceptance of #36)
 
-The three failure modes are demonstrated with `workflow_dispatch` runs; links are added here once they exist:
+The gate is shown to block, for each rule, with the workflow [`gate-demo.yml`](../../.github/workflows/gate-demo.yml) (`gh workflow run gate-demo.yml -f scenario=<name>`). A release run only exists on `main` and `main` must not receive faulty commits, so the demo does not use the release pipeline: it puts **one fault into a throw-away checkout of the run** (`scripts/gate-demo.sh`), runs the **real scans and the real gate** (`scripts/quality_gate.py`, the same Semgrep, Trivy, Gitleaks and cosign checks as the release run) and then checks that the gate blocked for exactly that reason. Nothing is built, signed, pushed or deployed, and the fault is never committed. The run is red on purpose; its reports go to the `evidence` branch under the prefix `demo-<scenario>-<run number>`.
 
-| Failure mode | Run |
-| :--- | :--- |
-| a dummy secret in the history | not run yet |
-| a known-vulnerable dependency | not run yet |
-| an unsigned image reference | not run yet |
+| Scenario | Fault | Rule that must block | Run |
+| :--- | :--- | :--- | :--- |
+| `clean` (control) | none | none, the gate passes | not run yet |
+| `secret` | a random token in the shape of a GitHub token, in a local commit | `secrets` | not run yet |
+| `vulnerability` | `backend/requirements.txt` pins PyYAML 5.3 (CVE-2020-14343, CRITICAL) | `vulnerabilities` | not run yet |
+| `unsigned` | the backend reference points to a public image that our key never signed | `signatures` | not run yet |
 
-A gate run is only possible on `main` (release run, [workflow README](../../.github/workflows/README.md)), so a demonstration needs a short-lived change on `main` that is reverted afterwards, or the local run of the script on fixture reports (`make test-gate`) as the reproducible proof.
+The image digests are those of the latest release run (read from the `evidence` branch). The `deploy` job is not part of the demo; that it is skipped when the gate fails follows from `needs: quality-gate` in `ci-cd.yml` and is shown by any red gate run of the release pipeline.
+
+Found by the demonstration: the evidence branch is part of the history that Gitleaks scans, and the Trivy image reports contain the public Python signing key id of the base image; see the scanner exceptions in [deviations.md](../report/deviations.md).

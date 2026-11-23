@@ -170,9 +170,13 @@ def check_signatures(reports: Path, verify_cmd: list[str]) -> dict:
         if not reference_file.is_file() or not reference_file.read_text(encoding="utf-8").strip():
             violate(result, f"{component}: no image reference ({reference_file})")
             continue
-        completed = subprocess.run(  # noqa: S603 - fixed command, component from a constant
-            [*verify_cmd, component], capture_output=True, text=True, check=False
-        )
+        try:
+            completed = subprocess.run(  # noqa: S603 - fixed command, component from a constant
+                [*verify_cmd, component], capture_output=True, text=True, check=False
+            )
+        except OSError as exc:  # the command cannot be started: fail closed, no traceback
+            violate(result, f"{component}: the verification could not be run ({exc})")
+            continue
         if completed.returncode != 0:
             violate(
                 result,

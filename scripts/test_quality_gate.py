@@ -109,6 +109,13 @@ class GateTest(unittest.TestCase):
         self.assertEqual(self.failed(results), ["signatures"])
         self.assertEqual(len(results["signatures"]["violations"]), 2)  # both images
 
+    def test_verification_that_cannot_run_blocks(self):
+        results = {
+            "signatures": gate.check_signatures(self.reports, [str(self.reports / "no-such-command")])
+        }
+        self.assertEqual(self.failed(results), ["signatures"])
+        self.assertEqual(len(results["signatures"]["violations"]), 2)
+
     def test_missing_image_reference_blocks(self):
         (self.reports / "images" / "backend" / "image-ref.txt").unlink()
         self.assertEqual(self.failed(self.run_gate()), ["signatures"])
