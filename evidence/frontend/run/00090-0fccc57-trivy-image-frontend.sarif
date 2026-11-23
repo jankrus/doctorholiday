@@ -1,0 +1,27 @@
+{
+  "version": "2.1.0",
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/main/sarif-2.1/schema/sarif-schema-2.1.0.json",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "fullName": "Trivy Vulnerability Scanner",
+          "informationUri": "https://github.com/aquasecurity/trivy",
+          "name": "Trivy",
+          "rules": [],
+          "version": "0.76.2"
+        }
+      },
+      "results": [],
+      "columnKind": "utf16CodeUnits",
+      "properties": {
+        "imageID": "sha256:4dc1979d875e5517ebc739ece7a6be44dfc0e029b77dc1e766f5b733da4f2f2b",
+        "imageName": "ghcr.io/jankrus/doctorholiday-frontend@sha256:3122fc9b06c170b0e8af1a9a67ce322d24baf083787404b4b9e3e3688e7ddd2e",
+        "repoDigests": [
+          "ghcr.io/jankrus/doctorholiday-frontend@sha256:3122fc9b06c170b0e8af1a9a67ce322d24baf083787404b4b9e3e3688e7ddd2e"
+        ],
+        "repoTags": null
+      }
+    }
+  ]
+}
