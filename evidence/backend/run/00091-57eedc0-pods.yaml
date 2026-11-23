@@ -1,0 +1,950 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      cni.projectcalico.org/containerID: d43efb2967637d9dde6b8b4c0ca3af92f40389c7875e3067f3cc3f9b6130a63f
+      cni.projectcalico.org/podIP: 192.168.146.70/32
+      cni.projectcalico.org/podIPs: 192.168.146.70/32
+    creationTimestamp: "2026-11-23T17:19:56Z"
+    generateName: backend-cddf4f5c6-
+    generation: 1
+    labels:
+      app.kubernetes.io/name: backend
+      app.kubernetes.io/part-of: doctorholiday
+      pod-template-hash: cddf4f5c6
+    name: backend-cddf4f5c6-fckjw
+    namespace: doctorholiday
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: backend-cddf4f5c6
+      uid: ee75d762-7278-4e59-b64d-b3372d372c6d
+    resourceVersion: "933"
+    uid: 68984aec-735c-417d-a772-d715b1f05fa5
+  spec:
+    automountServiceAccountToken: false
+    containers:
+    - env:
+      - name: DATABASE_URL
+        valueFrom:
+          secretKeyRef:
+            key: DATABASE_URL
+            name: backend-secrets
+      - name: MFA_ENCRYPTION_KEY
+        valueFrom:
+          secretKeyRef:
+            key: MFA_ENCRYPTION_KEY
+            name: backend-secrets
+      - name: SESSION_SECRET
+        valueFrom:
+          secretKeyRef:
+            key: SESSION_SECRET
+            name: backend-secrets
+      envFrom:
+      - configMapRef:
+          name: backend-config
+      image: ghcr.io/jankrus/doctorholiday-backend@sha256:d56804728150a80a186e290134681d60dabe2f25a804a239eb70010822f74196
+      imagePullPolicy: IfNotPresent
+      livenessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /healthz
+          port: http
+          scheme: HTTP
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 3
+      name: backend
+      ports:
+      - containerPort: 8080
+        name: http
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /readyz
+          port: http
+          scheme: HTTP
+        periodSeconds: 5
+        successThreshold: 1
+        timeoutSeconds: 3
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+      startupProbe:
+        failureThreshold: 30
+        httpGet:
+          path: /healthz
+          port: http
+          scheme: HTTP
+        periodSeconds: 2
+        successThreshold: 1
+        timeoutSeconds: 1
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /tmp
+        name: tmp
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    imagePullSecrets:
+    - name: ghcr-pull
+    nodeName: doctorholiday-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 10001
+      runAsGroup: 10001
+      runAsNonRoot: true
+      runAsUser: 10001
+      seccompProfile:
+        type: RuntimeDefault
+    serviceAccount: backend
+    serviceAccountName: backend
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - emptyDir:
+        sizeLimit: 64Mi
+      name: tmp
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:02Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:19:56Z"
+      observedGeneration: 1
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:13Z"
+      observedGeneration: 1
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:13Z"
+      observedGeneration: 1
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:19:56Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 100m
+        memory: 128Mi
+      containerID: containerd://405c4e985b66657d4bae79b92e0b09aa05d6914f4250bba3af5f3df99b6647f0
+      image: sha256:c56bb929c11b9e7ce6d525fe483e1c8b45a82ce87230bac8043b40efd9a32ed1
+      imageID: ghcr.io/jankrus/doctorholiday-backend@sha256:d56804728150a80a186e290134681d60dabe2f25a804a239eb70010822f74196
+      lastState: {}
+      name: backend
+      ready: true
+      resources:
+        limits:
+          cpu: 500m
+          memory: 256Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2026-11-23T17:20:01Z"
+      user:
+        linux:
+          gid: 10001
+          supplementalGroups:
+          - 10001
+          uid: 10001
+      volumeMounts:
+      - mountPath: /tmp
+        name: tmp
+    hostIP: 172.18.0.2
+    hostIPs:
+    - ip: 172.18.0.2
+    observedGeneration: 1
+    phase: Running
+    podIP: 192.168.146.70
+    podIPs:
+    - ip: 192.168.146.70
+    qosClass: Burstable
+    startTime: "2026-11-23T17:19:56Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      cni.projectcalico.org/containerID: 1acf210f689140b71a23110823e2161067bda092ff4507e4f6878ec8a4ce72a9
+      cni.projectcalico.org/podIP: ""
+      cni.projectcalico.org/podIPs: ""
+    creationTimestamp: "2026-11-23T17:19:56Z"
+    generateName: db-migrate-
+    generation: 1
+    labels:
+      app.kubernetes.io/name: db-migrate
+      app.kubernetes.io/part-of: doctorholiday
+      batch.kubernetes.io/controller-uid: 08fad9df-66a6-4d8a-9271-8e697d275ff9
+      batch.kubernetes.io/job-name: db-migrate
+      controller-uid: 08fad9df-66a6-4d8a-9271-8e697d275ff9
+      job-name: db-migrate
+    name: db-migrate-b2npt
+    namespace: doctorholiday
+    ownerReferences:
+    - apiVersion: batch/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: Job
+      name: db-migrate
+      uid: 08fad9df-66a6-4d8a-9271-8e697d275ff9
+    resourceVersion: "950"
+    uid: e6efdedf-7de4-46fc-bd43-8d37cd1f962a
+  spec:
+    automountServiceAccountToken: false
+    containers:
+    - args:
+      - |
+        until pg_isready --host=postgres --port=5432 --dbname=doctorholiday --username=doctorholiday_owner; do
+          echo "waiting for the database"
+          sleep 2
+        done
+        exec /bin/sh /opt/migrate/migrate.sh
+      command:
+      - /bin/sh
+      - -c
+      env:
+      - name: PGHOST
+        value: postgres
+      - name: PGDATABASE
+        value: doctorholiday
+      - name: PGUSER
+        value: doctorholiday_owner
+      - name: PGPASSWORD_FILE
+        value: /run/secrets/db_owner_password
+      - name: MIGRATIONS_DIR
+        value: /migrations
+      image: postgres:16.15-alpine3.24@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+      imagePullPolicy: IfNotPresent
+      name: migrate
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 32Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /tmp
+        name: tmp
+      - mountPath: /opt/migrate
+        name: script
+        readOnly: true
+      - mountPath: /migrations
+        name: migrations
+        readOnly: true
+      - mountPath: /run/secrets
+        name: secrets
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: doctorholiday-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: OnFailure
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 70
+      runAsGroup: 70
+      runAsNonRoot: true
+      runAsUser: 70
+      seccompProfile:
+        type: RuntimeDefault
+    serviceAccount: db-migrate
+    serviceAccountName: db-migrate
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - emptyDir:
+        sizeLimit: 16Mi
+      name: tmp
+    - configMap:
+        defaultMode: 365
+        name: db-migrate-script
+      name: script
+    - configMap:
+        defaultMode: 420
+        name: db-migrations
+      name: migrations
+    - name: secrets
+      secret:
+        defaultMode: 288
+        items:
+        - key: db_owner_password
+          path: db_owner_password
+        secretName: db-credentials
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:17Z"
+      observedGeneration: 1
+      status: "False"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:19:56Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:16Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "False"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:16Z"
+      observedGeneration: 1
+      reason: PodCompleted
+      status: "False"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:19:56Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 50m
+        memory: 32Mi
+      containerID: containerd://81b4c941732a5697b8675998a5353ec2b964364bb595aee90f0e1030dc227f22
+      image: sha256:6a2e324ebe59af6031c4c1cd96c1d5072c2ebc36563d2196365e43b8297c062d
+      imageID: docker.io/library/postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+      lastState: {}
+      name: migrate
+      ready: false
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 32Mi
+      restartCount: 0
+      started: false
+      state:
+        terminated:
+          containerID: containerd://81b4c941732a5697b8675998a5353ec2b964364bb595aee90f0e1030dc227f22
+          exitCode: 0
+          finishedAt: "2026-11-23T17:20:13Z"
+          reason: Completed
+          startedAt: "2026-11-23T17:20:07Z"
+      user:
+        linux:
+          gid: 70
+          supplementalGroups:
+          - 70
+          uid: 70
+      volumeMounts:
+      - mountPath: /tmp
+        name: tmp
+      - mountPath: /opt/migrate
+        name: script
+        readOnly: true
+        recursiveReadOnly: Disabled
+      - mountPath: /migrations
+        name: migrations
+        readOnly: true
+        recursiveReadOnly: Disabled
+      - mountPath: /run/secrets
+        name: secrets
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 172.18.0.2
+    hostIPs:
+    - ip: 172.18.0.2
+    observedGeneration: 1
+    phase: Succeeded
+    podIP: 192.168.146.72
+    podIPs:
+    - ip: 192.168.146.72
+    qosClass: Burstable
+    startTime: "2026-11-23T17:19:56Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      cni.projectcalico.org/containerID: 05422acbf74ff8ecfd3941710d3ba6d0457200f9b4cf5b7d043b66387ea09f4a
+      cni.projectcalico.org/podIP: 192.168.146.71/32
+      cni.projectcalico.org/podIPs: 192.168.146.71/32
+    creationTimestamp: "2026-11-23T17:19:56Z"
+    generateName: frontend-869cdd9fc-
+    generation: 1
+    labels:
+      app.kubernetes.io/name: frontend
+      app.kubernetes.io/part-of: doctorholiday
+      pod-template-hash: 869cdd9fc
+    name: frontend-869cdd9fc-qptv2
+    namespace: doctorholiday
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: ReplicaSet
+      name: frontend-869cdd9fc
+      uid: bf700085-da78-475b-bcdb-2889d4dc0de0
+    resourceVersion: "900"
+    uid: fa9f03e8-b99c-4b50-b6ce-ce12dd1c3c16
+  spec:
+    automountServiceAccountToken: false
+    containers:
+    - image: ghcr.io/jankrus/doctorholiday-frontend@sha256:52565a157cd768a00f6a386b3c9baea21824a7069a8e41328cc70966858fd395
+      imagePullPolicy: IfNotPresent
+      livenessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /healthz
+          port: http
+          scheme: HTTP
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 3
+      name: frontend
+      ports:
+      - containerPort: 8080
+        name: http
+        protocol: TCP
+      readinessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /healthz
+          port: http
+          scheme: HTTP
+        periodSeconds: 5
+        successThreshold: 1
+        timeoutSeconds: 3
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 32Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+      startupProbe:
+        failureThreshold: 30
+        httpGet:
+          path: /healthz
+          port: http
+          scheme: HTTP
+        periodSeconds: 2
+        successThreshold: 1
+        timeoutSeconds: 1
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /tmp
+        name: tmp
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    imagePullSecrets:
+    - name: ghcr-pull
+    nodeName: doctorholiday-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 10001
+      runAsGroup: 10001
+      runAsNonRoot: true
+      runAsUser: 10001
+      seccompProfile:
+        type: RuntimeDefault
+    serviceAccount: frontend
+    serviceAccountName: frontend
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - emptyDir:
+        sizeLimit: 32Mi
+      name: tmp
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:05Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:19:56Z"
+      observedGeneration: 1
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:07Z"
+      observedGeneration: 1
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:07Z"
+      observedGeneration: 1
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:19:56Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 50m
+        memory: 32Mi
+      containerID: containerd://ea0df3ce48474eee885f420da85e7685f44f694c27f98d7b91f5dd03a9548306
+      image: sha256:e37cd29394a0ced96a9dcf719398f04b8c602cc82c6343d13dadb45cc78ef5ca
+      imageID: ghcr.io/jankrus/doctorholiday-frontend@sha256:52565a157cd768a00f6a386b3c9baea21824a7069a8e41328cc70966858fd395
+      lastState: {}
+      name: frontend
+      ready: true
+      resources:
+        limits:
+          cpu: 250m
+          memory: 128Mi
+        requests:
+          cpu: 50m
+          memory: 32Mi
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2026-11-23T17:20:04Z"
+      user:
+        linux:
+          gid: 10001
+          supplementalGroups:
+          - 10001
+          uid: 10001
+      volumeMounts:
+      - mountPath: /tmp
+        name: tmp
+    hostIP: 172.18.0.2
+    hostIPs:
+    - ip: 172.18.0.2
+    observedGeneration: 1
+    phase: Running
+    podIP: 192.168.146.71
+    podIPs:
+    - ip: 192.168.146.71
+    qosClass: Burstable
+    startTime: "2026-11-23T17:19:56Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      cni.projectcalico.org/containerID: df0a7d5c5813d1e021b30a7e64f816f5537bdff3faff7d01b875e0fe1131c62c
+      cni.projectcalico.org/podIP: 192.168.146.75/32
+      cni.projectcalico.org/podIPs: 192.168.146.75/32
+      kubectl.kubernetes.io/last-applied-configuration: |
+        {"apiVersion":"v1","kind":"Pod","metadata":{"annotations":{},"labels":{"app.kubernetes.io/name":"netpol-probe"},"name":"netpol-probe","namespace":"doctorholiday"},"spec":{"automountServiceAccountToken":false,"containers":[{"command":["sleep","300"],"image":"ghcr.io/jankrus/doctorholiday-frontend@sha256:52565a157cd768a00f6a386b3c9baea21824a7069a8e41328cc70966858fd395","imagePullPolicy":"IfNotPresent","name":"probe","securityContext":{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"readOnlyRootFilesystem":true}}],"restartPolicy":"Never","securityContext":{"runAsGroup":10001,"runAsNonRoot":true,"runAsUser":10001,"seccompProfile":{"type":"RuntimeDefault"}}}}
+    creationTimestamp: "2026-11-23T17:20:20Z"
+    deletionGracePeriodSeconds: 30
+    deletionTimestamp: "2026-11-23T17:21:05Z"
+    generation: 2
+    labels:
+      app.kubernetes.io/name: netpol-probe
+    name: netpol-probe
+    namespace: doctorholiday
+    resourceVersion: "991"
+    uid: 98cc10bd-9ca7-41f6-b208-5f7702f2c55a
+  spec:
+    automountServiceAccountToken: false
+    containers:
+    - command:
+      - sleep
+      - "300"
+      image: ghcr.io/jankrus/doctorholiday-frontend@sha256:52565a157cd768a00f6a386b3c9baea21824a7069a8e41328cc70966858fd395
+      imagePullPolicy: IfNotPresent
+      name: probe
+      resources: {}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        readOnlyRootFilesystem: true
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    nodeName: doctorholiday-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Never
+    schedulerName: default-scheduler
+    securityContext:
+      runAsGroup: 10001
+      runAsNonRoot: true
+      runAsUser: 10001
+      seccompProfile:
+        type: RuntimeDefault
+    serviceAccount: default
+    serviceAccountName: default
+    terminationGracePeriodSeconds: 30
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:22Z"
+      observedGeneration: 2
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:20Z"
+      observedGeneration: 2
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:22Z"
+      observedGeneration: 2
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:22Z"
+      observedGeneration: 2
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:20Z"
+      observedGeneration: 2
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - containerID: containerd://a49a15a9e077f4936c5c8d0e2c5fdfdef3e3797e4dd97f875763e54cbad314cc
+      image: sha256:e37cd29394a0ced96a9dcf719398f04b8c602cc82c6343d13dadb45cc78ef5ca
+      imageID: ghcr.io/jankrus/doctorholiday-frontend@sha256:52565a157cd768a00f6a386b3c9baea21824a7069a8e41328cc70966858fd395
+      lastState: {}
+      name: probe
+      ready: true
+      resources: {}
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2026-11-23T17:20:21Z"
+      user:
+        linux:
+          gid: 10001
+          supplementalGroups:
+          - 10001
+          uid: 10001
+    hostIP: 172.18.0.2
+    hostIPs:
+    - ip: 172.18.0.2
+    observedGeneration: 2
+    phase: Running
+    podIP: 192.168.146.75
+    podIPs:
+    - ip: 192.168.146.75
+    qosClass: BestEffort
+    startTime: "2026-11-23T17:20:20Z"
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    annotations:
+      cni.projectcalico.org/containerID: 87ce53e6023fd50cdde4d227148705ea7b539485e123cb7db22a5919a07ddcc5
+      cni.projectcalico.org/podIP: 192.168.146.74/32
+      cni.projectcalico.org/podIPs: 192.168.146.74/32
+    creationTimestamp: "2026-11-23T17:19:56Z"
+    generateName: postgres-
+    generation: 1
+    labels:
+      app.kubernetes.io/name: postgres
+      app.kubernetes.io/part-of: doctorholiday
+      apps.kubernetes.io/pod-index: "0"
+      controller-revision-hash: postgres-6bcfc546f9
+      statefulset.kubernetes.io/pod-name: postgres-0
+    name: postgres-0
+    namespace: doctorholiday
+    ownerReferences:
+    - apiVersion: apps/v1
+      blockOwnerDeletion: true
+      controller: true
+      kind: StatefulSet
+      name: postgres
+      uid: 053df0f9-dc37-4bf1-8a7d-0e28e0ca5f67
+    resourceVersion: "920"
+    uid: e08f3417-3102-413d-8439-56e35d5b5af6
+  spec:
+    automountServiceAccountToken: false
+    containers:
+    - env:
+      - name: POSTGRES_USER
+        value: postgres
+      - name: POSTGRES_PASSWORD_FILE
+        value: /run/secrets/db_superuser_password
+      - name: POSTGRES_INITDB_ARGS
+        value: --auth-local=scram-sha-256 --auth-host=scram-sha-256
+      - name: PGDATA
+        value: /var/lib/postgresql/data/pgdata
+      image: postgres:16.15-alpine3.24@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+      imagePullPolicy: IfNotPresent
+      livenessProbe:
+        failureThreshold: 3
+        periodSeconds: 10
+        successThreshold: 1
+        tcpSocket:
+          port: postgres
+        timeoutSeconds: 3
+      name: postgres
+      ports:
+      - containerPort: 5432
+        name: postgres
+        protocol: TCP
+      readinessProbe:
+        exec:
+          command:
+          - pg_isready
+          - --host=127.0.0.1
+          - --dbname=doctorholiday
+          - --username=postgres
+        failureThreshold: 3
+        periodSeconds: 5
+        successThreshold: 1
+        timeoutSeconds: 3
+      resources:
+        limits:
+          cpu: "1"
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+          - ALL
+        privileged: false
+        readOnlyRootFilesystem: true
+      startupProbe:
+        exec:
+          command:
+          - pg_isready
+          - --host=127.0.0.1
+          - --dbname=doctorholiday
+          - --username=postgres
+        failureThreshold: 60
+        periodSeconds: 3
+        successThreshold: 1
+        timeoutSeconds: 1
+      terminationMessagePath: /dev/termination-log
+      terminationMessagePolicy: File
+      volumeMounts:
+      - mountPath: /var/lib/postgresql/data
+        name: data
+      - mountPath: /var/run/postgresql
+        name: run
+      - mountPath: /tmp
+        name: tmp
+      - mountPath: /run/secrets
+        name: secrets
+        readOnly: true
+      - mountPath: /docker-entrypoint-initdb.d
+        name: init
+        readOnly: true
+    dnsPolicy: ClusterFirst
+    enableServiceLinks: true
+    hostname: postgres-0
+    nodeName: doctorholiday-control-plane
+    preemptionPolicy: PreemptLowerPriority
+    priority: 0
+    restartPolicy: Always
+    schedulerName: default-scheduler
+    securityContext:
+      fsGroup: 70
+      fsGroupChangePolicy: OnRootMismatch
+      runAsGroup: 70
+      runAsNonRoot: true
+      runAsUser: 70
+      seccompProfile:
+        type: RuntimeDefault
+    serviceAccount: postgres
+    serviceAccountName: postgres
+    subdomain: postgres
+    terminationGracePeriodSeconds: 60
+    tolerations:
+    - effect: NoExecute
+      key: node.kubernetes.io/not-ready
+      operator: Exists
+      tolerationSeconds: 300
+    - effect: NoExecute
+      key: node.kubernetes.io/unreachable
+      operator: Exists
+      tolerationSeconds: 300
+    volumes:
+    - name: data
+      persistentVolumeClaim:
+        claimName: data-postgres-0
+    - emptyDir:
+        sizeLimit: 16Mi
+      name: run
+    - emptyDir:
+        sizeLimit: 64Mi
+      name: tmp
+    - name: secrets
+      secret:
+        defaultMode: 288
+        secretName: db-credentials
+    - configMap:
+        defaultMode: 365
+        name: postgres-init
+      name: init
+  status:
+    conditions:
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:08Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodReadyToStartContainers
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:03Z"
+      observedGeneration: 1
+      status: "True"
+      type: Initialized
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:10Z"
+      observedGeneration: 1
+      status: "True"
+      type: Ready
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:10Z"
+      observedGeneration: 1
+      status: "True"
+      type: ContainersReady
+    - lastProbeTime: null
+      lastTransitionTime: "2026-11-23T17:20:03Z"
+      observedGeneration: 1
+      status: "True"
+      type: PodScheduled
+    containerStatuses:
+    - allocatedResources:
+        cpu: 100m
+        memory: 256Mi
+      containerID: containerd://bbe2ee337d68501569c41419141d899ce4183cf0d0716b9ec1a9f87c81dd2762
+      image: sha256:6a2e324ebe59af6031c4c1cd96c1d5072c2ebc36563d2196365e43b8297c062d
+      imageID: docker.io/library/postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+      lastState: {}
+      name: postgres
+      ready: true
+      resources:
+        limits:
+          cpu: "1"
+          memory: 512Mi
+        requests:
+          cpu: 100m
+          memory: 256Mi
+      restartCount: 0
+      started: true
+      state:
+        running:
+          startedAt: "2026-11-23T17:20:08Z"
+      user:
+        linux:
+          gid: 70
+          supplementalGroups:
+          - 70
+          uid: 70
+      volumeMounts:
+      - mountPath: /var/lib/postgresql/data
+        name: data
+      - mountPath: /var/run/postgresql
+        name: run
+      - mountPath: /tmp
+        name: tmp
+      - mountPath: /run/secrets
+        name: secrets
+        readOnly: true
+        recursiveReadOnly: Disabled
+      - mountPath: /docker-entrypoint-initdb.d
+        name: init
+        readOnly: true
+        recursiveReadOnly: Disabled
+    hostIP: 172.18.0.2
+    hostIPs:
+    - ip: 172.18.0.2
+    observedGeneration: 1
+    phase: Running
+    podIP: 192.168.146.74
+    podIPs:
+    - ip: 192.168.146.74
+    qosClass: Burstable
+    startTime: "2026-11-23T17:20:03Z"
+kind: List
+metadata:
+  resourceVersion: ""
