@@ -1,4 +1,4 @@
-.PHONY: test-gate evidence evidence-sync help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
+.PHONY: registry-images smoke test-gate evidence evidence-sync help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
 .DEFAULT_GOAL := help
 
 # bash with strict flags, so a failing step stops the target with a clear error (#42).
