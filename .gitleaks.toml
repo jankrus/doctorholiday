@@ -11,19 +11,28 @@ title = "Doctor Holiday"
 [extend]
 useDefault = true
 
-# The Trivy reports of the built images (evidence/<image>/run/<run>-<sha>-trivy-image-<image>.json and
-# .sarif, #36, #44) list the layer history of the base image, and the python base image sets
-# `ENV GPG_KEY=<fingerprint>`. That fingerprint is the PUBLIC key id of the Python release signing
-# key, used by the base image to verify the Python download; it is not a secret. The generic API key
-# rule flags it in every report (8 findings in the first four runs). The allowlist belongs to that
-# one rule, and both conditions must hold: only these report files (and the deviations list, whose
-# earlier commits quote the line while the scanner exception is explained) and only this exact line. Every
-# other rule, and every other finding of this rule, still counts. Listed in docs/report/deviations.md.
-[[rules]]
-id = "generic-api-key"
-[[rules.allowlists]]
-description = "Public Python release signing key id in the Trivy image reports"
-condition = "AND"
-paths = ['''^(evidence/[a-z]+/run/.*-trivy-image-[a-z]+\.(json|sarif)|docs/report/deviations\.md)$''']
+# Exceptions for the `evidence` branch (#36, #44). It holds the reports of our own scanners, and
+# Gitleaks scans all refs, so it sees what the scanners wrote. They are global allowlists on purpose:
+# a rule-specific override (`[[rules]]`) switches global allowlists off, and the findings come from
+# different rules. Each one is narrow and listed in docs/report/deviations.md. A planted secret
+# anywhere else, or in any other file of the evidence branch, still counts.
+
+# 1. The reports of Gitleaks and of the gate repeat what Gitleaks looked at: the SARIF file lists
+#    the description of every rule (flagged as `sourcegraph-access-token`, 20 findings per run), the
+#    JSON report and the gate report quote the lines of earlier findings. The scanner runs with
+#    --redact, so no secret value is in them.
+[[allowlists]]
+description = "Reports of Gitleaks and of the quality gate in the evidence branch"
+paths = [
+  '''^evidence/[a-z]+/secrets/.*-gitleaks\.(sarif|json)$''',
+  '''^evidence/[a-z]+/run/.*-quality-gate\.json$''',
+]
+
+# 2. The Trivy image reports list the layer history of the python base image, which sets
+#    `ENV GPG_KEY=<fingerprint>`: the PUBLIC key id of the Python release signing key, used by the
+#    base image to verify the Python download. The generic API key rule flags that exact line in
+#    every report. Only this one line is allowed (it is also quoted in the notes of this repository).
+[[allowlists]]
+description = "Public Python release signing key id (ENV GPG_KEY of the python base image)"
 regexTarget = "line"
 regexes = ['''GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305''']

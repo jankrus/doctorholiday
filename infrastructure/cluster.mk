@@ -18,16 +18,28 @@ APP_URL := https://doctorholiday.localhost
 # they are not pinned by digest like a registry reference; the pipeline sets digests in #43.
 BACKEND_LOCAL_REF := ghcr.io/jankrus/doctorholiday-backend:dev
 FRONTEND_LOCAL_REF := ghcr.io/jankrus/doctorholiday-frontend:dev
-# local = build the images from this checkout; the pipeline's signed images (ghcr) follow with #34, #35.
+# local = build the images from this checkout and load them into the cluster (`make up`).
+# registry = use the signed images that the pipeline pushed to GHCR, by digest from
+# reports/images/<component>/image-ref.txt (the deploy job of the pipeline, #43): they are verified
+# with cosign first and the cluster pulls them itself. Set GHCR_USER and GHCR_TOKEN to give the
+# cluster a pull secret (needed as soon as the packages are private).
 IMAGE_SOURCE ?= local
 # No provenance attestation in the local image: `kind load` cannot import an image index that carries
 # one. Docker versions without BuildKit do not know the flag at all, so it is only passed if it exists.
 BUILD_FLAGS := $(shell docker build --help 2> /dev/null | grep -q -e --provenance && echo --provenance=false)
 
+ifeq ($(IMAGE_SOURCE),registry)
+IMAGES_TARGET := registry-images
+K8S_DIR := .cache/k8s-registry
+else
+IMAGES_TARGET := images
+K8S_DIR := infrastructure/k8s
+endif
+
 # The targets of `up` must run in this order.
 .NOTPARALLEL:
 
-up: check-tools cluster cni namespace ingress secrets db-config images deploy wait ## Create the kind cluster and deploy the app; prints Ready (#42)
+up: check-tools cluster cni namespace ingress secrets db-config $(IMAGES_TARGET) deploy wait ## Create the kind cluster and deploy the app; prints Ready (#42)
 	@echo
 	@echo "Ready"
 	@echo "  $(APP_URL)  (self-signed certificate: accept the browser warning or use curl -k)"
@@ -80,20 +92,27 @@ db-config: namespace ## ConfigMaps for the database init script and the migratio
 	$(KUBECTL_NS) label configmap postgres-init db-migrate-script db-migrations app.kubernetes.io/part-of=doctorholiday --overwrite
 
 images: ## Build the images and load them into the cluster (#28, #42)
-	@if [ "$(IMAGE_SOURCE)" != "local" ]; then \
-		echo "IMAGE_SOURCE=$(IMAGE_SOURCE) is not implemented yet: signed images from GHCR need #34 and #35."; \
-		exit 1; \
-	fi
 	docker build $(BUILD_FLAGS) --tag $(BACKEND_LOCAL_REF) --build-arg VERSION=$$(tr -d '[:space:]' < VERSION.txt) --build-arg REVISION=$$(git rev-parse HEAD) backend
 	docker build $(BUILD_FLAGS) --tag $(FRONTEND_LOCAL_REF) --build-arg VERSION=$$(tr -d '[:space:]' < VERSION.txt) --build-arg REVISION=$$(git rev-parse HEAD) frontend
 	@mkdir -p .cache
 	docker save --output .cache/images.tar $(BACKEND_LOCAL_REF) $(FRONTEND_LOCAL_REF)
 	kind load image-archive .cache/images.tar --name $(CLUSTER)
 
+# Defence in depth: the pipeline verified the signature in the quality gate; it is checked again
+# right before the images are used. A failed check stops here, before anything is applied.
+registry-images: namespace ## Verify the signed images of reports/images and prepare the manifests with their digests (#43)
+	scripts/verify-image.sh backend
+	scripts/verify-image.sh frontend
+	@if [ -n "$${GHCR_TOKEN:-}" ]; then \
+		scripts/k8s-pull-secret.sh $(CTX) $(NS) && PULL_SECRET=ghcr-pull scripts/k8s-registry-overlay.sh; \
+	else \
+		scripts/k8s-registry-overlay.sh; \
+	fi
+
 # A finished Job cannot be changed, so it is deleted first; migrate.sh applies each migration once.
 deploy: ## Apply the manifests and run the database migrations (#37-#41)
 	$(KUBECTL_NS) delete job db-migrate --ignore-not-found
-	$(KUBECTL) apply --kustomize infrastructure/k8s
+	$(KUBECTL) apply --kustomize $(K8S_DIR)
 	$(KUBECTL_NS) wait --for=condition=complete job/db-migrate --timeout=300s
 
 wait: ## Wait until database, backend and frontend are Ready and the app answers (#42)
@@ -112,6 +131,9 @@ status: ## Show the state of the deployment (#42)
 
 logs: ## Show the recent logs of all application containers (#42)
 	$(KUBECTL_NS) logs --selector=app.kubernetes.io/part-of=doctorholiday --all-containers --prefix --tail=50 --ignore-errors
+
+smoke: ## Smoke test of the running app through the ingress (#43)
+	scripts/smoke-test.sh $(APP_URL)
 
 verify: ## Prove that the NetworkPolicies are enforced (#41)
 	scripts/test-netpol.sh $(CTX) $(NS)

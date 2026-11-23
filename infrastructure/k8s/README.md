@@ -99,7 +99,7 @@ An existing secret is never overwritten. To rotate one, delete it and run `make 
 
 ## Images
 
-`make images` builds both images from this checkout (tag `dev`, build arguments from `VERSION.txt` and `git rev-parse HEAD`) and loads them into the cluster with `kind load image-archive`; the manifests refer to them by name and the tag in `kustomization.yaml`. The signed images from GHCR, pulled by digest and verified with cosign before they are loaded, come with #34, #35 and the end of #42; `make images IMAGE_SOURCE=ghcr` says so and stops until then.
+`make images` builds both images from this checkout (tag `dev`, build arguments from `VERSION.txt` and `git rev-parse HEAD`) and loads them into the cluster with `kind load image-archive`; the manifests refer to them by name and the tag in `kustomization.yaml`. The signed images of the pipeline are used with `make up IMAGE_SOURCE=registry` (#43): `make registry-images` verifies both with cosign (`scripts/verify-image.sh`), `scripts/k8s-registry-overlay.sh` writes an overlay in `.cache/k8s-registry/` that replaces the images by the digests of `reports/images/<component>/image-ref.txt`, and the cluster pulls them from GHCR itself (nothing is loaded). With `GHCR_USER` and `GHCR_TOKEN` set a pull secret `ghcr-pull` is created and added to the Deployments, which is needed once the packages are private.
 
 ## Checks
 

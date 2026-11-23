@@ -4,7 +4,7 @@
 #   scripts/collect-evidence.sh <artifacts-dir> <evidence-dir> <prefix>
 #
 #   <artifacts-dir>  the downloaded workflow artifacts, one directory per artifact:
-#                    sbom/ sast/ sca/ secrets/ signing-<image>/ gate/ image-<image>/ run-logs/
+#                    sbom/ sast/ sca/ secrets/ signing-<image>/ gate/ deploy/ image-<image>/ run-logs/
 #   <evidence-dir>   destination, normally `evidence/`
 #   <prefix>         names this run, e.g. `0042-a1b2c3d` (run number, short commit)
 #
@@ -81,6 +81,8 @@ done
 # Gate result and job logs describe the whole run; the image artifacts (digest, reference by
 # digest, build provenance) belong to one image each.
 sort_dir gate run
+# Smoke test, NetworkPolicy test and pod security check of the deployment (#43).
+sort_dir deploy run
 sort_dir run-logs run
 for image in "${images[@]}"; do
   dir="$artifacts/image-$image"
