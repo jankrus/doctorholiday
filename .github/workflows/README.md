@@ -36,12 +36,12 @@ meta ─┬─ test-backend ──┐
 | `test-frontend` | – | **real:** `npm ci --ignore-scripts`, lint, tests, build | #31 |
 | `sbom` | (a) | **real:** CycloneDX SBOM of `frontend/` and `backend/` (Syft), validated with the CycloneDX CLI, artifact `sbom`. SBOM per built image follows with #34/#35 | #32 |
 | `sast` | (b) | **real:** Semgrep (registry packs + `.semgrep/`), JSON and SARIF per component, artifact `sast` | #33 |
-| `sca` | (b) | **real:** Trivy on the lockfiles (`package-lock.json`, `uv.lock`), full report, the gate counts HIGH and CRITICAL, artifact `sca`. `trivy image` follows with #34 | #33 |
+| `sca` | (b) | **real:** Trivy on the lockfiles (`package-lock.json`, `uv.lock`), full report, the gate counts HIGH and CRITICAL, artifact `sca`. `trivy image` runs in the quality gate (#36) | #33 |
 | `secrets` | (b) | **real:** Gitleaks over the full history with `.gitleaks.toml`, values redacted, artifact `secrets` | #33 |
 | `build` | (c) | **real:** builds, pushes to GHCR, records the digest; matrix `frontend` / `backend`; artifacts `image-frontend`, `image-backend` (`digest.txt`, `image-ref.txt`); outputs `frontend` and `backend` (digest) | #34 |
 | `sign` | (d) | **real:** matrix `frontend` / `backend`; cosign (key-based) signs the image digest and attaches the CycloneDX SBOM as an attestation (`scripts/sign-image.sh`), then verifies both with the committed public key (`scripts/verify-image.sh`); artifact `signing-<image>` | #35 |
 | `pr-findings` | (e) | **real:** PR-only check of the SCA and secret counts (same threshold as the gate, no signature check) | #46 |
-| `quality-gate` | (e) | stub | #36 |
+| `quality-gate` | (e) | **real:** downloads the reports, scans both images with Trivy (`scripts/scan.sh image`), runs `scripts/quality_gate.py` (secrets, HIGH/CRITICAL or CVSS >= 7.0, Semgrep ERROR, signatures via `scripts/verify-image.sh`, every needed job succeeded); artifact `gate`; `deploy` needs it and is skipped when it fails; also runs after a failed scan job | #36 |
 | `deploy` | deployment | stub | #43 |
 | `evidence` | §7 evidence | **real:** downloads all artifacts, saves the logs of the finished jobs, sorts everything into `evidence/<image>/<type>/<run>-<sha>-<file>` (`scripts/collect-evidence.sh`) and pushes it to the `evidence` branch (`scripts/publish-evidence.sh`); runs even after a failure | #44 |
 
