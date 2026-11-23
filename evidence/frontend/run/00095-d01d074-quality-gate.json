@@ -1,0 +1,31 @@
+{
+  "passed": true,
+  "run": "45288791506",
+  "sha": "d01d07417db03b2593810c99103e4ea8de1ebac3",
+  "rules": [
+    {
+      "rule": "jobs",
+      "description": "every job the gate depends on succeeded",
+      "passed": true,
+      "violations": []
+    },
+    {
+      "rule": "secrets",
+      "description": "Gitleaks found no secret in the history",
+      "passed": true,
+      "violations": []
+    },
+    {
+      "rule": "vulnerabilities",
+      "description": "no HIGH/CRITICAL or CVSS >= 7.0 finding",
+      "passed": true,
+      "violations": []
+    },
+    {
+      "rule": "signatures",
+      "description": "every image has a valid signature and SBOM attestation",
+      "passed": true,
+      "violations": []
+    }
+  ]
+}

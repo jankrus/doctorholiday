@@ -1,0 +1,21 @@
+Smoke test against https://doctorholiday.localhost
+PASS  frontend answers on / (200)
+PASS  frontend serves the single-page app
+PASS  API refuses a request without a session (401)
+PASS  HSTS header on the API response
+PASS  cross-site write is refused (403)
+PASS  first account registers (202)
+PASS  first account logs in (200)
+PASS  session is valid (200)
+PASS  first login on a fresh system became ADMIN
+PASS  second account registers (202)
+PASS  second account logs in (200)
+PASS  patient session is valid (200)
+PASS  second account is PATIENT
+PASS  patient lists doctors (200)
+PASS  patient lists its own appointments (200)
+PASS  patient cannot read the audit log (404)
+PASS  logout (204)
+PASS  session is gone after logout (401)
+
+Smoke test passed.
