@@ -10,3 +10,17 @@ title = "Doctor Holiday"
 
 [extend]
 useDefault = true
+
+# The Trivy reports of the built images (evidence/<image>/run/<run>-<sha>-trivy-image-<image>.json and
+# .sarif, #36, #44) list the layer history of the base image, and the python base image sets
+# `ENV GPG_KEY=<fingerprint>`. That fingerprint is the PUBLIC key id of the Python release signing
+# key, used by the base image to verify the Python download; it is not a secret. The generic API key
+# rule flags it in every report (9 findings in the first four runs). Both conditions must hold: only
+# these report files and only this exact line. Listed in docs/report/deviations.md.
+[[allowlists]]
+description = "Public Python release signing key id in the Trivy image reports"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^evidence/[a-z]+/run/.*-trivy-image-[a-z]+\.(json|sarif)$''']
+regexTarget = "line"
+regexes = ['''GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305''']
