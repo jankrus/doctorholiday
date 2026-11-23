@@ -1,0 +1,122 @@
+{
+  "passed": false,
+  "run": "45210097447",
+  "sha": "006a7a2700d74435dbc0aec8b0e185da7d3290b9",
+  "rules": [
+    {
+      "rule": "jobs",
+      "description": "every job the gate depends on succeeded",
+      "passed": true,
+      "violations": []
+    },
+    {
+      "rule": "secrets",
+      "description": "Gitleaks found no secret in the history",
+      "passed": false,
+      "violations": [
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "generic-api-key",
+            "file": "docs/report/deviations.md",
+            "line": 46,
+            "commit": "86fbddc2a569"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "generic-api-key",
+            "file": "docs/report/deviations.md",
+            "line": 46,
+            "commit": "daff44ffe49b"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "generic-api-key",
+            "file": "evidence/backend/run/00067-731b5df-trivy-image-backend.json",
+            "line": 65,
+            "commit": "7a3f6d628672"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "generic-api-key",
+            "file": "evidence/backend/run/00067-731b5df-trivy-image-backend.json",
+            "line": 177,
+            "commit": "7a3f6d628672"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "generic-api-key",
+            "file": "evidence/backend/run/00066-62ec68b-trivy-image-backend.json",
+            "line": 65,
+            "commit": "8b7d0002e769"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "generic-api-key",
+            "file": "evidence/backend/run/00066-62ec68b-trivy-image-backend.json",
+            "line": 177,
+            "commit": "8b7d0002e769"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "generic-api-key",
+            "file": "evidence/backend/run/00068-7b9de0c-trivy-image-backend.json",
+            "line": 65,
+            "commit": "2af325de4f21"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "generic-api-key",
+            "file": "evidence/backend/run/00068-7b9de0c-trivy-image-backend.json",
+            "line": 177,
+            "commit": "2af325de4f21"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "generic-api-key",
+            "file": "evidence/backend/run/00065-3340660-trivy-image-backend.json",
+            "line": 65,
+            "commit": "2c06011768dd"
+          }
+        },
+        {
+          "message": "secret found",
+          "detail": {
+            "rule": "generic-api-key",
+            "file": "evidence/backend/run/00065-3340660-trivy-image-backend.json",
+            "line": 177,
+            "commit": "2c06011768dd"
+          }
+        }
+      ]
+    },
+    {
+      "rule": "vulnerabilities",
+      "description": "no HIGH/CRITICAL or CVSS >= 7.0 finding",
+      "passed": true,
+      "violations": []
+    },
+    {
+      "rule": "signatures",
+      "description": "every image has a valid signature and SBOM attestation",
+      "passed": true,
+      "violations": []
+    }
+  ]
+}

@@ -1,0 +1,405 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.76.2"
+  },
+  "ReportID": "01a2091c-a754-7dcf-a462-a8ddbb1d4659",
+  "CreatedAt": "2026-11-23T15:53:22.516906626Z",
+  "ArtifactName": "backend",
+  "ArtifactType": "filesystem",
+  "Results": [
+    {
+      "Target": "uv.lock",
+      "Class": "lang-pkgs",
+      "Type": "uv",
+      "Packages": [
+        {
+          "ID": "doctorholiday-backend@0.1.0",
+          "Name": "doctorholiday-backend",
+          "Identifier": {
+            "PURL": "pkg:pypi/doctorholiday-backend@0.1.0",
+            "UID": "9fb27fca553aac29"
+          },
+          "Version": "0.1.0",
+          "Relationship": "root",
+          "DependsOn": [
+            "argon2-cffi@25.1.0",
+            "email-validator@2.3.0",
+            "fastapi@0.142.2",
+            "psycopg@3.3.6",
+            "pydantic-settings@2.15.0",
+            "sqlalchemy@2.1.3",
+            "uvicorn@0.54.0"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "argon2-cffi@25.1.0",
+          "Name": "argon2-cffi",
+          "Identifier": {
+            "PURL": "pkg:pypi/argon2-cffi@25.1.0",
+            "UID": "f04edef5f7cbb346"
+          },
+          "Version": "25.1.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "argon2-cffi-bindings@26.1.0"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "email-validator@2.3.0",
+          "Name": "email-validator",
+          "Identifier": {
+            "PURL": "pkg:pypi/email-validator@2.3.0",
+            "UID": "39cfaa6691cfa145"
+          },
+          "Version": "2.3.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "dnspython@2.9.2",
+            "idna@3.20"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "fastapi@0.142.2",
+          "Name": "fastapi",
+          "Identifier": {
+            "PURL": "pkg:pypi/fastapi@0.142.2",
+            "UID": "997afbe44e09765b"
+          },
+          "Version": "0.142.2",
+          "Relationship": "direct",
+          "DependsOn": [
+            "annotated-doc@0.0.5",
+            "opentelemetry-api@1.45.2",
+            "pydantic@2.13.5",
+            "starlette@1.7.0",
+            "typing-extensions@4.16.0",
+            "typing-inspection@0.4.4"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "psycopg@3.3.6",
+          "Name": "psycopg",
+          "Identifier": {
+            "PURL": "pkg:pypi/psycopg@3.3.6",
+            "UID": "96437db6425e45fb"
+          },
+          "Version": "3.3.6",
+          "Relationship": "direct",
+          "DependsOn": [
+            "psycopg-binary@3.3.6",
+            "typing-extensions@4.16.0",
+            "tzdata@2026.5"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "pydantic-settings@2.15.0",
+          "Name": "pydantic-settings",
+          "Identifier": {
+            "PURL": "pkg:pypi/pydantic-settings@2.15.0",
+            "UID": "713907a0c9889d24"
+          },
+          "Version": "2.15.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "pydantic@2.13.5",
+            "python-dotenv@1.2.4",
+            "typing-inspection@0.4.4"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "sqlalchemy@2.1.3",
+          "Name": "sqlalchemy",
+          "Identifier": {
+            "PURL": "pkg:pypi/sqlalchemy@2.1.3",
+            "UID": "97f6a87bff342237"
+          },
+          "Version": "2.1.3",
+          "Relationship": "direct",
+          "DependsOn": [
+            "typing-extensions@4.16.0"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "uvicorn@0.54.0",
+          "Name": "uvicorn",
+          "Identifier": {
+            "PURL": "pkg:pypi/uvicorn@0.54.0",
+            "UID": "2cf2374d2e2088a2"
+          },
+          "Version": "0.54.0",
+          "Relationship": "direct",
+          "DependsOn": [
+            "click@8.5.0",
+            "h11@0.16.0"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "annotated-doc@0.0.5",
+          "Name": "annotated-doc",
+          "Identifier": {
+            "PURL": "pkg:pypi/annotated-doc@0.0.5",
+            "UID": "789160a1e6bce043"
+          },
+          "Version": "0.0.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "annotated-types@0.8.0",
+          "Name": "annotated-types",
+          "Identifier": {
+            "PURL": "pkg:pypi/annotated-types@0.8.0",
+            "UID": "628450cec6fe2976"
+          },
+          "Version": "0.8.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "anyio@4.15.1",
+          "Name": "anyio",
+          "Identifier": {
+            "PURL": "pkg:pypi/anyio@4.15.1",
+            "UID": "9c372fd1cb10b1f4"
+          },
+          "Version": "4.15.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "idna@3.20",
+            "typing-extensions@4.16.0"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "argon2-cffi-bindings@26.1.0",
+          "Name": "argon2-cffi-bindings",
+          "Identifier": {
+            "PURL": "pkg:pypi/argon2-cffi-bindings@26.1.0",
+            "UID": "6be951fa71d14321"
+          },
+          "Version": "26.1.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "cffi@2.1.1"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "cffi@2.1.1",
+          "Name": "cffi",
+          "Identifier": {
+            "PURL": "pkg:pypi/cffi@2.1.1",
+            "UID": "ea88ecf6c656ca53"
+          },
+          "Version": "2.1.1",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "pycparser@3.12"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "click@8.5.0",
+          "Name": "click",
+          "Identifier": {
+            "PURL": "pkg:pypi/click@8.5.0",
+            "UID": "1507ba743c24d894"
+          },
+          "Version": "8.5.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "dnspython@2.9.2",
+          "Name": "dnspython",
+          "Identifier": {
+            "PURL": "pkg:pypi/dnspython@2.9.2",
+            "UID": "654801320b36ae57"
+          },
+          "Version": "2.9.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "h11@0.16.0",
+          "Name": "h11",
+          "Identifier": {
+            "PURL": "pkg:pypi/h11@0.16.0",
+            "UID": "d50a8db9ed31c7b5"
+          },
+          "Version": "0.16.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "idna@3.20",
+          "Name": "idna",
+          "Identifier": {
+            "PURL": "pkg:pypi/idna@3.20",
+            "UID": "c64541044456d7da"
+          },
+          "Version": "3.20",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "opentelemetry-api@1.45.2",
+          "Name": "opentelemetry-api",
+          "Identifier": {
+            "PURL": "pkg:pypi/opentelemetry-api@1.45.2",
+            "UID": "6f28f0f2ffd88b9e"
+          },
+          "Version": "1.45.2",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "typing-extensions@4.16.0"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "psycopg-binary@3.3.6",
+          "Name": "psycopg-binary",
+          "Identifier": {
+            "PURL": "pkg:pypi/psycopg-binary@3.3.6",
+            "UID": "d7c987f03a3710e1"
+          },
+          "Version": "3.3.6",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "pycparser@3.12",
+          "Name": "pycparser",
+          "Identifier": {
+            "PURL": "pkg:pypi/pycparser@3.12",
+            "UID": "9530ade7f45fc79d"
+          },
+          "Version": "3.12",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "pydantic@2.13.5",
+          "Name": "pydantic",
+          "Identifier": {
+            "PURL": "pkg:pypi/pydantic@2.13.5",
+            "UID": "6be276daefecc4c8"
+          },
+          "Version": "2.13.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "annotated-types@0.8.0",
+            "pydantic-core@2.46.5",
+            "typing-extensions@4.16.0",
+            "typing-inspection@0.4.4"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "pydantic-core@2.46.5",
+          "Name": "pydantic-core",
+          "Identifier": {
+            "PURL": "pkg:pypi/pydantic-core@2.46.5",
+            "UID": "24b6d42517663d51"
+          },
+          "Version": "2.46.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "typing-extensions@4.16.0"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "python-dotenv@1.2.4",
+          "Name": "python-dotenv",
+          "Identifier": {
+            "PURL": "pkg:pypi/python-dotenv@1.2.4",
+            "UID": "6de80cc64e8b9be2"
+          },
+          "Version": "1.2.4",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "starlette@1.7.0",
+          "Name": "starlette",
+          "Identifier": {
+            "PURL": "pkg:pypi/starlette@1.7.0",
+            "UID": "78bbc96718f72e0d"
+          },
+          "Version": "1.7.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "anyio@4.15.1",
+            "typing-extensions@4.16.0"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "typing-extensions@4.16.0",
+          "Name": "typing-extensions",
+          "Identifier": {
+            "PURL": "pkg:pypi/typing-extensions@4.16.0",
+            "UID": "23fd9c45aea880bf"
+          },
+          "Version": "4.16.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "typing-inspection@0.4.4",
+          "Name": "typing-inspection",
+          "Identifier": {
+            "PURL": "pkg:pypi/typing-inspection@0.4.4",
+            "UID": "cd0e447ca908db0d"
+          },
+          "Version": "0.4.4",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "typing-extensions@4.16.0"
+          ],
+          "AnalyzedBy": "uv"
+        },
+        {
+          "ID": "tzdata@2026.5",
+          "Name": "tzdata",
+          "Identifier": {
+            "PURL": "pkg:pypi/tzdata@2026.5",
+            "UID": "b85b7f606e80bfe5"
+          },
+          "Version": "2026.5",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "AnalyzedBy": "uv"
+        }
+      ]
+    }
+  ]
+}
