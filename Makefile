@@ -68,7 +68,7 @@ DB_SECRETS := .secrets/db_superuser_password .secrets/db_owner_password .secrets
 # container's postgres user.
 $(DB_SECRETS):
 	@mkdir -p -m 700 .secrets
-	@openssl rand -hex 32 > $@ && chmod 644 $@
+	@openssl rand -hex 32 | tr -d '\r' > $@ && chmod 644 $@
 	@echo "Created $@"
 
 db-up: $(DB_SECRETS) ## Start local PostgreSQL and apply the migrations (#12)
