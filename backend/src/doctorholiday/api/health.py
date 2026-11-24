@@ -6,9 +6,10 @@ from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel
 from sqlalchemy import Engine
 
+from doctorholiday.auth.dependencies import public
 from doctorholiday.db import check_database, get_engine
 
-router = APIRouter(tags=["health"])
+router = APIRouter(tags=["health"], dependencies=[Depends(public)])
 
 
 class Liveness(BaseModel):

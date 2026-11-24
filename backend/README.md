@@ -111,7 +111,8 @@ src/doctorholiday/
   scheduling.py   available times from working hours, absences and bookings (BR-23), no DB access
   repositories/   data access layer: the only code that builds queries
   auth/           passwords (Argon2id), session tokens and cookie, CurrentSession/ActiveUser,
-                  require_roles (RBAC per route), rate limiting (rate_limiting.py)
+                  require_roles (RBAC per route), policy.py (default deny at startup),
+                  rate limiting (rate_limiting.py)
   api/common.py   client IP, pagination, UTC timestamps, camelCase request/response base models
   api/responses.py  response bodies shared by the routers (DoctorRef, Appointment, ...)
   api/health.py   GET /healthz, GET /readyz
@@ -145,7 +146,7 @@ Conventions for new code:
   Responses never contain the submitted values, parser messages, the framework's `detail`, stack traces or file paths; the validation log has field locations and error types only. The `500` is answered in `RequestContextMiddleware`, not by an exception handler, because Starlette runs those outside every middleware, so the response would lack `X-Request-Id`. New error codes go into `ErrorCode` in `openapi.yaml` first; `tests/test_errors.py` fails otherwise.
 - **Validation** (#13, SR-03): request bodies subclass `RequestModel` (`extra="forbid"`) and use the field types in `validation.py` (`Email`, `Password`, `NewPassword`, `DisplayName`) or give every string and every list a `max_length`. Query parameters a route does not declare are rejected. `tests/test_validation.py` fails for any route whose body, path, query, header or cookie parameters are unbounded or whose body is not a `RequestModel`, and for any endpoint that reads the raw body (`request.json()` etc.). E-mail addresses are trimmed and lowercased, display names trimmed; passwords are never changed.
 - **No API docs at runtime:** `/docs`, `/redoc` and `/openapi.json` are disabled; the contract is `openapi.yaml`.
-- **Authorisation:** an endpoint takes `user: Annotated[User, Depends(require_roles(...))]` with the roles of its `x-roles`; other roles get `403 FORBIDDEN`. Object-level checks ("own only") are done in the endpoint against the session's user, and a foreign object answers `404` like an unknown one. The central, default-deny rule table is #16.
+- **Authorisation:** an endpoint takes `user: Annotated[User, Depends(require_roles(...))]` with the roles of its `x-roles`; other roles get `403 FORBIDDEN`. Object-level checks ("own only") are done in the endpoint against the session's user, and a foreign object answers `404` like an unknown one. **Default deny:** `create_app` calls `auth.policy.enforce_default_deny`, so the app does not start if a route has no authorisation dependency (`require_roles`, `ActiveUser`, `CurrentSession`, `reject_session` or `public` for probes). `tests/test_authorization.py` checks that the roles each route lets through equal `x-roles` in `openapi.yaml`, `tests/db/test_permissions.py` is the role × endpoint matrix and `tests/db/test_idor.py` the IDOR test between two patients. A new route needs a rule and an entry in the contract before it can start.
 - **Responses** with camelCase fields subclass `ResponseModel` (`api/common.py`) and are built by field name; timestamps are `UtcDatetime`, so they are UTC with `Z` whatever the database session's time zone is. Optional fields are left out of the JSON with `response_model_exclude_none=True`.
 
 ## Authentication

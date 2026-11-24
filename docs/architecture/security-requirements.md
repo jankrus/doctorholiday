@@ -20,7 +20,7 @@ This document lists the security requirements that Doctor Holiday **must** imple
 | ID | Title | Area | Priority | Status |
 | --- | --- | --- | --- | --- |
 | [SR-01](#sr-01-strong-authentication-and-session-management) | Strong authentication and session management | App | MUST | In progress ([#73](https://github.com/jankrus/doctorholiday/pull/73) open) |
-| [SR-02](#sr-02-authorisation-with-default-deny-and-object-level-checks) | Authorisation with default deny and object-level checks | App | MUST | Open |
+| [SR-02](#sr-02-authorisation-with-default-deny-and-object-level-checks) | Authorisation with default deny and object-level checks | App | MUST | Partly done: default deny, role matrix and IDOR tests ([#16](https://github.com/jankrus/doctorholiday/issues/16)); last-admin protection with the admin endpoints ([#18](https://github.com/jankrus/doctorholiday/issues/18)) |
 | [SR-03](#sr-03-server-side-input-validation-and-safe-data-access) | Server-side input validation and safe data access | App | MUST | Done for the current endpoints (schema [#69](https://github.com/jankrus/doctorholiday/pull/69), validation layer [#13](https://github.com/jankrus/doctorholiday/issues/13)); new routes are checked by test |
 | [SR-04](#sr-04-error-handling-and-logging-without-information-leaks) | Error handling and logging without information leaks | App | MUST | Mostly done (health, config, logging [#11](https://github.com/jankrus/doctorholiday/issues/11), error handling [#13](https://github.com/jankrus/doctorholiday/issues/13)); [#22](https://github.com/jankrus/doctorholiday/issues/22) open |
 | [SR-05](#sr-05-no-secrets-in-the-repository-or-in-images) | No secrets in the repository or in images | App, CI, K8s | MUST | Open |
