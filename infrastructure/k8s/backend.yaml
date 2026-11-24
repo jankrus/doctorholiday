@@ -56,11 +56,6 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: MFA_ENCRYPTION_KEY
-            - name: SESSION_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: backend-secrets
-                  key: SESSION_SECRET
           securityContext:
             allowPrivilegeEscalation: false
             privileged: false

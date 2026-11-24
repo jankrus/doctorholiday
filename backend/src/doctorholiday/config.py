@@ -45,7 +45,6 @@ class DatabaseSettings(BaseSettings):
 
 
 class Settings(DatabaseSettings):
-    session_secret: SecretStr
     mfa_encryption_key: SecretStr
     allowed_origins: Annotated[list[str], NoDecode]
     port: int = Field(default=8080, ge=1024, le=65535)
@@ -69,13 +68,6 @@ class Settings(DatabaseSettings):
     reauth_max_failures_per_user: int = Field(default=5, ge=1, le=100)
     reauth_window_minutes: int = Field(default=15, ge=1, le=1440)
     reauth_lockout_minutes: int = Field(default=15, ge=1, le=1440)
-
-    @field_validator("session_secret")
-    @classmethod
-    def _check_session_secret(cls, value: SecretStr) -> SecretStr:
-        if len(value.get_secret_value()) < 32:
-            raise ValueError("must be at least 32 characters long")
-        return value
 
     @field_validator("mfa_encryption_key")
     @classmethod

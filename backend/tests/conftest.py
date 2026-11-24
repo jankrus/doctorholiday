@@ -11,7 +11,6 @@ from doctorholiday.main import create_app
 # Dummy values for tests only. Nothing listens on port 1, so the database is unreachable.
 TEST_ENV = {
     "DATABASE_URL": "postgresql+psycopg://dh:db-password-sentinel@127.0.0.1:1/doctorholiday",
-    "SESSION_SECRET": "session-secret-sentinel-0123456789abcdef",
     # Encoded at runtime, so no secret-looking literal sits in the repo (Gitleaks).
     "MFA_ENCRYPTION_KEY": base64.urlsafe_b64encode(b"mfa-key-sentinel-0123456789abcde").decode(),
     "ALLOWED_ORIGINS": "https://doctorholiday.localhost",

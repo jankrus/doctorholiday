@@ -93,7 +93,7 @@ This document lists the security requirements that Doctor Holiday **must** imple
   - `.gitleaks.toml` contains custom rules for `DATABASE_URL`, `MFA_ENCRYPTION_KEY`.
   - Manifest check: secrets in `infrastructure/k8s/` are referenced (`secretKeyRef`), never given as values.
   - `docs/architecture/secrets.md` lists exactly the variables `config.py` requires.
-- **Issues:** [#30](https://github.com/jankrus/doctorholiday/issues/30), [#59](https://github.com/jankrus/doctorholiday/issues/59) (`SESSION_SECRET`), [#39](https://github.com/jankrus/doctorholiday/issues/39), [#33](https://github.com/jankrus/doctorholiday/issues/33).
+- **Issues:** [#30](https://github.com/jankrus/doctorholiday/issues/30), [#59](https://github.com/jankrus/doctorholiday/issues/59) (`SESSION_SECRET` removed: no consumer), [#39](https://github.com/jankrus/doctorholiday/issues/39), [#33](https://github.com/jankrus/doctorholiday/issues/33).
 
 ## SR-06: SBOM and vulnerability scanning with a blocking quality gate
 
@@ -179,5 +179,4 @@ This document lists the security requirements that Doctor Holiday **must** imple
 ## Open points
 
 - The verification of SR-06 and SR-07 needs the pipeline (#31–#36); until then the requirements are only checked by review.
-- `SESSION_SECRET` (#59) is still required by `config.py` without a consumer. SR-05 demands that it gets one or is removed.
 - Statuses in the overview are maintained by hand; the full mapping SR ↔ STRIDE ↔ implementation ↔ evidence is the traceability matrix in #47.

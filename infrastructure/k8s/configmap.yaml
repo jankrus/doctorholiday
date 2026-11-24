@@ -1,5 +1,5 @@
-# Non-secret configuration of the backend (issue #38). Secrets (DATABASE_URL, MFA_ENCRYPTION_KEY,
-# SESSION_SECRET) are NOT here: `make secrets` creates them at deploy time (#30).
+# Non-secret configuration of the backend (issue #38). Secrets (DATABASE_URL, MFA_ENCRYPTION_KEY)
+# are NOT here: `make secrets` creates them at deploy time (#30).
 apiVersion: v1
 kind: ConfigMap
 metadata:
