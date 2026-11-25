@@ -15,9 +15,9 @@ Helper scripts used by the Makefile and the pipeline (quality gate, packaging).
 | [`k8s-apply-pinned.sh`](k8s-apply-pinned.sh) | Downloads an upstream manifest (Calico, the Traefik CRDs), verifies its SHA-256 and only then applies it. | #40, #41 |
 | [`k8s-secrets.sh`](k8s-secrets.sh) | Generates the cluster secrets at deploy time (database passwords, MFA key, session secret, TLS certificate); idempotent, never overwrites, never prints values. | #30, #39, #42 |
 | [`test-netpol.sh`](test-netpol.sh) | Proves that the NetworkPolicies are enforced: three connections that must be blocked, three that must work. Run by `make verify`. | #41 |
-
 | [`smoke-test.sh`](smoke-test.sh) | Smoke test of the running app through the ingress: frontend, refused anonymous API call, CSRF check, register and login of two accounts (the first one must be `ADMIN` on a fresh cluster), patient reads, logout. Run by the `deploy` job and `make smoke`. | #43 |
 | [`check_pod_security.py`](check_pod_security.py) | Checks the running pods (`kubectl get pods -o json`): not privileged, no privilege escalation, read-only root file system, non-root, capabilities dropped, seccomp, no host namespaces, no mounted token. | #43 |
 | [`k8s-registry-overlay.sh`](k8s-registry-overlay.sh), [`k8s-pull-secret.sh`](k8s-pull-secret.sh) | `IMAGE_SOURCE=registry`: write a Kustomize overlay that replaces the application images by the digests of `image-ref.txt` (only `ghcr.io/jankrus/doctorholiday-*` by digest are accepted), and create the GHCR pull secret from `GHCR_USER` / `GHCR_TOKEN`. | #43 |
+| [`gate-demo.sh`](gate-demo.sh) | Gate demonstration (workflow `gate-demo.yml`): `prepare` puts one fault into the checkout (`secret`, `vulnerability`, `unsigned`; `clean` is the control), `assert` checks that the gate blocked for exactly that reason. Nothing is committed or pushed. | #36 |
 
 Planned: packaging (#51).

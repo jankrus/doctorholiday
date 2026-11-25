@@ -11,6 +11,8 @@ CI/CD pipeline of Doctor Holiday: [`ci-cd.yml`](ci-cd.yml). The skeleton is issu
 | `workflow_dispatch` on `main` | the whole pipeline (a release run), started by hand |
 | `workflow_dispatch` on any other branch | like a pull request: tests and scans only |
 
+**Gate demonstration:** [`gate-demo.yml`](gate-demo.yml) is started by hand (`workflow_dispatch`, scenario `clean`, `secret`, `vulnerability` or `unsigned`). It puts one fault into the checkout of the run, runs the real scans and the real gate and expects the gate to block for exactly that reason; it builds, signs and deploys nothing and pushes only its reports to the `evidence` branch (#36, [quality-gate.md](../../docs/architecture/quality-gate.md)).
+
 **Release run:** the `context` job sets `release=true` only for a push or manual run on `refs/heads/main`. Build, sign, quality gate, deploy and evidence ask `needs.context.outputs.release == 'true'`, one expression in one place. A pull request or a manual run on a feature branch can therefore never build and push an image, sign, deploy or write evidence.
 
 **Every change to `main` triggers a run** (brief §3), also documentation. Only `evidence/**` is ignored, so the evidence commit of #44 cannot start a new run. (The issue text suggested ignoring `docs/**` as well; that would contradict "every change" and would leave documentation-only pull requests without the checks that later become required, so it is not done.)
