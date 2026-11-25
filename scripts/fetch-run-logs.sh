@@ -26,10 +26,14 @@ gh api --paginate "repos/$repo/actions/runs/$run_id/jobs?per_page=100" \
     # "build (backend)" -> "build-backend"
     slug="$(printf '%s' "$job_name" | tr -c 'A-Za-z0-9' '-' | sed -e 's/--*/-/g' -e 's/^-//' -e 's/-$//')"
     file="$out/job-$slug-$conclusion.log"
-    if gh api "repos/$repo/actions/jobs/$job_id/logs" > "$file" 2> /dev/null; then
+    # --allow-escape-sequences: the logs contain ANSI colours and gh refuses them otherwise; the
+    # colours are stripped again below. The reason of a failure is shown, never swallowed.
+    if gh api --allow-escape-sequences "repos/$repo/actions/jobs/$job_id/logs" > "$file.raw" 2> "$file.err"; then
+      sed "s/$(printf '\033')\[[0-9;]*m//g" "$file.raw" > "$file"
       echo "saved $file"
     else
       rm -f "$file"
-      echo "no log for job $job_name ($job_id)"
+      echo "no log for job $job_name ($job_id): $(head -c 300 "$file.err")"
     fi
+    rm -f "$file.raw" "$file.err"
   done
