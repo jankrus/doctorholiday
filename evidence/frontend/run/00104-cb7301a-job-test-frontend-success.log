@@ -1,0 +1,321 @@
+﻿2026-11-26T14:05:48.5461762Z Current runner version: '2.338.2'
+2026-11-26T14:05:48.5480030Z ##[group]Runner Image Provisioner
+2026-11-26T14:05:48.5480759Z Hosted Compute Agent
+2026-11-26T14:05:48.5481164Z Version: 20261111.635
+2026-11-26T14:05:48.5481592Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-26T14:05:48.5482185Z Build Date: 2026-11-11T01:49:01Z
+2026-11-26T14:05:48.5482678Z Worker ID: {4302d07e-373f-4691-9c9c-f0eec30707ba}
+2026-11-26T14:05:48.5483212Z Region: us-west-2
+2026-11-26T14:05:48.5483874Z Cloud: AWS
+2026-11-26T14:05:48.5484239Z ##[endgroup]
+2026-11-26T14:05:48.5485238Z ##[group]Operating System
+2026-11-26T14:05:48.5485685Z Ubuntu
+2026-11-26T14:05:48.5486052Z 24.04.5
+2026-11-26T14:05:48.5486415Z LTS
+2026-11-26T14:05:48.5486774Z ##[endgroup]
+2026-11-26T14:05:48.5487160Z ##[group]Runner Image
+2026-11-26T14:05:48.5487596Z Image: ubuntu-24.04
+2026-11-26T14:05:48.5488253Z Version: 20261116.133.1
+2026-11-26T14:05:48.5489160Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.133/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-26T14:05:48.5490300Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.133
+2026-11-26T14:05:48.5490984Z ##[endgroup]
+2026-11-26T14:05:48.5491766Z ##[group]GITHUB_TOKEN Permissions
+2026-11-26T14:05:48.5493303Z Contents: read
+2026-11-26T14:05:48.5494060Z Metadata: read
+2026-11-26T14:05:48.5494473Z ##[endgroup]
+2026-11-26T14:05:48.5496006Z Secret source: Actions
+2026-11-26T14:05:48.5496681Z Cache mode: write
+2026-11-26T14:05:48.5497164Z Prepare workflow directory
+2026-11-26T14:05:48.5768233Z Prepare all required actions
+2026-11-26T14:05:48.5804883Z Getting action download info
+2026-11-26T14:05:48.9354669Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-26T14:05:50.7015360Z Download action repository 'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1' (SHA:949feb2413d6458794dcd2491c4babbbce0c15c1)
+2026-11-26T14:05:50.9149038Z Complete job name: test (frontend)
+2026-11-26T14:05:50.9881228Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-26T14:05:50.9882606Z with:
+2026-11-26T14:05:50.9883599Z   persist-credentials: false
+2026-11-26T14:05:50.9884558Z   repository: jankrus/doctorholiday
+2026-11-26T14:05:50.9891481Z   token: ***
+2026-11-26T14:05:50.9892264Z   ssh-strict: true
+2026-11-26T14:05:50.9893009Z   ssh-user: git
+2026-11-26T14:05:50.9893963Z   clean: true
+2026-11-26T14:05:50.9894748Z   sparse-checkout-cone-mode: true
+2026-11-26T14:05:50.9895627Z   fetch-depth: 1
+2026-11-26T14:05:50.9896409Z   fetch-tags: false
+2026-11-26T14:05:50.9897166Z   show-progress: true
+2026-11-26T14:05:50.9897927Z   lfs: false
+2026-11-26T14:05:50.9898659Z   submodules: false
+2026-11-26T14:05:50.9899422Z   set-safe-directory: true
+2026-11-26T14:05:50.9900314Z   allow-unsafe-pr-checkout: false
+2026-11-26T14:05:50.9901391Z ##[endgroup]
+2026-11-26T14:05:54.7680831Z Syncing repository: jankrus/doctorholiday
+2026-11-26T14:05:54.7682263Z ##[group]Getting Git version info
+2026-11-26T14:05:54.7682698Z Working directory is '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T14:05:54.7683591Z [command]/usr/bin/git version
+2026-11-26T14:05:55.0764286Z git version 2.56.1
+2026-11-26T14:05:55.0778460Z ##[endgroup]
+2026-11-26T14:05:55.0786891Z Temporarily overriding HOME='/home/runner/work/_temp/c8ef3c69-13a9-499f-9e32-807598069b4e' before making global git config changes
+2026-11-26T14:05:55.0787793Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T14:05:55.0790757Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T14:05:55.1197213Z Deleting the contents of '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T14:05:55.1199590Z ##[group]Determining repository object format
+2026-11-26T14:05:55.1200976Z ##[endgroup]
+2026-11-26T14:05:55.1201433Z ##[group]Initializing the repository
+2026-11-26T14:05:55.1204694Z [command]/usr/bin/git init /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T14:05:55.2414685Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-26T14:05:55.2415383Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-26T14:05:55.2415921Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-26T14:05:55.2416295Z hint: call:
+2026-11-26T14:05:55.2416542Z hint:
+2026-11-26T14:05:55.2416958Z hint: 	git config --global init.defaultBranch <name>
+2026-11-26T14:05:55.2417279Z hint:
+2026-11-26T14:05:55.2417627Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-26T14:05:55.2418073Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-26T14:05:55.2418460Z hint:
+2026-11-26T14:05:55.2418780Z hint: 	git branch -m <name>
+2026-11-26T14:05:55.2419115Z hint:
+2026-11-26T14:05:55.2419622Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-26T14:05:55.2420276Z Initialized empty Git repository in /home/runner/work/doctorholiday/doctorholiday/.git/
+2026-11-26T14:05:55.2429645Z [command]/usr/bin/git remote add origin https://github.com/jankrus/doctorholiday
+2026-11-26T14:05:55.2476245Z ##[endgroup]
+2026-11-26T14:05:55.2476762Z ##[group]Disabling automatic garbage collection
+2026-11-26T14:05:55.2478364Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-26T14:05:55.2502781Z ##[endgroup]
+2026-11-26T14:05:55.2503494Z ##[group]Setting up auth
+2026-11-26T14:05:55.2503880Z Removing SSH command configuration
+2026-11-26T14:05:55.2507356Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T14:05:55.2537094Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T14:05:55.6654278Z Removing HTTP extra header
+2026-11-26T14:05:55.6659694Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T14:05:55.6689971Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T14:05:55.6837992Z Removing includeIf entries pointing to credentials config files
+2026-11-26T14:05:55.6842769Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T14:05:55.6869690Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T14:05:55.7021900Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-a7f313ad-2d3c-48a0-9ff4-929bef1a5832.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-26T14:05:55.7051083Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path /home/runner/work/_temp/git-credentials-a7f313ad-2d3c-48a0-9ff4-929bef1a5832.config
+2026-11-26T14:05:55.7073714Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-a7f313ad-2d3c-48a0-9ff4-929bef1a5832.config
+2026-11-26T14:05:55.7097966Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-a7f313ad-2d3c-48a0-9ff4-929bef1a5832.config
+2026-11-26T14:05:55.7120921Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-a7f313ad-2d3c-48a0-9ff4-929bef1a5832.config
+2026-11-26T14:05:55.7141951Z ##[endgroup]
+2026-11-26T14:05:55.7142468Z ##[group]Fetching the repository
+2026-11-26T14:05:55.7147654Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +cb7301a2a7d5d93b63ad9fcf1489ae6fbc560909:refs/remotes/origin/main
+2026-11-26T14:05:56.3343528Z From https://github.com/jankrus/doctorholiday
+2026-11-26T14:05:56.3344369Z  * [new ref]         cb7301a2a7d5d93b63ad9fcf1489ae6fbc560909 -> origin/main
+2026-11-26T14:05:56.3354089Z [command]/usr/bin/git branch --list --remote origin/main
+2026-11-26T14:05:56.3382020Z   origin/main
+2026-11-26T14:05:56.3388198Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-11-26T14:05:56.3407661Z cb7301a2a7d5d93b63ad9fcf1489ae6fbc560909
+2026-11-26T14:05:56.3409733Z ##[endgroup]
+2026-11-26T14:05:56.3410862Z ##[group]Determining the checkout info
+2026-11-26T14:05:56.3411373Z ##[endgroup]
+2026-11-26T14:05:56.3414453Z [command]/usr/bin/git sparse-checkout disable
+2026-11-26T14:05:56.3467335Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-26T14:05:56.3488845Z ##[group]Checking out the ref
+2026-11-26T14:05:56.3491609Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-11-26T14:05:56.3701599Z Switched to a new branch 'main'
+2026-11-26T14:05:56.3709286Z branch 'main' set up to track 'origin/main'.
+2026-11-26T14:05:56.3714613Z ##[endgroup]
+2026-11-26T14:05:56.3752624Z [command]/usr/bin/git log -1 --format=%H
+2026-11-26T14:05:56.3773691Z cb7301a2a7d5d93b63ad9fcf1489ae6fbc560909
+2026-11-26T14:05:56.3781782Z ##[group]Removing auth
+2026-11-26T14:05:56.3782070Z Removing SSH command configuration
+2026-11-26T14:05:56.3785204Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T14:05:56.3810381Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T14:05:56.3966201Z Removing HTTP extra header
+2026-11-26T14:05:56.3968976Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T14:05:56.3991950Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T14:05:56.4138761Z Removing includeIf entries pointing to credentials config files
+2026-11-26T14:05:56.4141825Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T14:05:56.4165227Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T14:05:56.4165890Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T14:05:56.4166388Z includeif.gitdir:/github/workspace/.git.path
+2026-11-26T14:05:56.4166854Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T14:05:56.4178974Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T14:05:56.4191749Z /home/runner/work/_temp/git-credentials-a7f313ad-2d3c-48a0-9ff4-929bef1a5832.config
+2026-11-26T14:05:56.4199004Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-a7f313ad\-2d3c\-48a0\-9ff4\-929bef1a5832\.config
+2026-11-26T14:05:56.4229828Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T14:05:56.4248601Z /home/runner/work/_temp/git-credentials-a7f313ad-2d3c-48a0-9ff4-929bef1a5832.config
+2026-11-26T14:05:56.4254295Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-a7f313ad\-2d3c\-48a0\-9ff4\-929bef1a5832\.config
+2026-11-26T14:05:56.4280887Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-11-26T14:05:56.4300849Z /github/runner_temp/git-credentials-a7f313ad-2d3c-48a0-9ff4-929bef1a5832.config
+2026-11-26T14:05:56.4306106Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-a7f313ad\-2d3c\-48a0\-9ff4\-929bef1a5832\.config
+2026-11-26T14:05:56.4330525Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T14:05:56.4347413Z /github/runner_temp/git-credentials-a7f313ad-2d3c-48a0-9ff4-929bef1a5832.config
+2026-11-26T14:05:56.4352006Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-a7f313ad\-2d3c\-48a0\-9ff4\-929bef1a5832\.config
+2026-11-26T14:05:56.4375324Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T14:05:56.4520607Z Removing credentials config '/home/runner/work/_temp/git-credentials-a7f313ad-2d3c-48a0-9ff4-929bef1a5832.config'
+2026-11-26T14:05:56.4526904Z ##[endgroup]
+2026-11-26T14:05:56.4714115Z ##[group]Run actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+2026-11-26T14:05:56.4714495Z with:
+2026-11-26T14:05:56.4714715Z   node-version-file: frontend/.nvmrc
+2026-11-26T14:05:56.4714966Z   check-latest: false
+2026-11-26T14:05:56.4716936Z   token: ***
+2026-11-26T14:05:56.4717142Z   package-manager-cache: true
+2026-11-26T14:05:56.4717400Z ##[endgroup]
+2026-11-26T14:05:56.5665342Z Node version file is not TOML file
+2026-11-26T14:05:56.5665937Z Resolved frontend/.nvmrc as 22.13
+2026-11-26T14:05:56.6409145Z Attempting to download 22.13...
+2026-11-26T14:05:57.3891452Z Acquiring 22.13.1 - x64 from https://github.com/actions/node-versions/releases/download/22.13.1-12900459766/node-22.13.1-linux-x64.tar.gz
+2026-11-26T14:05:58.0016922Z Extracting ...
+2026-11-26T14:05:58.0145598Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/cca71652-a189-4981-81fe-147021aaa11d -f /home/runner/work/_temp/7ec5534c-2a7f-41f8-b18d-b608ed653086
+2026-11-26T14:05:59.0642071Z Adding to the cache ...
+2026-11-26T14:06:00.0255006Z ##[group]Environment details
+2026-11-26T14:06:00.5737636Z node: v22.13.1
+2026-11-26T14:06:00.5738232Z npm: 10.9.2
+2026-11-26T14:06:00.5738500Z yarn: 1.22.22
+2026-11-26T14:06:00.5739090Z ##[endgroup]
+2026-11-26T14:06:00.5860341Z ##[group]Run npm ci --ignore-scripts
+2026-11-26T14:06:00.5860699Z npm ci --ignore-scripts
+2026-11-26T14:06:00.8165571Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:06:00.8165961Z ##[endgroup]
+2026-11-26T14:06:01.7337061Z npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2026-11-26T14:06:01.9234935Z npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-11-26T14:06:01.9862217Z npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-11-26T14:06:02.5625988Z npm warn deprecated @humanwhocodes/config-array@0.13.0: Use @eslint/config-array instead
+2026-11-26T14:06:02.5873841Z npm warn deprecated @humanwhocodes/object-schema@2.0.3: Use @eslint/object-schema instead
+2026-11-26T14:06:03.4060838Z npm warn deprecated eslint@8.57.1: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+2026-11-26T14:06:03.6900577Z 
+2026-11-26T14:06:03.6901670Z added 335 packages, and audited 336 packages in 3s
+2026-11-26T14:06:03.6907790Z 
+2026-11-26T14:06:03.6908102Z found 0 vulnerabilities
+2026-11-26T14:06:03.7149553Z ##[group]Run npm run lint
+2026-11-26T14:06:03.7149856Z npm run lint
+2026-11-26T14:06:03.7178826Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:06:03.7179188Z ##[endgroup]
+2026-11-26T14:06:03.7876496Z 
+2026-11-26T14:06:03.7877445Z > doctorholiday-frontend@0.0.0 lint
+2026-11-26T14:06:03.7878597Z > eslint . --max-warnings 0 && prettier --check .
+2026-11-26T14:06:03.7878969Z 
+2026-11-26T14:06:05.1941285Z Checking formatting...
+2026-11-26T14:06:06.3205702Z All matched files use Prettier code style!
+2026-11-26T14:06:06.3392682Z ##[group]Run npm test
+2026-11-26T14:06:06.3393034Z npm test
+2026-11-26T14:06:06.3419574Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:06:06.3419915Z ##[endgroup]
+2026-11-26T14:06:06.4118601Z 
+2026-11-26T14:06:06.4119243Z > doctorholiday-frontend@0.0.0 test
+2026-11-26T14:06:06.4119718Z > vitest run
+2026-11-26T14:06:06.4119858Z 
+2026-11-26T14:06:06.6716584Z 
+2026-11-26T14:06:06.6719207Z  RUN  v5.1.1 /home/runner/work/doctorholiday/doctorholiday/frontend
+2026-11-26T14:06:06.6719853Z 
+2026-11-26T14:06:10.2826611Z  ✓ src/pages/auth/MfaPage.test.tsx (12 tests) 2025ms
+2026-11-26T14:06:10.2855277Z    ✓ MFA login challenge (4)
+2026-11-26T14:06:10.2856608Z      ✓ accepts the app code, also with a space, and opens the start page 450ms
+2026-11-26T14:06:10.2885076Z    ✓ MFA enrolment (3)
+2026-11-26T14:06:10.2915395Z      ✓ shows the recovery codes once and continues only after confirming they are saved 321ms
+2026-11-26T14:06:10.6246268Z  ✓ src/pages/patient/AppointmentsPage.test.tsx (12 tests) 2366ms
+2026-11-26T14:06:10.6274741Z    ✓ my appointments (12)
+2026-11-26T14:06:10.6304950Z      ✓ greets the patient by the time of day and names the next appointment 313ms
+2026-11-26T14:06:10.6314749Z      ✓ cancels after confirmation and moves the appointment to the history 454ms
+2026-11-26T14:06:10.6344886Z      ✓ confirms the cancellation even while the list still reloads behind the dialog 532ms
+2026-11-26T14:06:11.8053174Z  ✓ src/pages/patient/BookPage.test.tsx (15 tests) 3550ms
+2026-11-26T14:06:11.8086930Z    ✓ booking page (15)
+2026-11-26T14:06:11.8088817Z      ✓ shows the free times of the first free day of this week 472ms
+2026-11-26T14:06:11.8089910Z      ✓ books a time with the chosen doctor and reason 561ms
+2026-11-26T14:06:11.8090864Z      ✓ reports a time taken meanwhile (TIME_ALREADY_BOOKED) and reloads the free times 331ms
+2026-11-26T14:06:12.8955261Z Error: useToast() needs a <ToastProvider> above it.
+2026-11-26T14:06:12.8969019Z     at useToast (/home/runner/work/doctorholiday/doctorholiday/frontend/src/components/Toasts.tsx:76:23)
+2026-11-26T14:06:12.8970275Z     at Orphan (/home/runner/work/doctorholiday/doctorholiday/frontend/src/components/Toasts.test.tsx:144:7)
+2026-11-26T14:06:12.8971622Z     at renderWithHooks (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/react-dom/cjs/react-dom.development.js:15486:18)
+2026-11-26T14:06:12.8983788Z     at mountIndeterminateComponent (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/react-dom/cjs/react-dom.development.js:20103:13)
+2026-11-26T14:06:12.8985310Z     at beginWork (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/react-dom/cjs/react-dom.development.js:21626:16)
+2026-11-26T14:06:12.8986889Z     at HTMLUnknownElement.callCallback (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/react-dom/cjs/react-dom.development.js:4164:14)
+2026-11-26T14:06:12.8988521Z  ✓ src/components/Toasts.test.tsx (11 tests) 753ms
+2026-11-26T14:06:12.9001591Z     at HTMLUnknownElement.callTheUserObjectsOperation (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/jsdom/lib/generated/idl/EventListener.js:26:30)
+2026-11-26T14:06:12.9004040Z     at innerInvokeEventListeners (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:360:16)
+2026-11-26T14:06:12.9030098Z     at invokeEventListeners (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:296:3)
+2026-11-26T14:06:12.9031864Z     at HTMLUnknownElementImpl._dispatch (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:243:9)
+2026-11-26T14:06:12.9033073Z Error: useToast() needs a <ToastProvider> above it.
+2026-11-26T14:06:12.9034141Z     at useToast (/home/runner/work/doctorholiday/doctorholiday/frontend/src/components/Toasts.tsx:76:23)
+2026-11-26T14:06:12.9035237Z     at Orphan (/home/runner/work/doctorholiday/doctorholiday/frontend/src/components/Toasts.test.tsx:144:7)
+2026-11-26T14:06:12.9036496Z     at renderWithHooks (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/react-dom/cjs/react-dom.development.js:15486:18)
+2026-11-26T14:06:12.9038005Z     at mountIndeterminateComponent (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/react-dom/cjs/react-dom.development.js:20103:13)
+2026-11-26T14:06:12.9045383Z     at beginWork (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/react-dom/cjs/react-dom.development.js:21626:16)
+2026-11-26T14:06:12.9046944Z     at HTMLUnknownElement.callCallback (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/react-dom/cjs/react-dom.development.js:4164:14)
+2026-11-26T14:06:12.9048620Z     at HTMLUnknownElement.callTheUserObjectsOperation (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/jsdom/lib/generated/idl/EventListener.js:26:30)
+2026-11-26T14:06:12.9051802Z     at innerInvokeEventListeners (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:360:16)
+2026-11-26T14:06:12.9053567Z     at invokeEventListeners (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:296:3)
+2026-11-26T14:06:12.9055351Z     at HTMLUnknownElementImpl._dispatch (/home/runner/work/doctorholiday/doctorholiday/frontend/node_modules/jsdom/lib/jsdom/living/events/EventTarget-impl.js:243:9)
+2026-11-26T14:06:14.0686479Z  ✓ src/pages/auth/LoginPage.test.tsx (9 tests) 2234ms
+2026-11-26T14:06:14.0750287Z    ✓ login page (9)
+2026-11-26T14:06:14.0785375Z      ✓ sends the credentials and opens the start page of the role 633ms
+2026-11-26T14:06:14.0884142Z      ✓ closes the error once a new attempt succeeds 335ms
+2026-11-26T14:06:14.4641867Z stderr | src/routes.test.tsx > routing > redirects / to /login without a session
+2026-11-26T14:06:14.4659650Z Matched leaf route at location "/" does not have an element or Component. This means it will render an <Outlet /> with a null value by default resulting in an "empty" page.
+2026-11-26T14:06:14.4662282Z 
+2026-11-26T14:06:15.6016415Z  ✓ src/routes.test.tsx (18 tests) 1193ms
+2026-11-26T14:06:15.9975960Z  ✓ src/pages/auth/RegisterPage.test.tsx (6 tests) 2710ms
+2026-11-26T14:06:16.0002559Z    ✓ register page (6)
+2026-11-26T14:06:16.0003625Z      ✓ registers and continues to the login page with a confirmation 955ms
+2026-11-26T14:06:16.0004550Z      ✓ leaves out an empty name 397ms
+2026-11-26T14:06:16.0005482Z      ✓ shows the confirmation only once: a reload of the login page shows nothing 505ms
+2026-11-26T14:06:16.0006349Z      ✓ shows a generic error from the server 387ms
+2026-11-26T14:06:16.4304072Z  ✓ src/pages/patient/ReschedulePage.test.tsx (5 tests) 971ms
+2026-11-26T14:06:16.4323935Z    ✓ reschedule page (5)
+2026-11-26T14:06:16.4325097Z      ✓ starts with the appointment's doctor and week 313ms
+2026-11-26T14:06:16.7102202Z      ✓ moves the appointment and confirms the new time 386ms
+2026-11-26T14:06:16.7103245Z  ✓ src/appointments/time.test.ts (16 tests) 7ms
+2026-11-26T14:06:17.0736394Z  ✓ src/auth/validation.test.ts (23 tests) 9ms
+2026-11-26T14:06:18.4494936Z  ✓ src/pages/auth/SetupPage.test.tsx (4 tests) 704ms
+2026-11-26T14:06:18.4496447Z    ✓ practice setup (4)
+2026-11-26T14:06:18.4497590Z      ✓ saves the settings and opens the admin area 355ms
+2026-11-26T14:06:18.5285772Z  ✓ src/components/OtpInput.test.tsx (6 tests) 368ms
+2026-11-26T14:06:18.6625632Z  ✓ src/pages/AppLayout.test.tsx (3 tests) 509ms
+2026-11-26T14:06:19.5116058Z  ✓ src/auth/guards.test.ts (15 tests) 10ms
+2026-11-26T14:06:19.5415989Z  ✓ src/api/errors.test.ts (6 tests) 4ms
+2026-11-26T14:06:19.5946163Z  ✓ src/auth/session.test.ts (3 tests) 9ms
+2026-11-26T14:06:19.5991336Z 
+2026-11-26T14:06:19.5995541Z  Test Files  16 passed (16)
+2026-11-26T14:06:19.5996546Z       Tests  164 passed (164)
+2026-11-26T14:06:19.5997236Z    Start at  14:06:06
+2026-11-26T14:06:19.6000162Z    Duration  12.92s (tests 47%, environment 32%, import 10%, setup 7%, transform 3%)
+2026-11-26T14:06:19.6004671Z 
+2026-11-26T14:06:19.6005887Z Environment  jsdom was created 16 times · 11.81s total, 32% of tracked time
+2026-11-26T14:06:19.6007348Z              create it once per worker with pool: 'vmThreads' (keeps per-file isolation) or isolate: false (shares it across files)
+2026-11-26T14:06:19.6010360Z              learn more: https://vitest.dev/guide/improving-performance#test-environments
+2026-11-26T14:06:19.6010939Z 
+2026-11-26T14:06:19.6441103Z ##[group]Run npm run build
+2026-11-26T14:06:19.6441404Z npm run build
+2026-11-26T14:06:19.6467938Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:06:19.6468255Z ##[endgroup]
+2026-11-26T14:06:19.7156989Z 
+2026-11-26T14:06:19.7157984Z > doctorholiday-frontend@0.0.0 build
+2026-11-26T14:06:19.7158516Z > npm run typecheck && vite build
+2026-11-26T14:06:19.7158704Z 
+2026-11-26T14:06:19.7832051Z 
+2026-11-26T14:06:19.7832979Z > doctorholiday-frontend@0.0.0 typecheck
+2026-11-26T14:06:19.7834041Z > tsc -p tsconfig.json && tsc -p tsconfig.node.json
+2026-11-26T14:06:19.7834378Z 
+2026-11-26T14:06:23.2902116Z vite v8.3.8 building client environment for production...
+2026-11-26T14:06:23.2980790Z transforming...
+2026-11-26T14:06:23.3731768Z ✓ 327 modules transformed.
+2026-11-26T14:06:23.4446051Z rendering chunks...
+2026-11-26T14:06:23.5273269Z computing gzip size...
+2026-11-26T14:06:23.5359375Z dist/index.html                   0.45 kB │ gzip:   0.28 kB
+2026-11-26T14:06:23.5359929Z dist/assets/index-DrP4Bq7W.css  697.66 kB │ gzip:  85.28 kB
+2026-11-26T14:06:23.5360494Z dist/assets/index-D0Ek8U_R.js   527.36 kB │ gzip: 161.53 kB
+2026-11-26T14:06:23.5360717Z 
+2026-11-26T14:06:23.5364951Z [plugin builtin:vite-reporter] 
+2026-11-26T14:06:23.5365764Z (!) Some chunks are larger than 500 kB after minification. Consider:
+2026-11-26T14:06:23.5366544Z - Using dynamic import() to code-split the application
+2026-11-26T14:06:23.5367329Z - Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+2026-11-26T14:06:23.5368160Z - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+2026-11-26T14:06:23.5414597Z ✓ built in 251ms
+2026-11-26T14:06:23.5673189Z Post job cleanup.
+2026-11-26T14:06:23.6707440Z Post job cleanup.
+2026-11-26T14:06:23.7383080Z [command]/usr/bin/git version
+2026-11-26T14:06:23.7416454Z git version 2.56.1
+2026-11-26T14:06:23.7442387Z Temporarily overriding HOME='/home/runner/work/_temp/2396489b-598a-450c-b37e-6a770e685be7' before making global git config changes
+2026-11-26T14:06:23.7444015Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T14:06:23.7445211Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T14:06:23.7472689Z Removing SSH command configuration
+2026-11-26T14:06:23.7477374Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T14:06:23.7506872Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T14:06:23.7671462Z Removing HTTP extra header
+2026-11-26T14:06:23.7676145Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T14:06:23.7701345Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T14:06:23.7855235Z Removing includeIf entries pointing to credentials config files
+2026-11-26T14:06:23.7860429Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T14:06:23.7882167Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T14:06:23.8179977Z Cleaning up orphan processes

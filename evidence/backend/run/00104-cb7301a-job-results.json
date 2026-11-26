@@ -1,0 +1,61 @@
+{
+  "context": {
+    "result": "success",
+    "outputs": {
+      "release": "true"
+    }
+  },
+  "meta": {
+    "result": "success",
+    "outputs": {
+      "tag_sha": "0.1.0-cb7301a",
+      "version": "0.1.0",
+      "short_sha": "cb7301a",
+      "tag_version": "0.1.0"
+    }
+  },
+  "sbom": {
+    "result": "success",
+    "outputs": {
+      "components": "139"
+    }
+  },
+  "sast": {
+    "result": "success",
+    "outputs": {
+      "findings": "0",
+      "findings_all": "2"
+    }
+  },
+  "sca": {
+    "result": "success",
+    "outputs": {
+      "findings": "0"
+    }
+  },
+  "secrets": {
+    "result": "success",
+    "outputs": {
+      "findings": "0"
+    }
+  },
+  "build": {
+    "result": "success",
+    "outputs": {
+      "backend": "sha256:6287fda5d208113d060d319114511ab8b912f1dcd1c7dd672f8824f984b42a1e",
+      "frontend": "sha256:4ec4367f13270ba560a72acf20116e6421d7b5648d2e7a185f8c4b68e3eaf048"
+    }
+  },
+  "sign": {
+    "result": "success",
+    "outputs": {}
+  },
+  "quality-gate": {
+    "result": "success",
+    "outputs": {}
+  },
+  "deploy": {
+    "result": "success",
+    "outputs": {}
+  }
+}

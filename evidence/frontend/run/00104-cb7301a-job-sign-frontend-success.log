@@ -1,0 +1,571 @@
+﻿2026-11-26T14:13:38.5609826Z Current runner version: '2.338.2'
+2026-11-26T14:13:38.5627395Z ##[group]Runner Image Provisioner
+2026-11-26T14:13:38.5628224Z Hosted Compute Agent
+2026-11-26T14:13:38.5628742Z Version: 20261111.635
+2026-11-26T14:13:38.5629341Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-26T14:13:38.5629971Z Build Date: 2026-11-11T01:49:01Z
+2026-11-26T14:13:38.5630573Z Worker ID: {7f576e5e-5341-481d-8df7-acc57dc07e57}
+2026-11-26T14:13:38.5631185Z Region: us-west-2
+2026-11-26T14:13:38.5631695Z Cloud: AWS
+2026-11-26T14:13:38.5632471Z ##[endgroup]
+2026-11-26T14:13:38.5633705Z ##[group]Operating System
+2026-11-26T14:13:38.5634230Z Ubuntu
+2026-11-26T14:13:38.5634712Z 24.04.5
+2026-11-26T14:13:38.5635149Z LTS
+2026-11-26T14:13:38.5635598Z ##[endgroup]
+2026-11-26T14:13:38.5636068Z ##[group]Runner Image
+2026-11-26T14:13:38.5636632Z Image: ubuntu-24.04
+2026-11-26T14:13:38.5637195Z Version: 20261122.23.1
+2026-11-26T14:13:38.5638559Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261122.23/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-26T14:13:38.5640264Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261122.23
+2026-11-26T14:13:38.5641326Z ##[endgroup]
+2026-11-26T14:13:38.5642845Z ##[group]GITHUB_TOKEN Permissions
+2026-11-26T14:13:38.5645274Z Contents: read
+2026-11-26T14:13:38.5645887Z Metadata: read
+2026-11-26T14:13:38.5646359Z Packages: write
+2026-11-26T14:13:38.5646825Z ##[endgroup]
+2026-11-26T14:13:38.5648575Z Secret source: Actions
+2026-11-26T14:13:38.5649341Z Cache mode: write
+2026-11-26T14:13:38.5649920Z Prepare workflow directory
+2026-11-26T14:13:38.5918515Z Prepare all required actions
+2026-11-26T14:13:38.5954438Z Getting action download info
+2026-11-26T14:13:39.0046607Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-26T14:13:40.1546855Z Download action repository 'actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333' (SHA:9000827ccba6bdab643e8b6fd33ac0654aef8333)
+2026-11-26T14:13:40.5776667Z Download action repository 'sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532' (SHA:756fe2d284c7292c4e9b62c8a28f1e5629c59532)
+2026-11-26T14:13:40.7916950Z Download action repository 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9' (SHA:cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+2026-11-26T14:13:41.0624165Z Complete job name: sign (frontend)
+2026-11-26T14:13:41.1229556Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-26T14:13:41.1230292Z with:
+2026-11-26T14:13:41.1230624Z   persist-credentials: false
+2026-11-26T14:13:41.1231025Z   repository: jankrus/doctorholiday
+2026-11-26T14:13:41.1233513Z   token: ***
+2026-11-26T14:13:41.1233860Z   ssh-strict: true
+2026-11-26T14:13:41.1234178Z   ssh-user: git
+2026-11-26T14:13:41.1234494Z   clean: true
+2026-11-26T14:13:41.1234849Z   sparse-checkout-cone-mode: true
+2026-11-26T14:13:41.1235221Z   fetch-depth: 1
+2026-11-26T14:13:41.1235543Z   fetch-tags: false
+2026-11-26T14:13:41.1235901Z   show-progress: true
+2026-11-26T14:13:41.1236323Z   lfs: false
+2026-11-26T14:13:41.1236642Z   submodules: false
+2026-11-26T14:13:41.1236969Z   set-safe-directory: true
+2026-11-26T14:13:41.1237341Z   allow-unsafe-pr-checkout: false
+2026-11-26T14:13:41.1237922Z ##[endgroup]
+2026-11-26T14:13:44.5998971Z Syncing repository: jankrus/doctorholiday
+2026-11-26T14:13:44.6000896Z ##[group]Getting Git version info
+2026-11-26T14:13:44.6001585Z Working directory is '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T14:13:44.6002681Z [command]/usr/bin/git version
+2026-11-26T14:13:44.9880627Z git version 2.56.1
+2026-11-26T14:13:44.9900631Z ##[endgroup]
+2026-11-26T14:13:44.9906926Z Temporarily overriding HOME='/home/runner/work/_temp/22de5075-b27d-4c10-a8be-0fd7bce6da16' before making global git config changes
+2026-11-26T14:13:44.9908129Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T14:13:44.9910269Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T14:13:45.0260157Z Deleting the contents of '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T14:13:45.0262314Z ##[group]Determining repository object format
+2026-11-26T14:13:45.0263661Z ##[endgroup]
+2026-11-26T14:13:45.0264158Z ##[group]Initializing the repository
+2026-11-26T14:13:45.0267098Z [command]/usr/bin/git init /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T14:13:45.0714641Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-26T14:13:45.0715266Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-26T14:13:45.0715913Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-26T14:13:45.0716426Z hint: call:
+2026-11-26T14:13:45.0716752Z hint:
+2026-11-26T14:13:45.0717095Z hint: 	git config --global init.defaultBranch <name>
+2026-11-26T14:13:45.0717476Z hint:
+2026-11-26T14:13:45.0717795Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-26T14:13:45.0718535Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-26T14:13:45.0719076Z hint:
+2026-11-26T14:13:45.0719430Z hint: 	git branch -m <name>
+2026-11-26T14:13:45.0719786Z hint:
+2026-11-26T14:13:45.0720243Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-26T14:13:45.0721067Z Initialized empty Git repository in /home/runner/work/doctorholiday/doctorholiday/.git/
+2026-11-26T14:13:45.0728983Z [command]/usr/bin/git remote add origin https://github.com/jankrus/doctorholiday
+2026-11-26T14:13:45.0770243Z ##[endgroup]
+2026-11-26T14:13:45.0770765Z ##[group]Disabling automatic garbage collection
+2026-11-26T14:13:45.0772749Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-26T14:13:45.0796383Z ##[endgroup]
+2026-11-26T14:13:45.0796969Z ##[group]Setting up auth
+2026-11-26T14:13:45.0797339Z Removing SSH command configuration
+2026-11-26T14:13:45.0801778Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T14:13:45.0827428Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T14:13:45.5996295Z Removing HTTP extra header
+2026-11-26T14:13:45.6001785Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T14:13:45.6039282Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T14:13:45.6176252Z Removing includeIf entries pointing to credentials config files
+2026-11-26T14:13:45.6180311Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T14:13:45.6209882Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T14:13:45.6360217Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-5214c486-237c-41ce-b85b-e6acf2b07191.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-26T14:13:45.6386154Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path /home/runner/work/_temp/git-credentials-5214c486-237c-41ce-b85b-e6acf2b07191.config
+2026-11-26T14:13:45.6409477Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-5214c486-237c-41ce-b85b-e6acf2b07191.config
+2026-11-26T14:13:45.6449650Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-5214c486-237c-41ce-b85b-e6acf2b07191.config
+2026-11-26T14:13:45.6456462Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-5214c486-237c-41ce-b85b-e6acf2b07191.config
+2026-11-26T14:13:45.6479849Z ##[endgroup]
+2026-11-26T14:13:45.6480516Z ##[group]Fetching the repository
+2026-11-26T14:13:45.6485004Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +cb7301a2a7d5d93b63ad9fcf1489ae6fbc560909:refs/remotes/origin/main
+2026-11-26T14:13:46.2314720Z From https://github.com/jankrus/doctorholiday
+2026-11-26T14:13:46.2315540Z  * [new ref]         cb7301a2a7d5d93b63ad9fcf1489ae6fbc560909 -> origin/main
+2026-11-26T14:13:46.2323930Z [command]/usr/bin/git branch --list --remote origin/main
+2026-11-26T14:13:46.2360337Z   origin/main
+2026-11-26T14:13:46.2366932Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-11-26T14:13:46.2385529Z cb7301a2a7d5d93b63ad9fcf1489ae6fbc560909
+2026-11-26T14:13:46.2387642Z ##[endgroup]
+2026-11-26T14:13:46.2388302Z ##[group]Determining the checkout info
+2026-11-26T14:13:46.2388988Z ##[endgroup]
+2026-11-26T14:13:46.2393122Z [command]/usr/bin/git sparse-checkout disable
+2026-11-26T14:13:46.2443149Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-26T14:13:46.2465178Z ##[group]Checking out the ref
+2026-11-26T14:13:46.2467822Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-11-26T14:13:46.2667083Z Switched to a new branch 'main'
+2026-11-26T14:13:46.2673969Z branch 'main' set up to track 'origin/main'.
+2026-11-26T14:13:46.2677606Z ##[endgroup]
+2026-11-26T14:13:46.2708554Z [command]/usr/bin/git log -1 --format=%H
+2026-11-26T14:13:46.2727039Z cb7301a2a7d5d93b63ad9fcf1489ae6fbc560909
+2026-11-26T14:13:46.2734237Z ##[group]Removing auth
+2026-11-26T14:13:46.2734823Z Removing SSH command configuration
+2026-11-26T14:13:46.2736193Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T14:13:46.2758516Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T14:13:46.2906485Z Removing HTTP extra header
+2026-11-26T14:13:46.2908873Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T14:13:46.2930656Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T14:13:46.3076631Z Removing includeIf entries pointing to credentials config files
+2026-11-26T14:13:46.3083708Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T14:13:46.3107993Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T14:13:46.3108991Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T14:13:46.3109895Z includeif.gitdir:/github/workspace/.git.path
+2026-11-26T14:13:46.3110536Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T14:13:46.3121825Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T14:13:46.3130266Z /home/runner/work/_temp/git-credentials-5214c486-237c-41ce-b85b-e6acf2b07191.config
+2026-11-26T14:13:46.3137043Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-5214c486\-237c\-41ce\-b85b\-e6acf2b07191\.config
+2026-11-26T14:13:46.3162415Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T14:13:46.3196771Z /home/runner/work/_temp/git-credentials-5214c486-237c-41ce-b85b-e6acf2b07191.config
+2026-11-26T14:13:46.3202039Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-5214c486\-237c\-41ce\-b85b\-e6acf2b07191\.config
+2026-11-26T14:13:46.3228311Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-11-26T14:13:46.3251353Z /github/runner_temp/git-credentials-5214c486-237c-41ce-b85b-e6acf2b07191.config
+2026-11-26T14:13:46.3257588Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-5214c486\-237c\-41ce\-b85b\-e6acf2b07191\.config
+2026-11-26T14:13:46.3274826Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T14:13:46.3291651Z /github/runner_temp/git-credentials-5214c486-237c-41ce-b85b-e6acf2b07191.config
+2026-11-26T14:13:46.3297067Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-5214c486\-237c\-41ce\-b85b\-e6acf2b07191\.config
+2026-11-26T14:13:46.3319225Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T14:13:46.3464570Z Removing credentials config '/home/runner/work/_temp/git-credentials-5214c486-237c-41ce-b85b-e6acf2b07191.config'
+2026-11-26T14:13:46.3470861Z ##[endgroup]
+2026-11-26T14:13:46.3657670Z ##[group]Run actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+2026-11-26T14:13:46.3658096Z with:
+2026-11-26T14:13:46.3658417Z   name: image-frontend
+2026-11-26T14:13:46.3658702Z   path: reports-in/image-frontend
+2026-11-26T14:13:46.3659017Z   merge-multiple: false
+2026-11-26T14:13:46.3659313Z   repository: jankrus/doctorholiday
+2026-11-26T14:13:46.3659617Z   run-id: 45835523069
+2026-11-26T14:13:46.3659888Z   skip-decompress: false
+2026-11-26T14:13:46.3660192Z   digest-mismatch: error
+2026-11-26T14:13:46.3660450Z ##[endgroup]
+2026-11-26T14:13:46.4696436Z Downloading single artifact
+2026-11-26T14:13:46.7700053Z Preparing to download the following artifacts:
+2026-11-26T14:13:46.7701245Z - image-frontend (ID: 15127335562, Size: 3984, Expected Digest: sha256:fd174f29854e5389cdf6c6d23778f31aec191863fcad4ebc3809e40a39522601)
+2026-11-26T14:13:47.3828625Z Redirecting to blob download url: https://productionresultssa1.blob.core.windows.net/actions-results/50dacd11-3bbf-806d-8446-8fd9f2c87f85/workflow-job-run-912640a6-5b95-5a7e-ac3a-a13027f5a291/artifacts/2ea25d67a45ff70f16c866ed9a29cbb4b2452ea33d0f567456605e9e9a4d49aa.zip
+2026-11-26T14:13:47.3830163Z Starting download of artifact to: /home/runner/work/doctorholiday/doctorholiday/reports-in/image-frontend
+2026-11-26T14:13:47.7240659Z (node:2269) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-11-26T14:13:47.7242248Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-26T14:13:47.7300112Z SHA256 digest of downloaded artifact is fd174f29854e5389cdf6c6d23778f31aec191863fcad4ebc3809e40a39522601
+2026-11-26T14:13:47.7300990Z Artifact download completed successfully.
+2026-11-26T14:13:47.7301407Z Total of 1 artifact(s) downloaded
+2026-11-26T14:13:47.7302135Z Download artifact has finished successfully
+2026-11-26T14:13:47.7417709Z ##[group]Run actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+2026-11-26T14:13:47.7418165Z with:
+2026-11-26T14:13:47.7418445Z   name: sbom
+2026-11-26T14:13:47.7418722Z   path: reports-in/sbom
+2026-11-26T14:13:47.7419016Z   merge-multiple: false
+2026-11-26T14:13:47.7419347Z   repository: jankrus/doctorholiday
+2026-11-26T14:13:47.7419674Z   run-id: 45835523069
+2026-11-26T14:13:47.7419968Z   skip-decompress: false
+2026-11-26T14:13:47.7420266Z   digest-mismatch: error
+2026-11-26T14:13:47.7420552Z ##[endgroup]
+2026-11-26T14:13:47.8471774Z Downloading single artifact
+2026-11-26T14:13:48.1473072Z Preparing to download the following artifacts:
+2026-11-26T14:13:48.1474064Z - sbom (ID: 15125376163, Size: 17976, Expected Digest: sha256:307a86c5af8791ea7a2ef3e74072b3009b77abde087a36b4c2cc35d914beb575)
+2026-11-26T14:13:48.7532453Z Redirecting to blob download url: https://productionresultssa1.blob.core.windows.net/actions-results/50dacd11-3bbf-806d-8446-8fd9f2c87f85/workflow-job-run-e4a9ea28-f318-59b8-9716-426162a60429/artifacts/98f3ae1ef67113d8140d4f6cb8d2830070e21ea48f091be519659846c771a374.zip
+2026-11-26T14:13:48.7533574Z Starting download of artifact to: /home/runner/work/doctorholiday/doctorholiday/reports-in/sbom
+2026-11-26T14:13:49.0782017Z (node:2281) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-11-26T14:13:49.0782897Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-26T14:13:49.0911288Z SHA256 digest of downloaded artifact is 307a86c5af8791ea7a2ef3e74072b3009b77abde087a36b4c2cc35d914beb575
+2026-11-26T14:13:49.0912289Z Artifact download completed successfully.
+2026-11-26T14:13:49.0912632Z Total of 1 artifact(s) downloaded
+2026-11-26T14:13:49.0914295Z Download artifact has finished successfully
+2026-11-26T14:13:49.1020677Z ##[group]Run mkdir -p "reports/images" "reports/sbom"
+2026-11-26T14:13:49.1021248Z mkdir -p "reports/images" "reports/sbom"
+2026-11-26T14:13:49.1021695Z cp -r "reports-in/image-$IMAGE" "reports/images/$IMAGE"
+2026-11-26T14:13:49.1022367Z cp reports-in/sbom/* reports/sbom/
+2026-11-26T14:13:49.6379370Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:13:49.6380066Z env:
+2026-11-26T14:13:49.6380335Z   IMAGE: frontend
+2026-11-26T14:13:49.6380636Z ##[endgroup]
+2026-11-26T14:13:49.6601818Z ##[group]Run sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532
+2026-11-26T14:13:49.6602479Z with:
+2026-11-26T14:13:49.6602735Z   cosign-release: v3.1.4
+2026-11-26T14:13:49.6603120Z   install-dir: $HOME/.cosign
+2026-11-26T14:13:49.6603453Z   use-sudo: false
+2026-11-26T14:13:49.6603725Z   curl-retries: 6
+2026-11-26T14:13:49.6604023Z ##[endgroup]
+2026-11-26T14:13:49.6655662Z ##[start-action display=Run #!/bin/bash;id=__sigstore_cosign-installer.__run]
+2026-11-26T14:13:49.6677348Z ##[group]Run #!/bin/bash
+2026-11-26T14:13:49.6678439Z #!/bin/bash
+2026-11-26T14:13:49.6678832Z # Substitute environment variables in install-dir input
+2026-11-26T14:13:49.6679459Z install_dir=$(envsubst <<<"${input_install_dir}")
+2026-11-26T14:13:49.6680002Z 
+2026-11-26T14:13:49.6680295Z # cosign install script
+2026-11-26T14:13:49.6680652Z shopt -s expand_aliases
+2026-11-26T14:13:49.6681076Z if [ -z "$NO_COLOR" ]; then
+2026-11-26T14:13:49.6681450Z   alias log_info="echo -e \"\033[1;32mINFO\033[0m:\""
+2026-11-26T14:13:49.6682027Z   alias log_error="echo -e \"\033[1;31mERROR\033[0m:\""
+2026-11-26T14:13:49.6682390Z else
+2026-11-26T14:13:49.6682736Z   alias log_info="echo \"INFO:\""
+2026-11-26T14:13:49.6683068Z   alias log_error="echo \"ERROR:\""
+2026-11-26T14:13:49.6683400Z fi
+2026-11-26T14:13:49.6683653Z set -e
+2026-11-26T14:13:49.6683961Z 
+2026-11-26T14:13:49.6684236Z CURL_RETRIES="${input_curl_retries:-6}"
+2026-11-26T14:13:49.6684990Z # Retry options shared by every release download below. GitHub's release
+2026-11-26T14:13:49.6685522Z # CDN intermittently returns transient HTTP 504s that can persist for
+2026-11-26T14:13:49.6686083Z # ~15-20s, outlasting curl's default exponential backoff (~7s across 3
+2026-11-26T14:13:49.6686573Z # retries). A fixed 5s delay with --retry-all-errors rides out those
+2026-11-26T14:13:49.6687094Z # windows, while --retry-max-time 120 keeps a failing download bounded.
+2026-11-26T14:13:49.6687684Z CURL_RETRY_OPTS=(--retry "${CURL_RETRIES}" --retry-delay 5 --retry-all-errors --retry-max-time 120)
+2026-11-26T14:13:49.6688153Z 
+2026-11-26T14:13:49.6688469Z # This function helps compare versions.
+2026-11-26T14:13:49.6688967Z # Returns 0 if version1 >= version2, 1 otherwise.
+2026-11-26T14:13:49.6689380Z # Usage: is_version_ge "3.0.0" "$version_num"
+2026-11-26T14:13:49.6689727Z is_version_ge() {
+2026-11-26T14:13:49.6690111Z     [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" == "$1" ]
+2026-11-26T14:13:49.6690465Z }
+2026-11-26T14:13:49.6690734Z 
+2026-11-26T14:13:49.6691091Z # Check for unsupported old versions (anything below v2.0.0)
+2026-11-26T14:13:49.6691520Z if [[ "${input_cosign_release}" != "main" ]]; then
+2026-11-26T14:13:49.6692123Z   # Extract version without 'v' prefix for comparison
+2026-11-26T14:13:49.6692521Z   version_num="${input_cosign_release}"
+2026-11-26T14:13:49.6692902Z   version_num="${version_num#v}"
+2026-11-26T14:13:49.6693225Z 
+2026-11-26T14:13:49.6693516Z   # Check if version is less than v2.0.0
+2026-11-26T14:13:49.6693907Z   if ! is_version_ge "2.0.0" "$version_num"; then
+2026-11-26T14:13:49.6694340Z     log_error "cosign versions below v2.0.0 are no longer supported."
+2026-11-26T14:13:49.6694805Z     log_error "Requested version: ${input_cosign_release}"
+2026-11-26T14:13:49.6695216Z     log_error "Please use cosign v2.6.0 or later."
+2026-11-26T14:13:49.6695711Z     log_error "See https://github.com/sigstore/cosign/releases for available versions."
+2026-11-26T14:13:49.6696166Z     exit 1
+2026-11-26T14:13:49.6696491Z   fi
+2026-11-26T14:13:49.6696804Z fi
+2026-11-26T14:13:49.6697757Z 
+2026-11-26T14:13:49.6698050Z mkdir -p "${install_dir}"
+2026-11-26T14:13:49.6698357Z 
+2026-11-26T14:13:49.6698695Z if [[ "${input_cosign_release}" == "main" ]]; then
+2026-11-26T14:13:49.6699129Z   log_info "installing cosign via 'go install' from its main version"
+2026-11-26T14:13:49.6699537Z   GOBIN=$(go env GOPATH)/bin
+2026-11-26T14:13:49.6699937Z   go install github.com/sigstore/cosign/v3/cmd/cosign@main
+2026-11-26T14:13:49.6700348Z   ln -s "$GOBIN/cosign" "${install_dir}/cosign"
+2026-11-26T14:13:49.6700705Z   exit 0
+2026-11-26T14:13:49.6700965Z fi
+2026-11-26T14:13:49.6701243Z 
+2026-11-26T14:13:49.6701579Z shaprog() {
+2026-11-26T14:13:49.6702256Z   case ${runner_os} in
+2026-11-26T14:13:49.6702658Z     Linux|linux)
+2026-11-26T14:13:49.6703028Z       sha256sum "$1" | cut -d' ' -f1
+2026-11-26T14:13:49.6703357Z       ;;
+2026-11-26T14:13:49.6703671Z     macOS|macos)
+2026-11-26T14:13:49.6703998Z       shasum -a256 "$1" | cut -d' ' -f1
+2026-11-26T14:13:49.6704329Z       ;;
+2026-11-26T14:13:49.6704604Z     Windows|windows)
+2026-11-26T14:13:49.6705129Z       powershell -command "(Get-FileHash \"$1\" -Algorithm SHA256 | Select-Object -ExpandProperty Hash).ToLower()"
+2026-11-26T14:13:49.6705657Z       ;;
+2026-11-26T14:13:49.6705919Z     *)
+2026-11-26T14:13:49.6706258Z       log_error "unsupported OS ${runner_os}"
+2026-11-26T14:13:49.6706584Z       exit 1
+2026-11-26T14:13:49.6706937Z       ;;
+2026-11-26T14:13:49.6707205Z   esac
+2026-11-26T14:13:49.6707510Z }
+2026-11-26T14:13:49.6707763Z 
+2026-11-26T14:13:49.6708204Z ## curl -sL https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign_checksums.txt |\
+2026-11-26T14:13:49.6708864Z ##   gawk 'match($2,/^cosign-([[:alnum:]]+)-([[:alnum:]]+)(\.[[:alnum:]]+)?$/,a){printf "bootstrap_%s_%s_sha=\"%s\"\n",a[1],a[2],$1}' |\
+2026-11-26T14:13:49.6709398Z ##   LANG=C sort
+2026-11-26T14:13:49.6709719Z bootstrap_version='v3.1.4'
+2026-11-26T14:13:49.6710196Z bootstrap_darwin_amd64_sha="9d1e4abe2b6be279ed0d2ff706fde1ccd738747c834e3e6d44039c238867334f"
+2026-11-26T14:13:49.6710992Z bootstrap_darwin_arm64_sha="9f9b8cd557cf2e5b3df3373a00baa005a86b02391e3e06dd0ce37b3a1533d3a4"
+2026-11-26T14:13:49.6711613Z bootstrap_linux_amd64_sha="424e2c97d0b45fd7a6b608a87f090f35633f4c23ece5f092d48bba11aaf4bbfa"
+2026-11-26T14:13:49.6712428Z bootstrap_linux_arm64_sha="ade83b7aac62e131cacfe96d958948b2150cc9efec46a570a2649b8e27dedad2"
+2026-11-26T14:13:49.6713046Z bootstrap_linux_arm_sha="09e77a313910cf5c4774508d85d017d9c60983f41bf657f83ecbd3892f7952cb"
+2026-11-26T14:13:49.6713671Z bootstrap_linux_ppc64le_sha="0887fca23319ea017cc827e6a845ba83722a36bf9e932f35c747ca83c14cec49"
+2026-11-26T14:13:49.6714285Z bootstrap_linux_riscv64_sha="24f3865df0fd9b055827b888d56e13583112ac7d4c87b45967af1f0febf35455"
+2026-11-26T14:13:49.6714920Z bootstrap_linux_s390x_sha="777978d576af893a3daf1fcf3b0e9178cebcbc083a669f6125b6c97b8e1fe433"
+2026-11-26T14:13:49.6715523Z bootstrap_windows_amd64_sha="cbe953787074611f1334cbf37dc1cf953995bb8c45398eb4fc7bb781d29c1f2a"
+2026-11-26T14:13:49.6715982Z 
+2026-11-26T14:13:49.6716299Z cosign_executable_name=cosign
+2026-11-26T14:13:49.6716653Z bootstrap_executable_name=cosign-bootstrap
+2026-11-26T14:13:49.6716994Z 
+2026-11-26T14:13:49.6717316Z trap "popd >/dev/null" EXIT
+2026-11-26T14:13:49.6717624Z 
+2026-11-26T14:13:49.6717893Z pushd "${install_dir}" > /dev/null
+2026-11-26T14:13:49.6718327Z 
+2026-11-26T14:13:49.6718624Z case ${runner_os} in
+2026-11-26T14:13:49.6718950Z   Linux|linux)
+2026-11-26T14:13:49.6719316Z     case ${runner_arch} in
+2026-11-26T14:13:49.6719679Z       X64|amd64)
+2026-11-26T14:13:49.6720064Z         bootstrap_filename='cosign-linux-amd64'
+2026-11-26T14:13:49.6720460Z         bootstrap_sha=${bootstrap_linux_amd64_sha}
+2026-11-26T14:13:49.6720852Z         desired_cosign_filename='cosign-linux-amd64'
+2026-11-26T14:13:49.6721258Z         ;;
+2026-11-26T14:13:49.6721539Z 
+2026-11-26T14:13:49.6721797Z       ARM|arm)
+2026-11-26T14:13:49.6722281Z         bootstrap_filename='cosign-linux-arm'
+2026-11-26T14:13:49.6722713Z         bootstrap_sha=${bootstrap_linux_arm_sha}
+2026-11-26T14:13:49.6723104Z         desired_cosign_filename='cosign-linux-arm'
+2026-11-26T14:13:49.6723451Z         ;;
+2026-11-26T14:13:49.6723742Z 
+2026-11-26T14:13:49.6724017Z       ARM64|arm64)
+2026-11-26T14:13:49.6724359Z         bootstrap_filename='cosign-linux-arm64'
+2026-11-26T14:13:49.6724756Z         bootstrap_sha=${bootstrap_linux_arm64_sha}
+2026-11-26T14:13:49.6725201Z         desired_cosign_filename='cosign-linux-arm64'
+2026-11-26T14:13:49.6725541Z         ;;
+2026-11-26T14:13:49.6725805Z 
+2026-11-26T14:13:49.6726047Z       *)
+2026-11-26T14:13:49.6726421Z         log_error "unsupported architecture ${runner_arch}"
+2026-11-26T14:13:49.6726789Z         exit 1
+2026-11-26T14:13:49.6727059Z         ;;
+2026-11-26T14:13:49.6727404Z     esac
+2026-11-26T14:13:49.6727667Z     ;;
+2026-11-26T14:13:49.6727999Z 
+2026-11-26T14:13:49.6728253Z   macOS|macos)
+2026-11-26T14:13:49.6728596Z     case ${runner_arch} in
+2026-11-26T14:13:49.6728894Z       X64|amd64)
+2026-11-26T14:13:49.6729236Z         bootstrap_filename='cosign-darwin-amd64'
+2026-11-26T14:13:49.6729608Z         bootstrap_sha=${bootstrap_darwin_amd64_sha}
+2026-11-26T14:13:49.6730068Z         desired_cosign_filename='cosign-darwin-amd64'
+2026-11-26T14:13:49.6730412Z         ;;
+2026-11-26T14:13:49.6730684Z 
+2026-11-26T14:13:49.6730990Z       ARM64|arm64)
+2026-11-26T14:13:49.6731325Z         bootstrap_filename='cosign-darwin-arm64'
+2026-11-26T14:13:49.6731725Z         bootstrap_sha=${bootstrap_darwin_arm64_sha}
+2026-11-26T14:13:49.6732400Z         desired_cosign_filename='cosign-darwin-arm64'
+2026-11-26T14:13:49.6732797Z         ;;
+2026-11-26T14:13:49.6733069Z 
+2026-11-26T14:13:49.6733328Z       *)
+2026-11-26T14:13:49.6733665Z         log_error "unsupported architecture ${runner_arch}"
+2026-11-26T14:13:49.6734056Z         exit 1
+2026-11-26T14:13:49.6734318Z         ;;
+2026-11-26T14:13:49.6734596Z     esac
+2026-11-26T14:13:49.6734899Z     ;;
+2026-11-26T14:13:49.6735168Z 
+2026-11-26T14:13:49.6735432Z   Windows|windows)
+2026-11-26T14:13:49.6735762Z     case ${runner_arch} in
+2026-11-26T14:13:49.6736102Z       X64|amd64)
+2026-11-26T14:13:49.6736430Z         bootstrap_filename='cosign-windows-amd64.exe'
+2026-11-26T14:13:49.6736839Z         bootstrap_sha=${bootstrap_windows_amd64_sha}
+2026-11-26T14:13:49.6737291Z         desired_cosign_filename='cosign-windows-amd64.exe'
+2026-11-26T14:13:49.6737744Z         cosign_executable_name=cosign.exe
+2026-11-26T14:13:49.6738127Z         bootstrap_executable_name=cosign-bootstrap.exe
+2026-11-26T14:13:49.6738479Z         ;;
+2026-11-26T14:13:49.6738770Z       *)
+2026-11-26T14:13:49.6739115Z         log_error "unsupported architecture ${runner_arch}"
+2026-11-26T14:13:49.6739464Z         exit 1
+2026-11-26T14:13:49.6739807Z         ;;
+2026-11-26T14:13:49.6740067Z     esac
+2026-11-26T14:13:49.6740335Z     ;;
+2026-11-26T14:13:49.6740665Z   *)
+2026-11-26T14:13:49.6741017Z     log_error "unsupported os ${runner_os}"
+2026-11-26T14:13:49.6741359Z     exit 1
+2026-11-26T14:13:49.6741628Z     ;;
+2026-11-26T14:13:49.6742095Z esac
+2026-11-26T14:13:49.6742388Z 
+2026-11-26T14:13:49.6742647Z SUDO=
+2026-11-26T14:13:49.6743005Z if [[ "${input_use_sudo}" == "true" ]] && command -v sudo >/dev/null; then
+2026-11-26T14:13:49.6743421Z   SUDO=sudo
+2026-11-26T14:13:49.6743704Z fi
+2026-11-26T14:13:49.6743974Z 
+2026-11-26T14:13:49.6744266Z expected_bootstrap_version_digest=${bootstrap_sha}
+2026-11-26T14:13:49.6745115Z log_info "Downloading bootstrap version '${bootstrap_version}' of cosign to verify version to be installed...\n      https://github.com/sigstore/cosign/releases/download/${bootstrap_version}/${bootstrap_filename}"
+2026-11-26T14:13:49.6746193Z $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSL "https://github.com/sigstore/cosign/releases/download/${bootstrap_version}/${bootstrap_filename}" -o "${bootstrap_executable_name}"
+2026-11-26T14:13:49.6746910Z shaBootstrap=$(shaprog "${bootstrap_executable_name}")
+2026-11-26T14:13:49.6747407Z if [[ "$shaBootstrap" != "${expected_bootstrap_version_digest}" ]]; then
+2026-11-26T14:13:49.6747894Z   log_error "Unable to validate cosign version: '${input_cosign_release}'"
+2026-11-26T14:13:49.6748348Z   exit 1
+2026-11-26T14:13:49.6748653Z fi
+2026-11-26T14:13:49.6748967Z $SUDO chmod +x "${bootstrap_executable_name}"
+2026-11-26T14:13:49.6749303Z 
+2026-11-26T14:13:49.6749669Z # If the bootstrap and specified `cosign` releases are the same, we're done.
+2026-11-26T14:13:49.6750187Z if [[ "${input_cosign_release}" == "${bootstrap_version}" ]]; then
+2026-11-26T14:13:49.6750755Z   log_info "bootstrap version successfully verified and matches requested version so nothing else to do"
+2026-11-26T14:13:49.6751309Z   $SUDO mv "${bootstrap_executable_name}" "${cosign_executable_name}"
+2026-11-26T14:13:49.6751788Z   exit 0
+2026-11-26T14:13:49.6752269Z fi
+2026-11-26T14:13:49.6752530Z 
+2026-11-26T14:13:49.6752851Z semver='^v([0-9]+\.){0,2}(\*|[0-9]+)(-?r?c?)(\.[0-9]+)$'
+2026-11-26T14:13:49.6753359Z if [[ "${input_cosign_release}" =~ $semver ]]; then
+2026-11-26T14:13:49.6753835Z   log_info "Custom cosign version '${input_cosign_release}' requested"
+2026-11-26T14:13:49.6754224Z else
+2026-11-26T14:13:49.6754625Z   log_error "Unable to validate requested cosign version: '${input_cosign_release}'"
+2026-11-26T14:13:49.6755092Z   exit 1
+2026-11-26T14:13:49.6755370Z fi
+2026-11-26T14:13:49.6755609Z 
+2026-11-26T14:13:49.6755907Z # Download custom cosign
+2026-11-26T14:13:49.6756654Z log_info "Downloading platform-specific version '${input_cosign_release}' of cosign...\n      https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${desired_cosign_filename}"
+2026-11-26T14:13:49.6757701Z $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSL "https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${desired_cosign_filename}" -o "cosign_${input_cosign_release}"
+2026-11-26T14:13:49.6758554Z shaCustom=$(shaprog "cosign_${input_cosign_release}");
+2026-11-26T14:13:49.6758978Z 
+2026-11-26T14:13:49.6759277Z # same hash means it is the same release
+2026-11-26T14:13:49.6759663Z if [[ "$shaCustom" != "$shaBootstrap" ]]; then
+2026-11-26T14:13:49.6760459Z   log_info "Downloading cosign public key '${input_cosign_release}' of cosign...\n    https://raw.githubusercontent.com/sigstore/cosign/${input_cosign_release}/release/release-cosign.pub"
+2026-11-26T14:13:49.6761401Z   RELEASE_COSIGN_PUB_KEY=https://raw.githubusercontent.com/sigstore/cosign/${input_cosign_release}/release/release-cosign.pub
+2026-11-26T14:13:49.6762244Z   RELEASE_COSIGN_PUB_KEY_SHA='f4cea466e5e887a45da5031757fa1d32655d83420639dc1758749b744179f126'
+2026-11-26T14:13:49.6762722Z 
+2026-11-26T14:13:49.6763085Z   log_info "Verifying public key matches expected value"
+2026-11-26T14:13:49.6763548Z   $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSL "$RELEASE_COSIGN_PUB_KEY" -o public.key
+2026-11-26T14:13:49.6764040Z   sha_fetched_key=$(shaprog public.key)
+2026-11-26T14:13:49.6764465Z   if [[ "$sha_fetched_key" != "$RELEASE_COSIGN_PUB_KEY_SHA" ]]; then
+2026-11-26T14:13:49.6764943Z     log_error "Fetched public key does not match expected digest, exiting"
+2026-11-26T14:13:49.6765393Z     exit 1
+2026-11-26T14:13:49.6765658Z   fi
+2026-11-26T14:13:49.6765938Z 
+2026-11-26T14:13:49.6766230Z   if is_version_ge "3.0.1" "$version_num"; then
+2026-11-26T14:13:49.6766683Z     # we're trying to get something greater than or equal to v3.0.1
+2026-11-26T14:13:49.6767135Z     keyless_signature_file=${desired_cosign_filename}.sigstore.json
+2026-11-26T14:13:49.6768000Z     log_info "Downloading keyless verification bundle for platform-specific '${input_cosign_release}' of cosign...\n      https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${keyless_signature_file}"
+2026-11-26T14:13:49.6769047Z     $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSLO "https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${keyless_signature_file}"
+2026-11-26T14:13:49.6769692Z 
+2026-11-26T14:13:49.6770112Z     log_info "Using bootstrap cosign to verify keyless signature of desired cosign version"
+2026-11-26T14:13:49.6771177Z     "./${bootstrap_executable_name}" verify-blob --certificate-identity=keyless@projectsigstore.iam.gserviceaccount.com --certificate-oidc-issuer=https://accounts.google.com --bundle "${keyless_signature_file}" "cosign_${input_cosign_release}"
+2026-11-26T14:13:49.6772188Z 
+2026-11-26T14:13:49.6772521Z     if is_version_ge "3.0.3" "$version_num"; then
+2026-11-26T14:13:49.6773026Z       # we're trying to get something greater than or equal to v3.0.3
+2026-11-26T14:13:49.6773510Z       kms_signature_file=${desired_cosign_filename}-kms.sigstore.json
+2026-11-26T14:13:49.6774467Z       log_info "Downloading KMS verification bundle for platform-specific '${input_cosign_release}' of cosign...\n      https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${kms_signature_file}"
+2026-11-26T14:13:49.6775513Z       $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSLO "https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${kms_signature_file}"
+2026-11-26T14:13:49.6776110Z 
+2026-11-26T14:13:49.6776527Z       log_info "Using bootstrap cosign to verify signature of desired cosign version"
+2026-11-26T14:13:49.6777222Z       "./${bootstrap_executable_name}" verify-blob --key public.key --bundle "${kms_signature_file}" "cosign_${input_cosign_release}"
+2026-11-26T14:13:49.6777770Z     fi
+2026-11-26T14:13:49.6778119Z   else
+2026-11-26T14:13:49.6778446Z     signature_file=${desired_cosign_filename}.sig
+2026-11-26T14:13:49.6779261Z     log_info "Downloading detached signature for platform-specific '${input_cosign_release}' of cosign...\n      https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${signature_file}"
+2026-11-26T14:13:49.6780288Z     $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSLO "https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${signature_file}"
+2026-11-26T14:13:49.6780834Z 
+2026-11-26T14:13:49.6781216Z     log_info "Using bootstrap cosign to verify signature of desired cosign version"
+2026-11-26T14:13:49.6782075Z     "./${bootstrap_executable_name}" verify-blob --key public.key --signature "${signature_file}" "cosign_${input_cosign_release}"
+2026-11-26T14:13:49.6782622Z   fi
+2026-11-26T14:13:49.6782873Z 
+2026-11-26T14:13:49.6783300Z   $SUDO mv "cosign_${input_cosign_release}" "${cosign_executable_name}"
+2026-11-26T14:13:49.6783740Z   $SUDO chmod +x "${cosign_executable_name}"
+2026-11-26T14:13:49.6784226Z   # best-effort: on Windows the just-run bootstrap binary may still be locked briefly
+2026-11-26T14:13:49.6784838Z   $SUDO rm -f "${bootstrap_executable_name}" || log_info "Unable to remove ${bootstrap_executable_name}, leaving it in place"
+2026-11-26T14:13:49.6785419Z   log_info "Installation complete!"
+2026-11-26T14:13:49.6785738Z fi
+2026-11-26T14:13:49.6808487Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:13:49.6808899Z env:
+2026-11-26T14:13:49.6809181Z   input_cosign_release: v3.1.4
+2026-11-26T14:13:49.6809522Z   input_install_dir: $HOME/.cosign
+2026-11-26T14:13:49.6809846Z   input_use_sudo: false
+2026-11-26T14:13:49.6810151Z   input_curl_retries: 6
+2026-11-26T14:13:49.6810448Z   runner_arch: X64
+2026-11-26T14:13:49.6810726Z   runner_os: Linux
+2026-11-26T14:13:49.6811007Z ##[endgroup]
+2026-11-26T14:13:49.6888487Z INFO: Downloading bootstrap version 'v3.1.4' of cosign to verify version to be installed...
+2026-11-26T14:13:49.6889329Z       https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign-linux-amd64
+2026-11-26T14:13:50.4329971Z INFO: bootstrap version successfully verified and matches requested version so nothing else to do
+2026-11-26T14:13:50.4352176Z ##[end-action id=__sigstore_cosign-installer.__run;outcome=success;conclusion=success;duration_ms=769]
+2026-11-26T14:13:50.4356508Z ##[start-action display=Run envsubst <<<"${input_install_dir}" >> "$GITHUB_PATH";id=__sigstore_cosign-installer.__run_2]
+2026-11-26T14:13:50.4388710Z ##[group]Run envsubst <<<"${input_install_dir}" >> "$GITHUB_PATH"
+2026-11-26T14:13:50.4389233Z envsubst <<<"${input_install_dir}" >> "$GITHUB_PATH"
+2026-11-26T14:13:50.4412658Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:13:50.4413086Z env:
+2026-11-26T14:13:50.4413366Z   input_install_dir: $HOME/.cosign
+2026-11-26T14:13:50.4413711Z ##[endgroup]
+2026-11-26T14:13:50.4466403Z ##[end-action id=__sigstore_cosign-installer.__run_2;outcome=success;conclusion=success;duration_ms=10]
+2026-11-26T14:13:50.4469756Z ##[start-action display=Run $install_dir = $ExecutionContext.InvokeCommand.ExpandString("${env:input_install_dir}");id=__sigstore_cosign-installer.__run_3]
+2026-11-26T14:13:50.4475449Z ##[end-action id=__sigstore_cosign-installer.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-11-26T14:13:50.4505241Z ##[group]Run echo "$GITHUB_TOKEN" | cosign login ghcr.io --username "$ACTOR" --password-stdin
+2026-11-26T14:13:50.4505875Z echo "$GITHUB_TOKEN" | cosign login ghcr.io --username "$ACTOR" --password-stdin
+2026-11-26T14:13:50.4526530Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:13:50.4526921Z env:
+2026-11-26T14:13:50.4529102Z   GITHUB_TOKEN: ***
+2026-11-26T14:13:50.4529370Z   ACTOR: jankrus
+2026-11-26T14:13:50.4529668Z ##[endgroup]
+2026-11-26T14:13:50.4768169Z 
+2026-11-26T14:13:50.4768836Z WARNING! Your credentials are stored unencrypted in '/home/runner/.docker/config.json'.
+2026-11-26T14:13:50.4769638Z Configure a credential helper to remove this warning. See
+2026-11-26T14:13:50.4770243Z https://docs.docker.com/go/credential-store/
+2026-11-26T14:13:50.4770511Z 
+2026-11-26T14:13:50.4770736Z logged in via /home/runner/.docker/config.json
+2026-11-26T14:13:50.4809863Z ##[group]Run scripts/sign-image.sh "$IMAGE"
+2026-11-26T14:13:50.4810255Z scripts/sign-image.sh "$IMAGE"
+2026-11-26T14:13:50.4828079Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:13:50.4828535Z env:
+2026-11-26T14:13:50.4828795Z   IMAGE: frontend
+2026-11-26T14:13:50.4831240Z   COSIGN_PRIVATE_KEY: ***
+2026-11-26T14:13:50.4831683Z   COSIGN_PASSWORD: ***
+2026-11-26T14:13:50.4832120Z ##[endgroup]
+2026-11-26T14:13:50.4923824Z Signing ghcr.io/jankrus/doctorholiday-frontend@sha256:4ec4367f13270ba560a72acf20116e6421d7b5648d2e7a185f8c4b68e3eaf048
+2026-11-26T14:13:51.0067741Z Signing artifact...
+2026-11-26T14:13:51.0072613Z Wrote bundle to file reports/signing/frontend/signature-frontend.bundle
+2026-11-26T14:13:51.0073697Z Pushing signature to: ghcr.io/jankrus/doctorholiday-frontend
+2026-11-26T14:13:55.3465137Z Attesting the SBOM reports/sbom/sbom-frontend-0.1.0-cb7301a.cdx.json
+2026-11-26T14:13:55.3649180Z Using payload from: reports/sbom/sbom-frontend-0.1.0-cb7301a.cdx.json
+2026-11-26T14:13:55.5034067Z Signing artifact...
+2026-11-26T14:13:55.5043401Z Wrote bundle to file reports/signing/frontend/attestation-frontend.bundle
+2026-11-26T14:14:00.0775180Z Signed and attested ghcr.io/jankrus/doctorholiday-frontend@sha256:4ec4367f13270ba560a72acf20116e6421d7b5648d2e7a185f8c4b68e3eaf048
+2026-11-26T14:14:00.0808252Z ##[group]Run scripts/verify-image.sh "$IMAGE"
+2026-11-26T14:14:00.0808682Z scripts/verify-image.sh "$IMAGE"
+2026-11-26T14:14:00.0833112Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:14:00.0833488Z env:
+2026-11-26T14:14:00.0833762Z   IMAGE: frontend
+2026-11-26T14:14:00.0834091Z ##[endgroup]
+2026-11-26T14:14:00.0941376Z Verifying the signature of ghcr.io/jankrus/doctorholiday-frontend@sha256:4ec4367f13270ba560a72acf20116e6421d7b5648d2e7a185f8c4b68e3eaf048
+2026-11-26T14:14:00.1133832Z WARNING: Skipping tlog verification is an insecure practice that lacks transparency and auditability verification for the signature.
+2026-11-26T14:14:02.0054616Z 
+2026-11-26T14:14:02.0056020Z Verification for ghcr.io/jankrus/doctorholiday-frontend@sha256:4ec4367f13270ba560a72acf20116e6421d7b5648d2e7a185f8c4b68e3eaf048 --
+2026-11-26T14:14:02.0056741Z The following checks were performed on each of these signatures:
+2026-11-26T14:14:02.0057324Z   - The cosign claims were validated
+2026-11-26T14:14:02.0057731Z   - Existence of the claims in the transparency log was verified offline
+2026-11-26T14:14:02.0058223Z   - The signatures were verified against the specified public key
+2026-11-26T14:14:02.0080476Z Verifying the SBOM attestation of ghcr.io/jankrus/doctorholiday-frontend@sha256:4ec4367f13270ba560a72acf20116e6421d7b5648d2e7a185f8c4b68e3eaf048
+2026-11-26T14:14:02.0268484Z WARNING: Skipping tlog verification is an insecure practice that lacks transparency and auditability verification for the attestation.
+2026-11-26T14:14:03.8149782Z 
+2026-11-26T14:14:03.8150943Z Verification for ghcr.io/jankrus/doctorholiday-frontend@sha256:4ec4367f13270ba560a72acf20116e6421d7b5648d2e7a185f8c4b68e3eaf048 --
+2026-11-26T14:14:03.8152024Z The following checks were performed on each of these signatures:
+2026-11-26T14:14:03.8152541Z   - The cosign claims were validated
+2026-11-26T14:14:03.8152998Z   - Existence of the claims in the transparency log was verified offline
+2026-11-26T14:14:03.8153506Z   - The signatures were verified against the specified public key
+2026-11-26T14:14:05.1249626Z OK: signature and SBOM attestation of ghcr.io/jankrus/doctorholiday-frontend@sha256:4ec4367f13270ba560a72acf20116e6421d7b5648d2e7a185f8c4b68e3eaf048 verified with infrastructure/signing/cosign.pub
+2026-11-26T14:14:05.1307429Z ##[group]Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+2026-11-26T14:14:05.1421123Z with:
+2026-11-26T14:14:05.1421376Z   name: signing-frontend
+2026-11-26T14:14:05.1421640Z   path: reports/signing/frontend/
+2026-11-26T14:14:05.1422140Z   if-no-files-found: warn
+2026-11-26T14:14:05.1422392Z   retention-days: 90
+2026-11-26T14:14:05.1422617Z   compression-level: 6
+2026-11-26T14:14:05.1422872Z   overwrite: false
+2026-11-26T14:14:05.1423115Z   include-hidden-files: false
+2026-11-26T14:14:05.1423375Z   archive: true
+2026-11-26T14:14:05.1423591Z ##[endgroup]
+2026-11-26T14:14:05.2549265Z With the provided path, there will be 6 files uploaded
+2026-11-26T14:14:05.2552819Z Artifact name is valid!
+2026-11-26T14:14:05.2553175Z Root directory input is valid!
+2026-11-26T14:14:05.7928070Z Uploading artifact: signing-frontend.zip
+2026-11-26T14:14:05.7955699Z Beginning upload of artifact content to blob storage
+2026-11-26T14:14:06.4575776Z Uploaded bytes 45701
+2026-11-26T14:14:06.5470885Z Finished uploading artifact content to blob storage!
+2026-11-26T14:14:06.5471510Z SHA256 digest of uploaded artifact is 0f6211f06a7d522777dc944afe5663de77163702d4ff02bb63ab667c0e08ce09
+2026-11-26T14:14:06.5472203Z Finalizing artifact upload
+2026-11-26T14:14:07.1626709Z Artifact signing-frontend successfully finalized. Artifact ID 15126396012
+2026-11-26T14:14:07.1627425Z Artifact signing-frontend has been successfully uploaded! Final size is 45701 bytes. Artifact ID is 15126396012
+2026-11-26T14:14:07.1630758Z Artifact download URL: https://github.com/jankrus/doctorholiday/actions/runs/45835523069/artifacts/15126396012
+2026-11-26T14:14:07.1767511Z Post job cleanup.
+2026-11-26T14:14:07.2416072Z [command]/usr/bin/git version
+2026-11-26T14:14:07.2452732Z git version 2.56.1
+2026-11-26T14:14:07.2476614Z Temporarily overriding HOME='/home/runner/work/_temp/e0f127a0-1687-40d4-8450-993a57caab73' before making global git config changes
+2026-11-26T14:14:07.2477967Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T14:14:07.2480114Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T14:14:07.2503519Z Removing SSH command configuration
+2026-11-26T14:14:07.2508266Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T14:14:07.2533704Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T14:14:07.2703146Z Removing HTTP extra header
+2026-11-26T14:14:07.2706660Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T14:14:07.2729847Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T14:14:07.2903607Z Removing includeIf entries pointing to credentials config files
+2026-11-26T14:14:07.2908231Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T14:14:07.2933415Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T14:14:07.3215511Z Cleaning up orphan processes
