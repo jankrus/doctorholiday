@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI
 
 from doctorholiday.api import appointments, auth, directory, health, schedule
+from doctorholiday.auth.policy import enforce_default_deny
 from doctorholiday.config import Settings
 from doctorholiday.db import create_db_engine, create_session_factory
 from doctorholiday.errors import install_error_handlers
@@ -53,4 +54,5 @@ def create_app(settings: Settings) -> FastAPI:
     app.include_router(directory.router)
     app.include_router(schedule.router)
     app.include_router(appointments.router)
+    enforce_default_deny(app)
     return app

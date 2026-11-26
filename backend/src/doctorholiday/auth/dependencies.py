@@ -5,9 +5,13 @@
   this one (e.g. bookings, #17). Other states get `403 MFA_REQUIRED`.
 - `require_roles(...)`: an `ActiveUser` whose role is one of the given ones, else `403 FORBIDDEN`
   (RBAC, `x-roles` in openapi.yaml). Object-level checks ("own only") stay in the endpoint,
-  which answers `404` for foreign objects. #16 replaces this per-route check with a central,
-  default-deny rule table.
+  which answers `404` for foreign objects.
 - `reject_session`: for register and login, which only callers without a session may use.
+- `public`: for the probes, which need no login.
+
+Default deny (#16): every dependency above carries its allowed roles in `AUTHZ_ATTRIBUTE`.
+`doctorholiday.auth.policy` reads them from the route table and refuses to start the app if a
+route has none, so a new endpoint without an explicit rule never goes live.
 """
 
 import logging
@@ -27,6 +31,16 @@ from doctorholiday.models import Role, SessionState, User, UserSession
 from doctorholiday.repositories import sessions, users
 
 logger = logging.getLogger(__name__)
+
+# The roles a dependency lets through; `ANONYMOUS` stands for a request without a session.
+AUTHZ_ATTRIBUTE = "authz_roles"
+ANONYMOUS = "ANONYMOUS"
+_LOGGED_IN = frozenset(role.value for role in Role)
+
+
+def _marked[F: Callable[..., object]](function: F, roles: frozenset[str]) -> F:
+    setattr(function, AUTHZ_ATTRIBUTE, roles)
+    return function
 
 
 @dataclass(frozen=True)
@@ -61,6 +75,7 @@ def _require_session(request: Request, db: DbSession) -> Authenticated:
     return authenticated
 
 
+_marked(_require_session, _LOGGED_IN)
 CurrentSession = Annotated[Authenticated, Depends(_require_session)]
 
 
@@ -74,6 +89,7 @@ def _require_active_user(authenticated: CurrentSession) -> User:
     return authenticated.user
 
 
+_marked(_require_active_user, _LOGGED_IN)
 ActiveUser = Annotated[User, Depends(_require_active_user)]
 
 
@@ -90,9 +106,19 @@ def require_roles(*allowed: Role) -> Callable[[User], User]:
             raise forbidden()
         return user
 
-    return dependency
+    return _marked(dependency, frozenset(role.value for role in roles))
 
 
 def reject_session(request: Request, db: DbSession) -> None:
     if _authenticate(request, db) is not None:
         raise ApiError(status.HTTP_403_FORBIDDEN, ErrorCode.FORBIDDEN, "You are already logged in.")
+
+
+_marked(reject_session, frozenset({ANONYMOUS}))
+
+
+def public() -> None:
+    """Dependency: an explicit "no login needed" (the probes). Anyone may call the route."""
+
+
+_marked(public, frozenset({ANONYMOUS}) | _LOGGED_IN)
