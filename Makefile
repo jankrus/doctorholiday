@@ -1,4 +1,4 @@
-.PHONY: check-traceability registry-images smoke test-gate evidence evidence-sync help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
+.PHONY: report check-traceability registry-images smoke test-gate evidence evidence-sync help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
 .DEFAULT_GOAL := help
 
 # bash with strict flags, so a failing step stops the target with a clear error (#42).
@@ -31,6 +31,9 @@ sast-sql: ## Check the backend for SQL built from strings with Semgrep (#12)
 # the pipeline can run its online audits (impostor commits, known-vulnerable actions) with a token.
 ACTIONLINT_IMAGE := rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667
 ZIZMOR_IMAGE := ghcr.io/zizmorcore/zizmor:1.32.0@sha256:3014cc8f68f663935f69b3c3e0e41f5ce102b268d97db13db0f62208747f860d
+
+report: ## Build docs/report/documentation.pdf from docs/report/documentation.md (pinned pandoc image, #50)
+	scripts/build-report.sh
 
 check-traceability: ## Fail if a file, symbol or link of docs/report/traceability.md does not resolve (#47)
 	python3 scripts/check_traceability.py
