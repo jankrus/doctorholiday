@@ -110,6 +110,18 @@ Updates come as Dependabot pull requests (#46, `.github/dependabot.yml`), which 
 
 The Docker entries ignore versions that conflict with the pins fixed elsewhere: Python 3.13 and later (`requires-python`, `backend/.python-version`, D-03), uv 0.13 and later (`required-version` in `backend/pyproject.toml`) and Node 23 and later (`frontend/.nvmrc`, AGENTS.md). **A uv bump in `backend/Dockerfile` has to be mirrored by hand in the `setup-uv` `version` in `ci-cd.yml`** (and the reverse), because Dependabot does not update that input.
 
+### Ignored major versions (frontend)
+
+`.github/dependabot.yml` ignores these major versions of the frontend dependencies. Each needs a coordinated upgrade that is a task of its own, not a merge of a bot PR; the ignore is removed when that task is done.
+
+| Dependency | Ignored | Why | Task |
+| :--- | :--- | :--- | :--- |
+| `react`, `react-dom`, `@types/react`, `@types/react-dom` | 19 and later | React 19 with the type packages and the router together | upgrade React |
+| `react-router` | 8 and later | peer dependencies do not resolve with React 18 | with the React upgrade |
+| `eslint`, `@eslint/js`, `eslint-plugin-react-hooks` | 9 and later (plugin 6 and later) | flat config; the three move together | migrate the lint configuration |
+| `jsdom` | 30 and later | needs Node 22.14, the pin is 22.13.1 | raise the Node pin (`.nvmrc`, workflow, Dockerfile, AGENTS.md) |
+| `typescript` | 7 and later | native port; conflicts with the peer ranges of `openapi-typescript` and others | when the tools support it |
+
 ## Open points
 
 - **Evidence commit:** committing reports to `main` is blocked by the branch ruleset (pull request required). #44 decides between an evidence branch and a bot token.

@@ -26,9 +26,39 @@ updates:
       frontend-minor-patch:
         update-types: [minor, patch]
     # The project runs on Node 22 (frontend/.nvmrc, AGENTS.md); @types/node must match it.
+    # The other entries are major versions whose update PRs failed `npm ci` or the tests because
+    # they need a coordinated upgrade of the toolchain. They are not forgotten: each is its own
+    # task (see `.github/workflows/README.md`, "Ignored major versions"), and the ignore is lifted
+    # when that task is done.
     ignore:
       - dependency-name: "@types/node"
         versions: [">=23"]
+      # React 19 (needs the React upgrade with its type packages and the router together).
+      - dependency-name: react
+        versions: [">=19"]
+      - dependency-name: react-dom
+        versions: [">=19"]
+      - dependency-name: "@types/react"
+        versions: [">=19"]
+      - dependency-name: "@types/react-dom"
+        versions: [">=19"]
+      # react-router 8: its peer dependencies do not resolve with React 18 and @types/react 18.
+      - dependency-name: react-router
+        versions: [">=8"]
+      # ESLint 9 and later use flat config; eslint, @eslint/js and the React hooks plugin (7.x needs
+      # ESLint 9) move together with the migration of the lint configuration.
+      - dependency-name: eslint
+        versions: [">=9"]
+      - dependency-name: "@eslint/js"
+        versions: [">=9"]
+      - dependency-name: eslint-plugin-react-hooks
+        versions: [">=6"]
+      # jsdom 30 and later need Node 22.14 (the pin is 22.13.1).
+      - dependency-name: jsdom
+        versions: [">=30"]
+      # TypeScript 7 (the native port) conflicts with the peer ranges of openapi-typescript and others.
+      - dependency-name: typescript
+        versions: [">=7"]
 
   - package-ecosystem: docker
     directory: /backend
