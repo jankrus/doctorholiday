@@ -105,6 +105,10 @@ jobs:
       - name: Check that actions and images are pinned
         run: scripts/check-pinning.sh
 
+      # Every file, symbol and link of the traceability matrix still exists (#47).
+      - name: Check the traceability matrix
+        run: python3 scripts/check_traceability.py
+
       - name: Read the version
         id: version
         run: |
