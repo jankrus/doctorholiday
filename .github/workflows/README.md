@@ -120,7 +120,8 @@ The Docker entries ignore versions that conflict with the pins fixed elsewhere: 
 | `react-router` | 8 and later | peer dependencies do not resolve with React 18 | with the React upgrade |
 | `eslint`, `@eslint/js`, `eslint-plugin-react-hooks` | 9 and later (plugin 6 and later) | flat config; the three move together | migrate the lint configuration |
 | `jsdom` | 30 and later | needs Node 22.14, the pin is 22.13.1 | raise the Node pin (`.nvmrc`, workflow, Dockerfile, AGENTS.md) |
-| `typescript` | 7 and later | native port; conflicts with the peer ranges of `openapi-typescript` and others | when the tools support it |
+| `typescript` | 6 and later | `openapi-typescript` 7.13 does not allow TypeScript 6 or 7 in its peer range, `npm ci` fails (#145) | when `openapi-typescript` supports it |
+| `@testing-library/jest-dom` | 7 and later | breaking changes: `@testing-library/dom` becomes a required peer, vitest an optional peer (#146) | adapt the test setup, then lift the ignore |
 
 ## Open points
 
