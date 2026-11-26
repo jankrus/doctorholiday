@@ -76,7 +76,6 @@ Read only from environment variables and validated at startup (`src/doctorholida
 | Variable | Required | Format |
 | :--- | :--- | :--- |
 | `DATABASE_URL` | yes | `postgresql+psycopg://user:password@host:port/db` |
-| `SESSION_SECRET` | yes | at least 32 characters |
 | `MFA_ENCRYPTION_KEY` | yes | 32 random bytes, base64url with padding (44 characters) |
 | `ALLOWED_ORIGINS` | yes | comma-separated `http(s)://host[:port]` origins, no wildcard |
 | `PORT` | no (8080) | 1024-65535 |
@@ -93,7 +92,7 @@ Read only from environment variables and validated at startup (`src/doctorholida
 | `REAUTH_WINDOW_MINUTES` | no (15) | 1-1440; how long wrong current passwords are counted |
 | `REAUTH_LOCKOUT_MINUTES` | no (15) | 1-1440; how long a locked user gets `429` for password changes |
 
-`SESSION_SECRET` is validated but not used yet: session tokens are random and only their hash is stored, so they need no signing key (#59).
+There is no session signing key: session tokens are random and only their SHA-256 hash is stored, and CSRF protection is an `Origin` / `Sec-Fetch-Site` check, so nothing is signed (#59). A required secret needs a documented consumer (`MFA_ENCRYPTION_KEY`: TOTP secrets, #21; `DATABASE_URL`: the database).
 
 ## Code layout
 

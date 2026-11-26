@@ -39,17 +39,15 @@ make db-up                          # starts PostgreSQL on 127.0.0.1:5432; creat
 cp backend/.env.example backend/.env
 ```
 
-Fill in `backend/.env` (it is git-ignored; never commit it). This replaces the three `CHANGE_ME` values with the app
-role's database password and freshly generated secrets; it works with both GNU and BSD (macOS) `sed`:
+Fill in `backend/.env` (it is git-ignored; never commit it). This replaces the two `CHANGE_ME` values with the app
+role's database password and a freshly generated key; it works with both GNU and BSD (macOS) `sed`:
 
 ```sh
 cd backend
 APP_PW=$(cat ../.secrets/db_app_password)
-SESSION_SECRET=$(openssl rand -base64 32)
 MFA_KEY=$(uv run --locked python -c 'import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())')
 sed -i.bak \
   -e "s#^DATABASE_URL=.*#DATABASE_URL=postgresql+psycopg://doctorholiday_app:${APP_PW}@localhost:5432/doctorholiday#" \
-  -e "s#^SESSION_SECRET=.*#SESSION_SECRET=${SESSION_SECRET}#" \
   -e "s#^MFA_ENCRYPTION_KEY=.*#MFA_ENCRYPTION_KEY=${MFA_KEY}#" \
   .env && rm .env.bak
 cd ..

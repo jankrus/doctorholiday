@@ -4,7 +4,7 @@ import pytest
 
 from doctorholiday.config import ConfigError, LogLevel, load_settings
 
-REQUIRED = ["DATABASE_URL", "SESSION_SECRET", "MFA_ENCRYPTION_KEY", "ALLOWED_ORIGINS"]
+REQUIRED = ["DATABASE_URL", "MFA_ENCRYPTION_KEY", "ALLOWED_ORIGINS"]
 
 
 def test_loads_valid_environment(env: dict[str, str]) -> None:
@@ -13,7 +13,6 @@ def test_loads_valid_environment(env: dict[str, str]) -> None:
     assert settings.port == 8080
     assert settings.log_level is LogLevel.DEBUG
     assert settings.allowed_origins == ["https://doctorholiday.localhost"]
-    assert settings.session_secret.get_secret_value() == env["SESSION_SECRET"]
 
 
 def test_defaults(env: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
@@ -37,7 +36,7 @@ def test_defaults(env: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
 def test_secrets_are_masked_in_repr(env: dict[str, str]) -> None:
     text = repr(load_settings())
 
-    assert env["SESSION_SECRET"] not in text
+    assert env["MFA_ENCRYPTION_KEY"] not in text
     assert "db-password-sentinel" not in text
 
 
@@ -57,7 +56,6 @@ def test_missing_required_variable(
     ("name", "value"),
     [
         ("DATABASE_URL", "mysql://dh:invalid-secret-sentinel@db/doctorholiday"),
-        ("SESSION_SECRET", "invalid-secret-sentinel"),
         ("MFA_ENCRYPTION_KEY", "invalid-secret-sentinel"),
         # Valid base64, but 23 instead of 32 bytes.
         ("MFA_ENCRYPTION_KEY", base64.urlsafe_b64encode(b"invalid-secret-sentinel").decode()),

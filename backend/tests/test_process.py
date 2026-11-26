@@ -41,7 +41,7 @@ def _json_lines(output: str) -> list[dict[str, object]]:
 def test_missing_variable_exits_with_clear_error(tmp_path: Path) -> None:
     result = subprocess.run(
         [sys.executable, "-m", "doctorholiday"],
-        env=_environ(tmp_path, SESSION_SECRET=None, MFA_ENCRYPTION_KEY="key-sentinel"),
+        env=_environ(tmp_path, ALLOWED_ORIGINS=None, MFA_ENCRYPTION_KEY="key-sentinel"),
         capture_output=True,
         text=True,
         timeout=STARTUP_TIMEOUT_S,
@@ -55,7 +55,7 @@ def test_missing_variable_exits_with_clear_error(tmp_path: Path) -> None:
     assert "db-password-sentinel" not in output
     (entry,) = _json_lines(result.stdout)
     assert entry["level"] == "CRITICAL"
-    assert "SESSION_SECRET: is missing" in entry["errors"]
+    assert "ALLOWED_ORIGINS: is missing" in entry["errors"]
     assert any(str(error).startswith("MFA_ENCRYPTION_KEY: ") for error in entry["errors"])
 
 
@@ -99,7 +99,6 @@ def test_serves_and_shuts_down_gracefully_on_sigterm(tmp_path: Path) -> None:
     assert any("Finished server process" in str(message) for message in messages)
     for secret in (
         "db-password-sentinel",
-        TEST_ENV["SESSION_SECRET"],
         TEST_ENV["MFA_ENCRYPTION_KEY"],
     ):
         assert secret not in stdout

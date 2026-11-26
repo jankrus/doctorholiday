@@ -180,7 +180,7 @@ def test_the_command_needs_only_the_database_url(
     # Least privilege (AGENTS.md rule 6): the CronJob gets no API secrets.
     guest_appointment(db_engine, doctor, staff, ended_days_ago=31)
     monkeypatch.setenv("DATABASE_URL", db_url)
-    for name in ("SESSION_SECRET", "MFA_ENCRYPTION_KEY", "ALLOWED_ORIGINS"):
+    for name in ("MFA_ENCRYPTION_KEY", "ALLOWED_ORIGINS"):
         monkeypatch.delenv(name)
 
     assert guest_cleanup.main() == 0
