@@ -1,0 +1,40 @@
+{
+  "passed": false,
+  "run": "45626616466",
+  "sha": "09e82dba279f486eff3002c75071bdedf8574a4c",
+  "rules": [
+    {
+      "rule": "jobs",
+      "description": "every job the gate depends on succeeded",
+      "passed": true,
+      "violations": []
+    },
+    {
+      "rule": "secrets",
+      "description": "Gitleaks found no secret in the history",
+      "passed": true,
+      "violations": []
+    },
+    {
+      "rule": "vulnerabilities",
+      "description": "no HIGH/CRITICAL or CVSS >= 7.0 finding",
+      "passed": true,
+      "violations": []
+    },
+    {
+      "rule": "signatures",
+      "description": "every image has a valid signature and SBOM attestation",
+      "passed": false,
+      "violations": [
+        {
+          "message": "backend: signature or attestation does not verify",
+          "detail": [
+            "Error: no matching attestations: ",
+            "error during command execution: no matching attestations: ",
+            "SBOM ATTESTATION INVALID OR MISSING: docker.io/library/alpine@sha256:a8560b36e8b8210634f77d9f7f9efd7ffa463e380b75e2e74aff4511df3ef88c"
+          ]
+        }
+      ]
+    }
+  ]
+}
