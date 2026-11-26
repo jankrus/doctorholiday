@@ -56,8 +56,13 @@ updates:
       # jsdom 30 and later need Node 22.14 (the pin is 22.13.1).
       - dependency-name: jsdom
         versions: [">=30"]
-      # TypeScript 7 (the native port) conflicts with the peer ranges of openapi-typescript and others.
+      # TypeScript 6 and 7: openapi-typescript (7.13) does not allow them in its peer range, so
+      # `npm ci` fails (PR #145 for 6.0.3; 7 is the native port with the same conflict).
       - dependency-name: typescript
+        versions: [">=6"]
+      # @testing-library/jest-dom 7 and 8 make @testing-library/dom a required peer and declare
+      # vitest as an optional peer (breaking changes); the test setup is adapted together.
+      - dependency-name: "@testing-library/jest-dom"
         versions: [">=7"]
 
   - package-ecosystem: docker
