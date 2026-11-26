@@ -1,0 +1,861 @@
+﻿2026-11-26T15:34:01.5319036Z Current runner version: '2.338.2'
+2026-11-26T15:34:01.5337919Z ##[group]Runner Image Provisioner
+2026-11-26T15:34:01.5338560Z Hosted Compute Agent
+2026-11-26T15:34:01.5339024Z Version: 20261111.635
+2026-11-26T15:34:01.5339505Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-26T15:34:01.5340039Z Build Date: 2026-11-11T01:49:01Z
+2026-11-26T15:34:01.5340547Z Worker ID: {0989f795-4fd4-405b-a330-df964432c1a6}
+2026-11-26T15:34:01.5341046Z Region: us-west-2
+2026-11-26T15:34:01.5341437Z Cloud: AWS
+2026-11-26T15:34:01.5341837Z ##[endgroup]
+2026-11-26T15:34:01.5342841Z ##[group]Operating System
+2026-11-26T15:34:01.5343288Z Ubuntu
+2026-11-26T15:34:01.5343658Z 24.04.5
+2026-11-26T15:34:01.5344017Z LTS
+2026-11-26T15:34:01.5344427Z ##[endgroup]
+2026-11-26T15:34:01.5344842Z ##[group]Runner Image
+2026-11-26T15:34:01.5345271Z Image: ubuntu-24.04
+2026-11-26T15:34:01.5345950Z Version: 20261116.133.1
+2026-11-26T15:34:01.5347000Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.133/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-26T15:34:01.5348138Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.133
+2026-11-26T15:34:01.5348831Z ##[endgroup]
+2026-11-26T15:34:01.5349669Z ##[group]GITHUB_TOKEN Permissions
+2026-11-26T15:34:01.5351335Z Contents: read
+2026-11-26T15:34:01.5351738Z Metadata: read
+2026-11-26T15:34:01.5352117Z Packages: read
+2026-11-26T15:34:01.5352533Z ##[endgroup]
+2026-11-26T15:34:01.5354051Z Secret source: Actions
+2026-11-26T15:34:01.5354730Z Cache mode: write
+2026-11-26T15:34:01.5355206Z Prepare workflow directory
+2026-11-26T15:34:01.5629562Z Prepare all required actions
+2026-11-26T15:34:01.5666652Z Getting action download info
+2026-11-26T15:34:02.0126418Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-26T15:34:03.4210138Z Download action repository 'actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333' (SHA:9000827ccba6bdab643e8b6fd33ac0654aef8333)
+2026-11-26T15:34:03.8293779Z Download action repository 'sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532' (SHA:756fe2d284c7292c4e9b62c8a28f1e5629c59532)
+2026-11-26T15:34:04.0148013Z Download action repository 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9' (SHA:cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+2026-11-26T15:34:04.2889306Z Complete job name: deploy
+2026-11-26T15:34:04.3498949Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-26T15:34:04.3499534Z with:
+2026-11-26T15:34:04.3499828Z   persist-credentials: false
+2026-11-26T15:34:04.3500141Z   repository: jankrus/doctorholiday
+2026-11-26T15:34:04.3502141Z   token: ***
+2026-11-26T15:34:04.3502429Z   ssh-strict: true
+2026-11-26T15:34:04.3502703Z   ssh-user: git
+2026-11-26T15:34:04.3502967Z   clean: true
+2026-11-26T15:34:04.3503246Z   sparse-checkout-cone-mode: true
+2026-11-26T15:34:04.3503579Z   fetch-depth: 1
+2026-11-26T15:34:04.3503913Z   fetch-tags: false
+2026-11-26T15:34:04.3504205Z   show-progress: true
+2026-11-26T15:34:04.3504496Z   lfs: false
+2026-11-26T15:34:04.3504771Z   submodules: false
+2026-11-26T15:34:04.3505059Z   set-safe-directory: true
+2026-11-26T15:34:04.3505379Z   allow-unsafe-pr-checkout: false
+2026-11-26T15:34:04.3506029Z ##[endgroup]
+2026-11-26T15:34:07.5116065Z Syncing repository: jankrus/doctorholiday
+2026-11-26T15:34:07.5117603Z ##[group]Getting Git version info
+2026-11-26T15:34:07.5118025Z Working directory is '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T15:34:07.5118663Z [command]/usr/bin/git version
+2026-11-26T15:34:07.8235735Z git version 2.56.1
+2026-11-26T15:34:07.8257837Z ##[endgroup]
+2026-11-26T15:34:07.8266800Z Temporarily overriding HOME='/home/runner/work/_temp/138ecfde-2c06-42d4-876f-cfc3cb3f644c' before making global git config changes
+2026-11-26T15:34:07.8267747Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T15:34:07.8271182Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T15:34:07.8715004Z Deleting the contents of '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T15:34:07.8718091Z ##[group]Determining repository object format
+2026-11-26T15:34:07.8718954Z ##[endgroup]
+2026-11-26T15:34:07.8719578Z ##[group]Initializing the repository
+2026-11-26T15:34:07.8722810Z [command]/usr/bin/git init /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T15:34:07.8878324Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-26T15:34:07.8879086Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-26T15:34:07.8879582Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-26T15:34:07.8879960Z hint: call:
+2026-11-26T15:34:07.8880256Z hint:
+2026-11-26T15:34:07.8880582Z hint: 	git config --global init.defaultBranch <name>
+2026-11-26T15:34:07.8880992Z hint:
+2026-11-26T15:34:07.8881327Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-26T15:34:07.8887901Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-26T15:34:07.8888444Z hint:
+2026-11-26T15:34:07.8888752Z hint: 	git branch -m <name>
+2026-11-26T15:34:07.8889123Z hint:
+2026-11-26T15:34:07.8889597Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-26T15:34:07.8890389Z Initialized empty Git repository in /home/runner/work/doctorholiday/doctorholiday/.git/
+2026-11-26T15:34:07.8898284Z [command]/usr/bin/git remote add origin https://github.com/jankrus/doctorholiday
+2026-11-26T15:34:07.8955239Z ##[endgroup]
+2026-11-26T15:34:07.8956155Z ##[group]Disabling automatic garbage collection
+2026-11-26T15:34:07.8958426Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-26T15:34:07.8982467Z ##[endgroup]
+2026-11-26T15:34:07.8982958Z ##[group]Setting up auth
+2026-11-26T15:34:07.8983471Z Removing SSH command configuration
+2026-11-26T15:34:07.8986545Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T15:34:07.9014557Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T15:34:08.2325121Z Removing HTTP extra header
+2026-11-26T15:34:08.2330090Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T15:34:08.2360047Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T15:34:08.2506556Z Removing includeIf entries pointing to credentials config files
+2026-11-26T15:34:08.2512592Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T15:34:08.2540472Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T15:34:08.2692431Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-3236a257-4f78-4c8c-9c96-b894c4eaeee6.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-26T15:34:08.2722330Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path /home/runner/work/_temp/git-credentials-3236a257-4f78-4c8c-9c96-b894c4eaeee6.config
+2026-11-26T15:34:08.2745911Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-3236a257-4f78-4c8c-9c96-b894c4eaeee6.config
+2026-11-26T15:34:08.2769200Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-3236a257-4f78-4c8c-9c96-b894c4eaeee6.config
+2026-11-26T15:34:08.2791867Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-3236a257-4f78-4c8c-9c96-b894c4eaeee6.config
+2026-11-26T15:34:08.2813637Z ##[endgroup]
+2026-11-26T15:34:08.2814188Z ##[group]Fetching the repository
+2026-11-26T15:34:08.2819102Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +f62fd9eb7f491870f102d401fa4fd3a835be5d48:refs/remotes/origin/main
+2026-11-26T15:34:08.8991318Z From https://github.com/jankrus/doctorholiday
+2026-11-26T15:34:08.8991948Z  * [new ref]         f62fd9eb7f491870f102d401fa4fd3a835be5d48 -> origin/main
+2026-11-26T15:34:08.9000615Z [command]/usr/bin/git branch --list --remote origin/main
+2026-11-26T15:34:08.9036998Z   origin/main
+2026-11-26T15:34:08.9043190Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-11-26T15:34:08.9067189Z f62fd9eb7f491870f102d401fa4fd3a835be5d48
+2026-11-26T15:34:08.9069280Z ##[endgroup]
+2026-11-26T15:34:08.9069794Z ##[group]Determining the checkout info
+2026-11-26T15:34:08.9070334Z ##[endgroup]
+2026-11-26T15:34:08.9074178Z [command]/usr/bin/git sparse-checkout disable
+2026-11-26T15:34:08.9139479Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-26T15:34:08.9167850Z ##[group]Checking out the ref
+2026-11-26T15:34:08.9170410Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-11-26T15:34:08.9376830Z Switched to a new branch 'main'
+2026-11-26T15:34:08.9384399Z branch 'main' set up to track 'origin/main'.
+2026-11-26T15:34:08.9399094Z ##[endgroup]
+2026-11-26T15:34:08.9424382Z [command]/usr/bin/git log -1 --format=%H
+2026-11-26T15:34:08.9444479Z f62fd9eb7f491870f102d401fa4fd3a835be5d48
+2026-11-26T15:34:08.9452955Z ##[group]Removing auth
+2026-11-26T15:34:08.9453321Z Removing SSH command configuration
+2026-11-26T15:34:08.9456476Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T15:34:08.9481411Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T15:34:08.9632418Z Removing HTTP extra header
+2026-11-26T15:34:08.9634873Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T15:34:08.9659867Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T15:34:08.9803907Z Removing includeIf entries pointing to credentials config files
+2026-11-26T15:34:08.9806716Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T15:34:08.9830365Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T15:34:08.9831165Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T15:34:08.9831670Z includeif.gitdir:/github/workspace/.git.path
+2026-11-26T15:34:08.9832084Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T15:34:08.9837313Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T15:34:08.9854728Z /home/runner/work/_temp/git-credentials-3236a257-4f78-4c8c-9c96-b894c4eaeee6.config
+2026-11-26T15:34:08.9861826Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-3236a257\-4f78\-4c8c\-9c96\-b894c4eaeee6\.config
+2026-11-26T15:34:08.9886444Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T15:34:08.9908680Z /home/runner/work/_temp/git-credentials-3236a257-4f78-4c8c-9c96-b894c4eaeee6.config
+2026-11-26T15:34:08.9913722Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-3236a257\-4f78\-4c8c\-9c96\-b894c4eaeee6\.config
+2026-11-26T15:34:08.9938893Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-11-26T15:34:08.9956374Z /github/runner_temp/git-credentials-3236a257-4f78-4c8c-9c96-b894c4eaeee6.config
+2026-11-26T15:34:08.9962529Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-3236a257\-4f78\-4c8c\-9c96\-b894c4eaeee6\.config
+2026-11-26T15:34:08.9984666Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T15:34:09.0001813Z /github/runner_temp/git-credentials-3236a257-4f78-4c8c-9c96-b894c4eaeee6.config
+2026-11-26T15:34:09.0007298Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-3236a257\-4f78\-4c8c\-9c96\-b894c4eaeee6\.config
+2026-11-26T15:34:09.0030411Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T15:34:09.0173371Z Removing credentials config '/home/runner/work/_temp/git-credentials-3236a257-4f78-4c8c-9c96-b894c4eaeee6.config'
+2026-11-26T15:34:09.0179605Z ##[endgroup]
+2026-11-26T15:34:09.0357665Z ##[group]Run actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+2026-11-26T15:34:09.0358049Z with:
+2026-11-26T15:34:09.0358277Z   name: image-backend
+2026-11-26T15:34:09.0358503Z   path: reports/images/backend
+2026-11-26T15:34:09.0358782Z   merge-multiple: false
+2026-11-26T15:34:09.0359053Z   repository: jankrus/doctorholiday
+2026-11-26T15:34:09.0359317Z   run-id: 45848434608
+2026-11-26T15:34:09.0359578Z   skip-decompress: false
+2026-11-26T15:34:09.0359808Z   digest-mismatch: error
+2026-11-26T15:34:09.0360053Z ##[endgroup]
+2026-11-26T15:34:09.1432210Z Downloading single artifact
+2026-11-26T15:34:09.5033442Z Preparing to download the following artifacts:
+2026-11-26T15:34:09.5034184Z - image-backend (ID: 15134345741, Size: 3729, Expected Digest: sha256:8090bad1bbdd4d8db9cc21de9fc36eadddc992745d478e3f4157948a280f887a)
+2026-11-26T15:34:10.1217598Z Redirecting to blob download url: https://productionresultssa17.blob.core.windows.net/actions-results/4601ee3d-7cff-899a-bfae-29fb62390356/workflow-job-run-b8a95a9b-87f9-5b93-9120-c59453927ece/artifacts/b153194b4cd8359feabef5b0729436aad7e4ef3b8501401512397d83c19f69a3.zip
+2026-11-26T15:34:10.1219008Z Starting download of artifact to: /home/runner/work/doctorholiday/doctorholiday/reports/images/backend
+2026-11-26T15:34:10.4518034Z (node:2249) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-11-26T15:34:10.4519057Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-26T15:34:10.4573854Z SHA256 digest of downloaded artifact is 8090bad1bbdd4d8db9cc21de9fc36eadddc992745d478e3f4157948a280f887a
+2026-11-26T15:34:10.4574577Z Artifact download completed successfully.
+2026-11-26T15:34:10.4575088Z Total of 1 artifact(s) downloaded
+2026-11-26T15:34:10.4583803Z Download artifact has finished successfully
+2026-11-26T15:34:10.4691609Z ##[group]Run actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+2026-11-26T15:34:10.4691963Z with:
+2026-11-26T15:34:10.4692203Z   name: image-frontend
+2026-11-26T15:34:10.4692470Z   path: reports/images/frontend
+2026-11-26T15:34:10.4692761Z   merge-multiple: false
+2026-11-26T15:34:10.4693003Z   repository: jankrus/doctorholiday
+2026-11-26T15:34:10.4693293Z   run-id: 45848434608
+2026-11-26T15:34:10.4693532Z   skip-decompress: false
+2026-11-26T15:34:10.4693772Z   digest-mismatch: error
+2026-11-26T15:34:10.4694031Z ##[endgroup]
+2026-11-26T15:34:10.5756190Z Downloading single artifact
+2026-11-26T15:34:10.9130203Z Preparing to download the following artifacts:
+2026-11-26T15:34:10.9130810Z - image-frontend (ID: 15133666181, Size: 3728, Expected Digest: sha256:14e4ab2a6588550578d459a00370928df3f3c4447fadf6b2ed9908cb5604a164)
+2026-11-26T15:34:11.5072288Z Redirecting to blob download url: https://productionresultssa17.blob.core.windows.net/actions-results/4601ee3d-7cff-899a-bfae-29fb62390356/workflow-job-run-71177209-b75f-5866-8f3d-400a978cd806/artifacts/2ea25d67a45ff70f16c866ed9a29cbb4b2452ea33d0f567456605e9e9a4d49aa.zip
+2026-11-26T15:34:11.5073331Z Starting download of artifact to: /home/runner/work/doctorholiday/doctorholiday/reports/images/frontend
+2026-11-26T15:34:11.8358830Z (node:2261) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+2026-11-26T15:34:11.8360623Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-26T15:34:11.8406241Z SHA256 digest of downloaded artifact is 14e4ab2a6588550578d459a00370928df3f3c4447fadf6b2ed9908cb5604a164
+2026-11-26T15:34:11.8406910Z Artifact download completed successfully.
+2026-11-26T15:34:11.8407307Z Total of 1 artifact(s) downloaded
+2026-11-26T15:34:11.8409987Z Download artifact has finished successfully
+2026-11-26T15:34:11.8581606Z ##[group]Run sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532
+2026-11-26T15:34:11.8581987Z with:
+2026-11-26T15:34:11.8582269Z   cosign-release: v3.1.4
+2026-11-26T15:34:11.8582526Z   install-dir: $HOME/.cosign
+2026-11-26T15:34:11.8582758Z   use-sudo: false
+2026-11-26T15:34:11.8583025Z   curl-retries: 6
+2026-11-26T15:34:11.8583239Z ##[endgroup]
+2026-11-26T15:34:11.8638881Z ##[start-action display=Run #!/bin/bash;id=__sigstore_cosign-installer.__run]
+2026-11-26T15:34:11.8669033Z ##[group]Run #!/bin/bash
+2026-11-26T15:34:11.8670068Z #!/bin/bash
+2026-11-26T15:34:11.8670378Z # Substitute environment variables in install-dir input
+2026-11-26T15:34:11.8670783Z install_dir=$(envsubst <<<"${input_install_dir}")
+2026-11-26T15:34:11.8671128Z 
+2026-11-26T15:34:11.8671365Z # cosign install script
+2026-11-26T15:34:11.8671668Z shopt -s expand_aliases
+2026-11-26T15:34:11.8672033Z if [ -z "$NO_COLOR" ]; then
+2026-11-26T15:34:11.8672356Z   alias log_info="echo -e \"\033[1;32mINFO\033[0m:\""
+2026-11-26T15:34:11.8672737Z   alias log_error="echo -e \"\033[1;31mERROR\033[0m:\""
+2026-11-26T15:34:11.8673036Z else
+2026-11-26T15:34:11.8673264Z   alias log_info="echo \"INFO:\""
+2026-11-26T15:34:11.8673615Z   alias log_error="echo \"ERROR:\""
+2026-11-26T15:34:11.8673882Z fi
+2026-11-26T15:34:11.8674127Z set -e
+2026-11-26T15:34:11.8674344Z 
+2026-11-26T15:34:11.8674581Z CURL_RETRIES="${input_curl_retries:-6}"
+2026-11-26T15:34:11.8675004Z # Retry options shared by every release download below. GitHub's release
+2026-11-26T15:34:11.8675608Z # CDN intermittently returns transient HTTP 504s that can persist for
+2026-11-26T15:34:11.8676109Z # ~15-20s, outlasting curl's default exponential backoff (~7s across 3
+2026-11-26T15:34:11.8676536Z # retries). A fixed 5s delay with --retry-all-errors rides out those
+2026-11-26T15:34:11.8676972Z # windows, while --retry-max-time 120 keeps a failing download bounded.
+2026-11-26T15:34:11.8677517Z CURL_RETRY_OPTS=(--retry "${CURL_RETRIES}" --retry-delay 5 --retry-all-errors --retry-max-time 120)
+2026-11-26T15:34:11.8677924Z 
+2026-11-26T15:34:11.8678208Z # This function helps compare versions.
+2026-11-26T15:34:11.8678520Z # Returns 0 if version1 >= version2, 1 otherwise.
+2026-11-26T15:34:11.8678914Z # Usage: is_version_ge "3.0.0" "$version_num"
+2026-11-26T15:34:11.8679208Z is_version_ge() {
+2026-11-26T15:34:11.8679519Z     [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" == "$1" ]
+2026-11-26T15:34:11.8679849Z }
+2026-11-26T15:34:11.8680056Z 
+2026-11-26T15:34:11.8680425Z # Check for unsupported old versions (anything below v2.0.0)
+2026-11-26T15:34:11.8680944Z if [[ "${input_cosign_release}" != "main" ]]; then
+2026-11-26T15:34:11.8681313Z   # Extract version without 'v' prefix for comparison
+2026-11-26T15:34:11.8681668Z   version_num="${input_cosign_release}"
+2026-11-26T15:34:11.8681981Z   version_num="${version_num#v}"
+2026-11-26T15:34:11.8682269Z 
+2026-11-26T15:34:11.8682510Z   # Check if version is less than v2.0.0
+2026-11-26T15:34:11.8682827Z   if ! is_version_ge "2.0.0" "$version_num"; then
+2026-11-26T15:34:11.8683206Z     log_error "cosign versions below v2.0.0 are no longer supported."
+2026-11-26T15:34:11.8683638Z     log_error "Requested version: ${input_cosign_release}"
+2026-11-26T15:34:11.8684014Z     log_error "Please use cosign v2.6.0 or later."
+2026-11-26T15:34:11.8684439Z     log_error "See https://github.com/sigstore/cosign/releases for available versions."
+2026-11-26T15:34:11.8684842Z     exit 1
+2026-11-26T15:34:11.8685286Z   fi
+2026-11-26T15:34:11.8685671Z fi
+2026-11-26T15:34:11.8686105Z 
+2026-11-26T15:34:11.8686365Z mkdir -p "${install_dir}"
+2026-11-26T15:34:11.8686674Z 
+2026-11-26T15:34:11.8686941Z if [[ "${input_cosign_release}" == "main" ]]; then
+2026-11-26T15:34:11.8687323Z   log_info "installing cosign via 'go install' from its main version"
+2026-11-26T15:34:11.8687799Z   GOBIN=$(go env GOPATH)/bin
+2026-11-26T15:34:11.8688180Z   go install github.com/sigstore/cosign/v3/cmd/cosign@main
+2026-11-26T15:34:11.8688530Z   ln -s "$GOBIN/cosign" "${install_dir}/cosign"
+2026-11-26T15:34:11.8688835Z   exit 0
+2026-11-26T15:34:11.8689074Z fi
+2026-11-26T15:34:11.8689285Z 
+2026-11-26T15:34:11.8689500Z shaprog() {
+2026-11-26T15:34:11.8689761Z   case ${runner_os} in
+2026-11-26T15:34:11.8690024Z     Linux|linux)
+2026-11-26T15:34:11.8690297Z       sha256sum "$1" | cut -d' ' -f1
+2026-11-26T15:34:11.8690583Z       ;;
+2026-11-26T15:34:11.8690819Z     macOS|macos)
+2026-11-26T15:34:11.8691153Z       shasum -a256 "$1" | cut -d' ' -f1
+2026-11-26T15:34:11.8691415Z       ;;
+2026-11-26T15:34:11.8691668Z     Windows|windows)
+2026-11-26T15:34:11.8692136Z       powershell -command "(Get-FileHash \"$1\" -Algorithm SHA256 | Select-Object -ExpandProperty Hash).ToLower()"
+2026-11-26T15:34:11.8692563Z       ;;
+2026-11-26T15:34:11.8692808Z     *)
+2026-11-26T15:34:11.8693056Z       log_error "unsupported OS ${runner_os}"
+2026-11-26T15:34:11.8693375Z       exit 1
+2026-11-26T15:34:11.8693608Z       ;;
+2026-11-26T15:34:11.8693805Z   esac
+2026-11-26T15:34:11.8694063Z }
+2026-11-26T15:34:11.8694267Z 
+2026-11-26T15:34:11.8694688Z ## curl -sL https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign_checksums.txt |\
+2026-11-26T15:34:11.8695268Z ##   gawk 'match($2,/^cosign-([[:alnum:]]+)-([[:alnum:]]+)(\.[[:alnum:]]+)?$/,a){printf "bootstrap_%s_%s_sha=\"%s\"\n",a[1],a[2],$1}' |\
+2026-11-26T15:34:11.8695897Z ##   LANG=C sort
+2026-11-26T15:34:11.8696146Z bootstrap_version='v3.1.4'
+2026-11-26T15:34:11.8696553Z bootstrap_darwin_amd64_sha="9d1e4abe2b6be279ed0d2ff706fde1ccd738747c834e3e6d44039c238867334f"
+2026-11-26T15:34:11.8697174Z bootstrap_darwin_arm64_sha="9f9b8cd557cf2e5b3df3373a00baa005a86b02391e3e06dd0ce37b3a1533d3a4"
+2026-11-26T15:34:11.8697710Z bootstrap_linux_amd64_sha="424e2c97d0b45fd7a6b608a87f090f35633f4c23ece5f092d48bba11aaf4bbfa"
+2026-11-26T15:34:11.8698277Z bootstrap_linux_arm64_sha="ade83b7aac62e131cacfe96d958948b2150cc9efec46a570a2649b8e27dedad2"
+2026-11-26T15:34:11.8698805Z bootstrap_linux_arm_sha="09e77a313910cf5c4774508d85d017d9c60983f41bf657f83ecbd3892f7952cb"
+2026-11-26T15:34:11.8699458Z bootstrap_linux_ppc64le_sha="0887fca23319ea017cc827e6a845ba83722a36bf9e932f35c747ca83c14cec49"
+2026-11-26T15:34:11.8699995Z bootstrap_linux_riscv64_sha="24f3865df0fd9b055827b888d56e13583112ac7d4c87b45967af1f0febf35455"
+2026-11-26T15:34:11.8700562Z bootstrap_linux_s390x_sha="777978d576af893a3daf1fcf3b0e9178cebcbc083a669f6125b6c97b8e1fe433"
+2026-11-26T15:34:11.8701113Z bootstrap_windows_amd64_sha="cbe953787074611f1334cbf37dc1cf953995bb8c45398eb4fc7bb781d29c1f2a"
+2026-11-26T15:34:11.8701546Z 
+2026-11-26T15:34:11.8701819Z cosign_executable_name=cosign
+2026-11-26T15:34:11.8702116Z bootstrap_executable_name=cosign-bootstrap
+2026-11-26T15:34:11.8702427Z 
+2026-11-26T15:34:11.8702643Z trap "popd >/dev/null" EXIT
+2026-11-26T15:34:11.8702898Z 
+2026-11-26T15:34:11.8703169Z pushd "${install_dir}" > /dev/null
+2026-11-26T15:34:11.8703431Z 
+2026-11-26T15:34:11.8703677Z case ${runner_os} in
+2026-11-26T15:34:11.8703929Z   Linux|linux)
+2026-11-26T15:34:11.8704248Z     case ${runner_arch} in
+2026-11-26T15:34:11.8704539Z       X64|amd64)
+2026-11-26T15:34:11.8704807Z         bootstrap_filename='cosign-linux-amd64'
+2026-11-26T15:34:11.8705186Z         bootstrap_sha=${bootstrap_linux_amd64_sha}
+2026-11-26T15:34:11.8705684Z         desired_cosign_filename='cosign-linux-amd64'
+2026-11-26T15:34:11.8706002Z         ;;
+2026-11-26T15:34:11.8706247Z 
+2026-11-26T15:34:11.8706452Z       ARM|arm)
+2026-11-26T15:34:11.8706771Z         bootstrap_filename='cosign-linux-arm'
+2026-11-26T15:34:11.8707079Z         bootstrap_sha=${bootstrap_linux_arm_sha}
+2026-11-26T15:34:11.8707428Z         desired_cosign_filename='cosign-linux-arm'
+2026-11-26T15:34:11.8707742Z         ;;
+2026-11-26T15:34:11.8707969Z 
+2026-11-26T15:34:11.8708217Z       ARM64|arm64)
+2026-11-26T15:34:11.8708496Z         bootstrap_filename='cosign-linux-arm64'
+2026-11-26T15:34:11.8708829Z         bootstrap_sha=${bootstrap_linux_arm64_sha}
+2026-11-26T15:34:11.8709175Z         desired_cosign_filename='cosign-linux-arm64'
+2026-11-26T15:34:11.8709487Z         ;;
+2026-11-26T15:34:11.8709742Z 
+2026-11-26T15:34:11.8709955Z       *)
+2026-11-26T15:34:11.8710225Z         log_error "unsupported architecture ${runner_arch}"
+2026-11-26T15:34:11.8710568Z         exit 1
+2026-11-26T15:34:11.8710815Z         ;;
+2026-11-26T15:34:11.8711047Z     esac
+2026-11-26T15:34:11.8711279Z     ;;
+2026-11-26T15:34:11.8711483Z 
+2026-11-26T15:34:11.8711730Z   macOS|macos)
+2026-11-26T15:34:11.8711981Z     case ${runner_arch} in
+2026-11-26T15:34:11.8712267Z       X64|amd64)
+2026-11-26T15:34:11.8712546Z         bootstrap_filename='cosign-darwin-amd64'
+2026-11-26T15:34:11.8712880Z         bootstrap_sha=${bootstrap_darwin_amd64_sha}
+2026-11-26T15:34:11.8713272Z         desired_cosign_filename='cosign-darwin-amd64'
+2026-11-26T15:34:11.8713564Z         ;;
+2026-11-26T15:34:11.8713814Z 
+2026-11-26T15:34:11.8714025Z       ARM64|arm64)
+2026-11-26T15:34:11.8714297Z         bootstrap_filename='cosign-darwin-arm64'
+2026-11-26T15:34:11.8714680Z         bootstrap_sha=${bootstrap_darwin_arm64_sha}
+2026-11-26T15:34:11.8715009Z         desired_cosign_filename='cosign-darwin-arm64'
+2026-11-26T15:34:11.8715328Z         ;;
+2026-11-26T15:34:11.8715689Z 
+2026-11-26T15:34:11.8715896Z       *)
+2026-11-26T15:34:11.8716223Z         log_error "unsupported architecture ${runner_arch}"
+2026-11-26T15:34:11.8716511Z         exit 1
+2026-11-26T15:34:11.8716783Z         ;;
+2026-11-26T15:34:11.8717000Z     esac
+2026-11-26T15:34:11.8717318Z     ;;
+2026-11-26T15:34:11.8717559Z 
+2026-11-26T15:34:11.8717773Z   Windows|windows)
+2026-11-26T15:34:11.8718059Z     case ${runner_arch} in
+2026-11-26T15:34:11.8718319Z       X64|amd64)
+2026-11-26T15:34:11.8718625Z         bootstrap_filename='cosign-windows-amd64.exe'
+2026-11-26T15:34:11.8718996Z         bootstrap_sha=${bootstrap_windows_amd64_sha}
+2026-11-26T15:34:11.8719353Z         desired_cosign_filename='cosign-windows-amd64.exe'
+2026-11-26T15:34:11.8719713Z         cosign_executable_name=cosign.exe
+2026-11-26T15:34:11.8720055Z         bootstrap_executable_name=cosign-bootstrap.exe
+2026-11-26T15:34:11.8720356Z         ;;
+2026-11-26T15:34:11.8720595Z       *)
+2026-11-26T15:34:11.8720886Z         log_error "unsupported architecture ${runner_arch}"
+2026-11-26T15:34:11.8721231Z         exit 1
+2026-11-26T15:34:11.8721467Z         ;;
+2026-11-26T15:34:11.8721683Z     esac
+2026-11-26T15:34:11.8721922Z     ;;
+2026-11-26T15:34:11.8722260Z   *)
+2026-11-26T15:34:11.8722547Z     log_error "unsupported os ${runner_os}"
+2026-11-26T15:34:11.8722850Z     exit 1
+2026-11-26T15:34:11.8723069Z     ;;
+2026-11-26T15:34:11.8723322Z esac
+2026-11-26T15:34:11.8723544Z 
+2026-11-26T15:34:11.8723735Z SUDO=
+2026-11-26T15:34:11.8724082Z if [[ "${input_use_sudo}" == "true" ]] && command -v sudo >/dev/null; then
+2026-11-26T15:34:11.8724418Z   SUDO=sudo
+2026-11-26T15:34:11.8724668Z fi
+2026-11-26T15:34:11.8724891Z 
+2026-11-26T15:34:11.8725151Z expected_bootstrap_version_digest=${bootstrap_sha}
+2026-11-26T15:34:11.8726166Z log_info "Downloading bootstrap version '${bootstrap_version}' of cosign to verify version to be installed...\n      https://github.com/sigstore/cosign/releases/download/${bootstrap_version}/${bootstrap_filename}"
+2026-11-26T15:34:11.8727223Z $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSL "https://github.com/sigstore/cosign/releases/download/${bootstrap_version}/${bootstrap_filename}" -o "${bootstrap_executable_name}"
+2026-11-26T15:34:11.8727894Z shaBootstrap=$(shaprog "${bootstrap_executable_name}")
+2026-11-26T15:34:11.8728299Z if [[ "$shaBootstrap" != "${expected_bootstrap_version_digest}" ]]; then
+2026-11-26T15:34:11.8728782Z   log_error "Unable to validate cosign version: '${input_cosign_release}'"
+2026-11-26T15:34:11.8729124Z   exit 1
+2026-11-26T15:34:11.8729368Z fi
+2026-11-26T15:34:11.8729697Z $SUDO chmod +x "${bootstrap_executable_name}"
+2026-11-26T15:34:11.8729977Z 
+2026-11-26T15:34:11.8730286Z # If the bootstrap and specified `cosign` releases are the same, we're done.
+2026-11-26T15:34:11.8730717Z if [[ "${input_cosign_release}" == "${bootstrap_version}" ]]; then
+2026-11-26T15:34:11.8731239Z   log_info "bootstrap version successfully verified and matches requested version so nothing else to do"
+2026-11-26T15:34:11.8731776Z   $SUDO mv "${bootstrap_executable_name}" "${cosign_executable_name}"
+2026-11-26T15:34:11.8732112Z   exit 0
+2026-11-26T15:34:11.8732350Z fi
+2026-11-26T15:34:11.8732602Z 
+2026-11-26T15:34:11.8732879Z semver='^v([0-9]+\.){0,2}(\*|[0-9]+)(-?r?c?)(\.[0-9]+)$'
+2026-11-26T15:34:11.8733241Z if [[ "${input_cosign_release}" =~ $semver ]]; then
+2026-11-26T15:34:11.8733630Z   log_info "Custom cosign version '${input_cosign_release}' requested"
+2026-11-26T15:34:11.8733984Z else
+2026-11-26T15:34:11.8734334Z   log_error "Unable to validate requested cosign version: '${input_cosign_release}'"
+2026-11-26T15:34:11.8734693Z   exit 1
+2026-11-26T15:34:11.8734984Z fi
+2026-11-26T15:34:11.8735197Z 
+2026-11-26T15:34:11.8735562Z # Download custom cosign
+2026-11-26T15:34:11.8736346Z log_info "Downloading platform-specific version '${input_cosign_release}' of cosign...\n      https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${desired_cosign_filename}"
+2026-11-26T15:34:11.8737302Z $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSL "https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${desired_cosign_filename}" -o "cosign_${input_cosign_release}"
+2026-11-26T15:34:11.8737944Z shaCustom=$(shaprog "cosign_${input_cosign_release}");
+2026-11-26T15:34:11.8738266Z 
+2026-11-26T15:34:11.8738518Z # same hash means it is the same release
+2026-11-26T15:34:11.8738836Z if [[ "$shaCustom" != "$shaBootstrap" ]]; then
+2026-11-26T15:34:11.8739485Z   log_info "Downloading cosign public key '${input_cosign_release}' of cosign...\n    https://raw.githubusercontent.com/sigstore/cosign/${input_cosign_release}/release/release-cosign.pub"
+2026-11-26T15:34:11.8740353Z   RELEASE_COSIGN_PUB_KEY=https://raw.githubusercontent.com/sigstore/cosign/${input_cosign_release}/release/release-cosign.pub
+2026-11-26T15:34:11.8741018Z   RELEASE_COSIGN_PUB_KEY_SHA='f4cea466e5e887a45da5031757fa1d32655d83420639dc1758749b744179f126'
+2026-11-26T15:34:11.8741410Z 
+2026-11-26T15:34:11.8741698Z   log_info "Verifying public key matches expected value"
+2026-11-26T15:34:11.8742107Z   $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSL "$RELEASE_COSIGN_PUB_KEY" -o public.key
+2026-11-26T15:34:11.8742518Z   sha_fetched_key=$(shaprog public.key)
+2026-11-26T15:34:11.8742866Z   if [[ "$sha_fetched_key" != "$RELEASE_COSIGN_PUB_KEY_SHA" ]]; then
+2026-11-26T15:34:11.8743289Z     log_error "Fetched public key does not match expected digest, exiting"
+2026-11-26T15:34:11.8743660Z     exit 1
+2026-11-26T15:34:11.8743883Z   fi
+2026-11-26T15:34:11.8744130Z 
+2026-11-26T15:34:11.8744367Z   if is_version_ge "3.0.1" "$version_num"; then
+2026-11-26T15:34:11.8744731Z     # we're trying to get something greater than or equal to v3.0.1
+2026-11-26T15:34:11.8745138Z     keyless_signature_file=${desired_cosign_filename}.sigstore.json
+2026-11-26T15:34:11.8746046Z     log_info "Downloading keyless verification bundle for platform-specific '${input_cosign_release}' of cosign...\n      https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${keyless_signature_file}"
+2026-11-26T15:34:11.8747035Z     $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSLO "https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${keyless_signature_file}"
+2026-11-26T15:34:11.8747542Z 
+2026-11-26T15:34:11.8747897Z     log_info "Using bootstrap cosign to verify keyless signature of desired cosign version"
+2026-11-26T15:34:11.8748778Z     "./${bootstrap_executable_name}" verify-blob --certificate-identity=keyless@projectsigstore.iam.gserviceaccount.com --certificate-oidc-issuer=https://accounts.google.com --bundle "${keyless_signature_file}" "cosign_${input_cosign_release}"
+2026-11-26T15:34:11.8749579Z 
+2026-11-26T15:34:11.8749808Z     if is_version_ge "3.0.3" "$version_num"; then
+2026-11-26T15:34:11.8750206Z       # we're trying to get something greater than or equal to v3.0.3
+2026-11-26T15:34:11.8750601Z       kms_signature_file=${desired_cosign_filename}-kms.sigstore.json
+2026-11-26T15:34:11.8751369Z       log_info "Downloading KMS verification bundle for platform-specific '${input_cosign_release}' of cosign...\n      https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${kms_signature_file}"
+2026-11-26T15:34:11.8752280Z       $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSLO "https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${kms_signature_file}"
+2026-11-26T15:34:11.8752796Z 
+2026-11-26T15:34:11.8753220Z       log_info "Using bootstrap cosign to verify signature of desired cosign version"
+2026-11-26T15:34:11.8753841Z       "./${bootstrap_executable_name}" verify-blob --key public.key --bundle "${kms_signature_file}" "cosign_${input_cosign_release}"
+2026-11-26T15:34:11.8754345Z     fi
+2026-11-26T15:34:11.8754584Z   else
+2026-11-26T15:34:11.8754908Z     signature_file=${desired_cosign_filename}.sig
+2026-11-26T15:34:11.8755727Z     log_info "Downloading detached signature for platform-specific '${input_cosign_release}' of cosign...\n      https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${signature_file}"
+2026-11-26T15:34:11.8756681Z     $SUDO curl "${CURL_RETRY_OPTS[@]}" -fsSLO "https://github.com/sigstore/cosign/releases/download/${input_cosign_release}/${signature_file}"
+2026-11-26T15:34:11.8757179Z 
+2026-11-26T15:34:11.8757541Z     log_info "Using bootstrap cosign to verify signature of desired cosign version"
+2026-11-26T15:34:11.8758197Z     "./${bootstrap_executable_name}" verify-blob --key public.key --signature "${signature_file}" "cosign_${input_cosign_release}"
+2026-11-26T15:34:11.8758698Z   fi
+2026-11-26T15:34:11.8758972Z 
+2026-11-26T15:34:11.8759285Z   $SUDO mv "cosign_${input_cosign_release}" "${cosign_executable_name}"
+2026-11-26T15:34:11.8759721Z   $SUDO chmod +x "${cosign_executable_name}"
+2026-11-26T15:34:11.8760138Z   # best-effort: on Windows the just-run bootstrap binary may still be locked briefly
+2026-11-26T15:34:11.8760765Z   $SUDO rm -f "${bootstrap_executable_name}" || log_info "Unable to remove ${bootstrap_executable_name}, leaving it in place"
+2026-11-26T15:34:11.8761275Z   log_info "Installation complete!"
+2026-11-26T15:34:11.8761584Z fi
+2026-11-26T15:34:12.0168340Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:34:12.0169006Z env:
+2026-11-26T15:34:12.0169281Z   input_cosign_release: v3.1.4
+2026-11-26T15:34:12.0169593Z   input_install_dir: $HOME/.cosign
+2026-11-26T15:34:12.0169950Z   input_use_sudo: false
+2026-11-26T15:34:12.0170209Z   input_curl_retries: 6
+2026-11-26T15:34:12.0170467Z   runner_arch: X64
+2026-11-26T15:34:12.0170753Z   runner_os: Linux
+2026-11-26T15:34:12.0170986Z ##[endgroup]
+2026-11-26T15:34:12.0280553Z INFO: Downloading bootstrap version 'v3.1.4' of cosign to verify version to be installed...
+2026-11-26T15:34:12.0281147Z       https://github.com/sigstore/cosign/releases/download/v3.1.4/cosign-linux-amd64
+2026-11-26T15:34:12.7581513Z INFO: bootstrap version successfully verified and matches requested version so nothing else to do
+2026-11-26T15:34:12.7609011Z ##[end-action id=__sigstore_cosign-installer.__run;outcome=success;conclusion=success;duration_ms=896]
+2026-11-26T15:34:12.7613032Z ##[start-action display=Run envsubst <<<"${input_install_dir}" >> "$GITHUB_PATH";id=__sigstore_cosign-installer.__run_2]
+2026-11-26T15:34:12.7643614Z ##[group]Run envsubst <<<"${input_install_dir}" >> "$GITHUB_PATH"
+2026-11-26T15:34:12.7644055Z envsubst <<<"${input_install_dir}" >> "$GITHUB_PATH"
+2026-11-26T15:34:12.7670863Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:34:12.7671192Z env:
+2026-11-26T15:34:12.7671437Z   input_install_dir: $HOME/.cosign
+2026-11-26T15:34:12.7671754Z ##[endgroup]
+2026-11-26T15:34:12.7728772Z ##[end-action id=__sigstore_cosign-installer.__run_2;outcome=success;conclusion=success;duration_ms=11]
+2026-11-26T15:34:12.7731859Z ##[start-action display=Run $install_dir = $ExecutionContext.InvokeCommand.ExpandString("${env:input_install_dir}");id=__sigstore_cosign-installer.__run_3]
+2026-11-26T15:34:12.7737104Z ##[end-action id=__sigstore_cosign-installer.__run_3;outcome=skipped;conclusion=skipped;duration_ms=0]
+2026-11-26T15:34:12.7764768Z ##[group]Run echo "$GITHUB_TOKEN" | cosign login ghcr.io --username "$ACTOR" --password-stdin
+2026-11-26T15:34:12.7765406Z echo "$GITHUB_TOKEN" | cosign login ghcr.io --username "$ACTOR" --password-stdin
+2026-11-26T15:34:12.7788893Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:34:12.7789298Z env:
+2026-11-26T15:34:12.7791312Z   GITHUB_TOKEN: ***
+2026-11-26T15:34:12.7791613Z   ACTOR: jankrus
+2026-11-26T15:34:12.7791834Z ##[endgroup]
+2026-11-26T15:34:12.8034652Z 
+2026-11-26T15:34:12.8035330Z WARNING! Your credentials are stored unencrypted in '/home/runner/.docker/config.json'.
+2026-11-26T15:34:12.8036049Z Configure a credential helper to remove this warning. See
+2026-11-26T15:34:12.8036571Z https://docs.docker.com/go/credential-store/
+2026-11-26T15:34:12.8036752Z 
+2026-11-26T15:34:12.8036903Z logged in via /home/runner/.docker/config.json
+2026-11-26T15:34:12.8075101Z ##[group]Run set -a
+2026-11-26T15:34:12.8075728Z set -a
+2026-11-26T15:34:12.8076064Z . infrastructure/kind/versions.env
+2026-11-26T15:34:12.8076437Z set +a
+2026-11-26T15:34:12.8077031Z curl --fail --silent --show-error --location --proto '=https' --output kind             "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-linux-amd64"
+2026-11-26T15:34:12.8077740Z echo "${KIND_LINUX_AMD64_SHA256}  kind" | sha256sum --check
+2026-11-26T15:34:12.8078115Z sudo install -m 0755 kind /usr/local/bin/kind
+2026-11-26T15:34:12.8078439Z kind version
+2026-11-26T15:34:12.8101915Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:34:12.8102295Z ##[endgroup]
+2026-11-26T15:34:13.1135112Z kind: OK
+2026-11-26T15:34:13.1264009Z kind v0.33.0 go1.26.7 linux/amd64
+2026-11-26T15:34:13.1293935Z ##[group]Run make up IMAGE_SOURCE=registry
+2026-11-26T15:34:13.1294320Z make up IMAGE_SOURCE=registry
+2026-11-26T15:34:13.1321053Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:34:13.1321436Z env:
+2026-11-26T15:34:13.1321645Z   GHCR_USER: jankrus
+2026-11-26T15:34:13.1323804Z   GHCR_TOKEN: ***
+2026-11-26T15:34:13.1324057Z ##[endgroup]
+2026-11-26T15:34:22.1463162Z kind 0.33.0 (pinned: v0.33.0)
+2026-11-26T15:34:25.9124299Z kubectl v1.37.2
+2026-11-26T15:34:25.9938292Z Creating cluster "doctorholiday" ...
+2026-11-26T15:34:25.9939373Z  • Ensuring node image (kindest/node:v1.35.8) 🖼️  ...
+2026-11-26T15:34:31.5753233Z  ✓ Ensuring node image (kindest/node:v1.35.8) 🖼️
+2026-11-26T15:34:31.5753942Z  • Preparing nodes 📦   ...
+2026-11-26T15:34:37.9317500Z  ✓ Preparing nodes 📦 
+2026-11-26T15:34:37.9534107Z  • Writing configuration 📜  ...
+2026-11-26T15:34:38.0981164Z  ✓ Writing configuration 📜
+2026-11-26T15:34:38.0981838Z  • Starting control-plane 🕹️  ...
+2026-11-26T15:34:44.1783658Z  ✓ Starting control-plane 🕹️
+2026-11-26T15:34:44.1784337Z  • Installing StorageClass 💾  ...
+2026-11-26T15:34:44.4390360Z  ✓ Installing StorageClass 💾
+2026-11-26T15:34:44.5686609Z Set kubectl context to "kind-doctorholiday"
+2026-11-26T15:34:44.5687362Z You can now use your cluster with:
+2026-11-26T15:34:44.5687798Z 
+2026-11-26T15:34:44.5688722Z kubectl cluster-info --context kind-doctorholiday
+2026-11-26T15:34:44.5689053Z 
+2026-11-26T15:34:44.5689453Z Have a nice day! 👋
+2026-11-26T15:34:44.5693475Z scripts/k8s-apply-pinned.sh kind-doctorholiday "https://raw.githubusercontent.com/projectcalico/calico/v3.32.3/manifests/calico.yaml" "3db4c55514b678be853be49b8cb102bed0a00bc0343eec05ac191652dc7211e0"
+2026-11-26T15:34:44.9854917Z poddisruptionbudget.policy/calico-kube-controllers created
+2026-11-26T15:34:44.9888433Z serviceaccount/calico-kube-controllers created
+2026-11-26T15:34:44.9921965Z serviceaccount/calico-node created
+2026-11-26T15:34:44.9957633Z serviceaccount/calico-cni-plugin created
+2026-11-26T15:34:44.9992870Z configmap/calico-config created
+2026-11-26T15:34:45.0064769Z customresourcedefinition.apiextensions.k8s.io/bgpconfigurations.crd.projectcalico.org created
+2026-11-26T15:34:45.0223590Z customresourcedefinition.apiextensions.k8s.io/bgpfilters.crd.projectcalico.org created
+2026-11-26T15:34:45.0281644Z customresourcedefinition.apiextensions.k8s.io/bgppeers.crd.projectcalico.org created
+2026-11-26T15:34:45.0326691Z customresourcedefinition.apiextensions.k8s.io/blockaffinities.crd.projectcalico.org created
+2026-11-26T15:34:45.0396024Z customresourcedefinition.apiextensions.k8s.io/caliconodestatuses.crd.projectcalico.org created
+2026-11-26T15:34:45.0460257Z customresourcedefinition.apiextensions.k8s.io/clusterinformations.crd.projectcalico.org created
+2026-11-26T15:34:45.0848228Z customresourcedefinition.apiextensions.k8s.io/felixconfigurations.crd.projectcalico.org created
+2026-11-26T15:34:45.1011935Z customresourcedefinition.apiextensions.k8s.io/globalnetworkpolicies.crd.projectcalico.org created
+2026-11-26T15:34:45.1050473Z customresourcedefinition.apiextensions.k8s.io/globalnetworksets.crd.projectcalico.org created
+2026-11-26T15:34:45.1107793Z customresourcedefinition.apiextensions.k8s.io/hostendpoints.crd.projectcalico.org created
+2026-11-26T15:34:45.1171316Z customresourcedefinition.apiextensions.k8s.io/ipamblocks.crd.projectcalico.org created
+2026-11-26T15:34:45.1234846Z customresourcedefinition.apiextensions.k8s.io/ipamconfigs.crd.projectcalico.org created
+2026-11-26T15:34:45.1280525Z customresourcedefinition.apiextensions.k8s.io/ipamhandles.crd.projectcalico.org created
+2026-11-26T15:34:45.1453722Z customresourcedefinition.apiextensions.k8s.io/ippools.crd.projectcalico.org created
+2026-11-26T15:34:45.1503250Z customresourcedefinition.apiextensions.k8s.io/ipreservations.crd.projectcalico.org created
+2026-11-26T15:34:45.1603289Z customresourcedefinition.apiextensions.k8s.io/kubecontrollersconfigurations.crd.projectcalico.org created
+2026-11-26T15:34:45.1878382Z customresourcedefinition.apiextensions.k8s.io/networkpolicies.crd.projectcalico.org created
+2026-11-26T15:34:45.1978314Z customresourcedefinition.apiextensions.k8s.io/networksets.crd.projectcalico.org created
+2026-11-26T15:34:45.2108454Z customresourcedefinition.apiextensions.k8s.io/stagedglobalnetworkpolicies.crd.projectcalico.org created
+2026-11-26T15:34:45.2164063Z customresourcedefinition.apiextensions.k8s.io/stagedkubernetesnetworkpolicies.crd.projectcalico.org created
+2026-11-26T15:34:45.2290624Z customresourcedefinition.apiextensions.k8s.io/stagednetworkpolicies.crd.projectcalico.org created
+2026-11-26T15:34:45.2340894Z customresourcedefinition.apiextensions.k8s.io/tiers.crd.projectcalico.org created
+2026-11-26T15:34:45.2578711Z customresourcedefinition.apiextensions.k8s.io/clusternetworkpolicies.policy.networking.k8s.io created
+2026-11-26T15:34:45.2672658Z clusterrole.rbac.authorization.k8s.io/calico-kube-controllers created
+2026-11-26T15:34:45.2736382Z clusterrole.rbac.authorization.k8s.io/calico-node created
+2026-11-26T15:34:45.2803841Z clusterrole.rbac.authorization.k8s.io/calico-cni-plugin created
+2026-11-26T15:34:45.2923505Z clusterrole.rbac.authorization.k8s.io/calico-tier-getter created
+2026-11-26T15:34:45.2981280Z clusterrolebinding.rbac.authorization.k8s.io/calico-kube-controllers created
+2026-11-26T15:34:45.3043263Z clusterrolebinding.rbac.authorization.k8s.io/calico-node created
+2026-11-26T15:34:45.3075696Z clusterrolebinding.rbac.authorization.k8s.io/calico-cni-plugin created
+2026-11-26T15:34:45.3109356Z clusterrolebinding.rbac.authorization.k8s.io/calico-tier-getter created
+2026-11-26T15:34:45.3177147Z daemonset.apps/calico-node created
+2026-11-26T15:34:45.3219983Z deployment.apps/calico-kube-controllers created
+2026-11-26T15:34:45.3268431Z kubectl --context kind-doctorholiday --namespace kube-system rollout status daemonset/calico-node --timeout=300s
+2026-11-26T15:34:45.3777979Z Waiting for daemon set spec update to be observed...
+2026-11-26T15:34:49.5634266Z Waiting for daemon set "calico-node" rollout to finish: 0 out of 1 new pods have been updated...
+2026-11-26T15:34:49.5771698Z Waiting for daemon set "calico-node" rollout to finish: 0 of 1 updated pods are available...
+2026-11-26T15:35:21.2993491Z daemon set "calico-node" successfully rolled out
+2026-11-26T15:35:21.3010170Z kubectl --context kind-doctorholiday wait --for=condition=Ready nodes --all --timeout=300s
+2026-11-26T15:35:21.4425688Z node/doctorholiday-control-plane condition met
+2026-11-26T15:35:21.4443222Z kubectl --context kind-doctorholiday apply --filename infrastructure/k8s/namespace.yaml
+2026-11-26T15:35:21.5129613Z namespace/doctorholiday created
+2026-11-26T15:35:21.5164363Z scripts/k8s-apply-pinned.sh kind-doctorholiday "https://raw.githubusercontent.com/traefik/traefik/v3.7.17/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml" "ecbe44ea9b011cda1b562716175b882d59cf6561fe6d3e5832df7ee072687d17" server-side
+2026-11-26T15:35:21.7817630Z customresourcedefinition.apiextensions.k8s.io/ingressroutes.traefik.io serverside-applied
+2026-11-26T15:35:21.7878957Z customresourcedefinition.apiextensions.k8s.io/ingressroutetcps.traefik.io serverside-applied
+2026-11-26T15:35:21.7936574Z customresourcedefinition.apiextensions.k8s.io/ingressrouteudps.traefik.io serverside-applied
+2026-11-26T15:35:21.8108470Z customresourcedefinition.apiextensions.k8s.io/middlewares.traefik.io serverside-applied
+2026-11-26T15:35:21.8207490Z customresourcedefinition.apiextensions.k8s.io/middlewaretcps.traefik.io serverside-applied
+2026-11-26T15:35:21.8333582Z customresourcedefinition.apiextensions.k8s.io/serverstransports.traefik.io serverside-applied
+2026-11-26T15:35:21.8496324Z customresourcedefinition.apiextensions.k8s.io/serverstransporttcps.traefik.io serverside-applied
+2026-11-26T15:35:21.8586515Z customresourcedefinition.apiextensions.k8s.io/tlsoptions.traefik.io serverside-applied
+2026-11-26T15:35:21.8675108Z customresourcedefinition.apiextensions.k8s.io/tlsstores.traefik.io serverside-applied
+2026-11-26T15:35:21.9042520Z customresourcedefinition.apiextensions.k8s.io/traefikservices.traefik.io serverside-applied
+2026-11-26T15:35:21.9066997Z kubectl --context kind-doctorholiday wait --for=condition=Established crd/middlewares.traefik.io --timeout=120s
+2026-11-26T15:35:22.0540501Z customresourcedefinition.apiextensions.k8s.io/middlewares.traefik.io condition met
+2026-11-26T15:35:22.0558773Z kubectl --context kind-doctorholiday apply --filename infrastructure/kind/traefik.yaml
+2026-11-26T15:35:22.2019597Z namespace/traefik created
+2026-11-26T15:35:22.2078401Z serviceaccount/traefik created
+2026-11-26T15:35:22.2110725Z clusterrole.rbac.authorization.k8s.io/traefik-cluster-reader created
+2026-11-26T15:35:22.2140550Z clusterrolebinding.rbac.authorization.k8s.io/traefik-cluster-reader created
+2026-11-26T15:35:22.2181606Z role.rbac.authorization.k8s.io/traefik-ingress-controller created
+2026-11-26T15:35:22.2222894Z rolebinding.rbac.authorization.k8s.io/traefik-ingress-controller created
+2026-11-26T15:35:22.2253336Z ingressclass.networking.k8s.io/traefik created
+2026-11-26T15:35:22.2302666Z deployment.apps/traefik created
+2026-11-26T15:35:22.2423748Z service/traefik created
+2026-11-26T15:35:22.2481323Z kubectl --context kind-doctorholiday --namespace traefik rollout status deployment/traefik --timeout=300s
+2026-11-26T15:35:22.3023630Z Waiting for deployment "traefik" rollout to finish: 0 of 1 updated replicas are available...
+2026-11-26T15:35:25.3020138Z deployment "traefik" successfully rolled out
+2026-11-26T15:35:25.3045431Z scripts/k8s-secrets.sh kind-doctorholiday doctorholiday
+2026-11-26T15:35:25.6379987Z secret db-credentials created
+2026-11-26T15:35:25.7570964Z secret backend-secrets created
+2026-11-26T15:35:25.9636230Z secret doctorholiday-tls created (self-signed, valid 365 days)
+2026-11-26T15:35:26.0907160Z kubectl --context kind-doctorholiday --namespace doctorholiday create configmap postgres-init --from-file=infrastructure/postgres/init/00-roles.sh --dry-run=client --output=yaml | kubectl --context kind-doctorholiday --namespace doctorholiday apply --filename -
+2026-11-26T15:35:26.1701066Z configmap/postgres-init created
+2026-11-26T15:35:26.1724336Z kubectl --context kind-doctorholiday --namespace doctorholiday create configmap db-migrate-script --from-file=infrastructure/postgres/migrate.sh --dry-run=client --output=yaml | kubectl --context kind-doctorholiday --namespace doctorholiday apply --filename -
+2026-11-26T15:35:26.2511973Z configmap/db-migrate-script created
+2026-11-26T15:35:26.2531526Z kubectl --context kind-doctorholiday --namespace doctorholiday create configmap db-migrations --from-file=backend/migrations --dry-run=client --output=yaml | kubectl --context kind-doctorholiday --namespace doctorholiday apply --filename -
+2026-11-26T15:35:26.3296948Z configmap/db-migrations created
+2026-11-26T15:35:26.3323142Z kubectl --context kind-doctorholiday --namespace doctorholiday label configmap postgres-init db-migrate-script db-migrations app.kubernetes.io/part-of=doctorholiday --overwrite
+2026-11-26T15:35:26.3744834Z configmap/postgres-init labeled
+2026-11-26T15:35:26.3784475Z configmap/db-migrate-script labeled
+2026-11-26T15:35:26.3854123Z configmap/db-migrations labeled
+2026-11-26T15:35:26.3868516Z scripts/verify-image.sh backend
+2026-11-26T15:35:26.3946979Z Verifying the signature of ghcr.io/jankrus/doctorholiday-backend@sha256:2b727eb3bd33a3ef9399a678673acd9409151e0d6166267351f22ab129a7d94e
+2026-11-26T15:35:26.4133479Z WARNING: Skipping tlog verification is an insecure practice that lacks transparency and auditability verification for the signature.
+2026-11-26T15:35:28.2522568Z 
+2026-11-26T15:35:28.2523572Z Verification for ghcr.io/jankrus/doctorholiday-backend@sha256:2b727eb3bd33a3ef9399a678673acd9409151e0d6166267351f22ab129a7d94e --
+2026-11-26T15:35:28.2524657Z The following checks were performed on each of these signatures:
+2026-11-26T15:35:28.2525086Z   - The cosign claims were validated
+2026-11-26T15:35:28.2525657Z   - Existence of the claims in the transparency log was verified offline
+2026-11-26T15:35:28.2526776Z   - The signatures were verified against the specified public key
+2026-11-26T15:35:28.2542289Z Verifying the SBOM attestation of ghcr.io/jankrus/doctorholiday-backend@sha256:2b727eb3bd33a3ef9399a678673acd9409151e0d6166267351f22ab129a7d94e
+2026-11-26T15:35:28.2730833Z WARNING: Skipping tlog verification is an insecure practice that lacks transparency and auditability verification for the attestation.
+2026-11-26T15:35:29.9970378Z 
+2026-11-26T15:35:29.9971521Z Verification for ghcr.io/jankrus/doctorholiday-backend@sha256:2b727eb3bd33a3ef9399a678673acd9409151e0d6166267351f22ab129a7d94e --
+2026-11-26T15:35:29.9972285Z The following checks were performed on each of these signatures:
+2026-11-26T15:35:29.9973251Z   - The cosign claims were validated
+2026-11-26T15:35:29.9973637Z   - Existence of the claims in the transparency log was verified offline
+2026-11-26T15:35:29.9974121Z   - The signatures were verified against the specified public key
+2026-11-26T15:35:31.2630766Z OK: signature and SBOM attestation of ghcr.io/jankrus/doctorholiday-backend@sha256:2b727eb3bd33a3ef9399a678673acd9409151e0d6166267351f22ab129a7d94e verified with infrastructure/signing/cosign.pub
+2026-11-26T15:35:31.2631810Z scripts/verify-image.sh frontend
+2026-11-26T15:35:31.2711855Z Verifying the signature of ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b
+2026-11-26T15:35:31.2917289Z WARNING: Skipping tlog verification is an insecure practice that lacks transparency and auditability verification for the signature.
+2026-11-26T15:35:33.2582991Z 
+2026-11-26T15:35:33.2584206Z Verification for ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b --
+2026-11-26T15:35:33.2603915Z The following checks were performed on each of these signatures:
+2026-11-26T15:35:33.2604325Z   - The cosign claims were validated
+2026-11-26T15:35:33.2604825Z   - Existence of the claims in the transparency log was verified offline
+2026-11-26T15:35:33.2605288Z   - The signatures were verified against the specified public key
+2026-11-26T15:35:33.2606228Z Verifying the SBOM attestation of ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b
+2026-11-26T15:35:33.2793354Z WARNING: Skipping tlog verification is an insecure practice that lacks transparency and auditability verification for the attestation.
+2026-11-26T15:35:35.0676073Z 
+2026-11-26T15:35:35.0677379Z Verification for ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b --
+2026-11-26T15:35:35.0677995Z The following checks were performed on each of these signatures:
+2026-11-26T15:35:35.0678501Z   - The cosign claims were validated
+2026-11-26T15:35:36.3922630Z   - Existence of the claims in the transparency log was verified offline
+2026-11-26T15:35:36.3923179Z   - The signatures were verified against the specified public key
+2026-11-26T15:35:36.3924082Z OK: signature and SBOM attestation of ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b verified with infrastructure/signing/cosign.pub
+2026-11-26T15:35:36.4717682Z secret/ghcr-pull created
+2026-11-26T15:35:36.4827223Z wrote .cache/k8s-registry/kustomization.yaml
+2026-11-26T15:35:36.4834666Z     digest: sha256:2b727eb3bd33a3ef9399a678673acd9409151e0d6166267351f22ab129a7d94e
+2026-11-26T15:35:36.4835311Z     digest: sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b
+2026-11-26T15:35:36.4839264Z kubectl --context kind-doctorholiday --namespace doctorholiday delete job db-migrate --ignore-not-found
+2026-11-26T15:35:36.5250386Z kubectl --context kind-doctorholiday apply --kustomize .cache/k8s-registry
+2026-11-26T15:35:36.7715779Z namespace/doctorholiday unchanged
+2026-11-26T15:35:36.7765113Z serviceaccount/backend created
+2026-11-26T15:35:36.7808285Z serviceaccount/db-migrate created
+2026-11-26T15:35:36.7857915Z serviceaccount/frontend created
+2026-11-26T15:35:36.7911959Z serviceaccount/postgres created
+2026-11-26T15:35:36.7954852Z configmap/backend-config created
+2026-11-26T15:35:36.8020129Z service/backend created
+2026-11-26T15:35:36.8117175Z service/frontend created
+2026-11-26T15:35:36.8197602Z service/postgres created
+2026-11-26T15:35:36.8265684Z deployment.apps/backend created
+2026-11-26T15:35:36.8339534Z deployment.apps/frontend created
+2026-11-26T15:35:36.8473402Z statefulset.apps/postgres created
+2026-11-26T15:35:36.8715688Z job.batch/db-migrate created
+2026-11-26T15:35:36.8869442Z ingress.networking.k8s.io/doctorholiday created
+2026-11-26T15:35:36.9042345Z networkpolicy.networking.k8s.io/allow-dns-egress created
+2026-11-26T15:35:36.9156647Z networkpolicy.networking.k8s.io/backend-allow-egress-postgres created
+2026-11-26T15:35:36.9257820Z networkpolicy.networking.k8s.io/backend-allow-ingress-controller created
+2026-11-26T15:35:36.9324825Z networkpolicy.networking.k8s.io/db-migrate-allow-egress-postgres created
+2026-11-26T15:35:36.9401195Z networkpolicy.networking.k8s.io/default-deny-all created
+2026-11-26T15:35:36.9456409Z networkpolicy.networking.k8s.io/frontend-allow-ingress-controller created
+2026-11-26T15:35:36.9496898Z networkpolicy.networking.k8s.io/postgres-allow-backend-and-migrate created
+2026-11-26T15:35:36.9546241Z middleware.traefik.io/rate-limit created
+2026-11-26T15:35:36.9585370Z middleware.traefik.io/request-limit created
+2026-11-26T15:35:36.9625055Z middleware.traefik.io/security-headers created
+2026-11-26T15:35:36.9651133Z kubectl --context kind-doctorholiday --namespace doctorholiday wait --for=condition=complete job/db-migrate --timeout=300s
+2026-11-26T15:35:55.3705278Z job.batch/db-migrate condition met
+2026-11-26T15:35:55.3726875Z kubectl --context kind-doctorholiday --namespace doctorholiday rollout status statefulset/postgres --timeout=300s
+2026-11-26T15:35:55.4209725Z partitioned roll out complete: 1 new pods have been updated...
+2026-11-26T15:35:55.4226068Z kubectl --context kind-doctorholiday --namespace doctorholiday rollout status deployment/backend --timeout=300s
+2026-11-26T15:35:55.4686904Z deployment "backend" successfully rolled out
+2026-11-26T15:35:55.4706872Z kubectl --context kind-doctorholiday --namespace doctorholiday rollout status deployment/frontend --timeout=300s
+2026-11-26T15:35:55.5177289Z deployment "frontend" successfully rolled out
+2026-11-26T15:35:55.5193773Z kubectl --context kind-doctorholiday --namespace doctorholiday wait --for=condition=Ready pod --selector='app.kubernetes.io/name in (postgres,backend,frontend)' --timeout=300s
+2026-11-26T15:35:55.6615103Z pod/backend-965c4789-6pdcw condition met
+2026-11-26T15:35:55.7628218Z pod/frontend-6dbc799999-9d5qb condition met
+2026-11-26T15:35:55.8636075Z pod/postgres-0 condition met
+2026-11-26T15:35:55.9702842Z https://doctorholiday.localhost answers
+2026-11-26T15:35:55.9713367Z 
+2026-11-26T15:35:55.9722879Z Ready
+2026-11-26T15:35:55.9731708Z   https://doctorholiday.localhost  (self-signed certificate: accept the browser warning or use curl -k)
+2026-11-26T15:35:55.9740237Z   The first login becomes the admin: register and log in right now (README, #15).
+2026-11-26T15:35:55.9770391Z ##[group]Run scripts/smoke-test.sh
+2026-11-26T15:35:55.9770720Z scripts/smoke-test.sh
+2026-11-26T15:35:55.9799263Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:35:55.9799678Z env:
+2026-11-26T15:35:55.9800032Z   EXPECT_FIRST_ADMIN: 1
+2026-11-26T15:35:55.9800302Z ##[endgroup]
+2026-11-26T15:35:56.0062872Z Smoke test against https://doctorholiday.localhost
+2026-11-26T15:35:56.0267565Z PASS  frontend answers on / (200)
+2026-11-26T15:35:56.0277649Z PASS  frontend serves the single-page app
+2026-11-26T15:35:56.0371826Z PASS  API refuses a request without a session (401)
+2026-11-26T15:35:56.0381734Z PASS  HSTS header on the API response
+2026-11-26T15:35:56.0464386Z PASS  cross-site write is refused (403)
+2026-11-26T15:35:56.5154837Z PASS  first account registers (202)
+2026-11-26T15:35:56.9502657Z PASS  first account logs in (200)
+2026-11-26T15:35:56.9672080Z PASS  session is valid (200)
+2026-11-26T15:35:56.9843896Z PASS  first login on a fresh system became ADMIN
+2026-11-26T15:35:57.3126092Z PASS  second account registers (202)
+2026-11-26T15:35:57.7125740Z PASS  second account logs in (200)
+2026-11-26T15:35:57.7263896Z PASS  patient session is valid (200)
+2026-11-26T15:35:57.7437135Z PASS  second account is PATIENT
+2026-11-26T15:35:57.7597511Z PASS  patient lists doctors (200)
+2026-11-26T15:35:57.7757187Z PASS  patient lists its own appointments (200)
+2026-11-26T15:35:57.7844492Z PASS  patient cannot read the audit log (404)
+2026-11-26T15:35:57.7980037Z PASS  logout (204)
+2026-11-26T15:35:57.8072251Z PASS  session is gone after logout (401)
+2026-11-26T15:35:57.8072482Z 
+2026-11-26T15:35:57.8072695Z Smoke test passed.
+2026-11-26T15:35:57.8111120Z ##[group]Run make verify
+2026-11-26T15:35:57.8111459Z make verify
+2026-11-26T15:35:57.8138442Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:35:57.8138857Z ##[endgroup]
+2026-11-26T15:35:57.8801735Z scripts/test-netpol.sh kind-doctorholiday doctorholiday
+2026-11-26T15:35:57.8857749Z NetworkPolicy check, context kind-doctorholiday, namespace doctorholiday, 2026-11-26T15:35:57Z
+2026-11-26T15:35:57.9313226Z policy allow-dns-egress
+2026-11-26T15:35:57.9313963Z policy backend-allow-egress-postgres
+2026-11-26T15:35:57.9314424Z policy backend-allow-ingress-controller
+2026-11-26T15:35:57.9314980Z policy db-migrate-allow-egress-postgres
+2026-11-26T15:35:57.9315418Z policy default-deny-all
+2026-11-26T15:35:57.9315978Z policy frontend-allow-ingress-controller
+2026-11-26T15:35:57.9316370Z policy postgres-allow-backend-and-migrate
+2026-11-26T15:35:59.3662306Z 
+2026-11-26T15:35:59.3663879Z --- controls (a blocked connection only proves something if the tool works)
+2026-11-26T15:35:59.5945828Z PASS  nc exists in the throwaway pod
+2026-11-26T15:35:59.7166265Z PASS  nc connects to a listening port (frontend -> 127.0.0.1:8080)
+2026-11-26T15:35:59.7166842Z 
+2026-11-26T15:35:59.7166990Z --- must be blocked
+2026-11-26T15:36:02.7962990Z PASS  throwaway pod -> postgres:5432 is blocked
+2026-11-26T15:36:05.8792706Z PASS  frontend -> postgres:5432 is blocked
+2026-11-26T15:36:12.0017432Z PASS  backend -> example.com:443 is blocked
+2026-11-26T15:36:12.0019917Z 
+2026-11-26T15:36:12.0020207Z --- must work
+2026-11-26T15:36:12.1105809Z PASS  backend -> postgres:5432 works
+2026-11-26T15:36:12.2177554Z PASS  backend resolves names through kube-dns
+2026-11-26T15:36:12.2273021Z PASS  https://doctorholiday.localhost/ answers 200 through the ingress
+2026-11-26T15:36:12.2382823Z PASS  https://doctorholiday.localhost/api/v1/auth/me reaches the backend (401 without a session)
+2026-11-26T15:36:12.2383315Z 
+2026-11-26T15:36:12.2383614Z All checks passed. Report: reports/netpol/test-netpol-20261126T153557Z.txt
+2026-11-26T15:36:12.2882776Z ##[group]Run mkdir -p reports/deploy
+2026-11-26T15:36:12.2883263Z mkdir -p reports/deploy
+2026-11-26T15:36:12.2883967Z kubectl --context kind-doctorholiday --namespace doctorholiday get pods --output json > reports/deploy/pods.json
+2026-11-26T15:36:12.2884882Z python3 scripts/check_pod_security.py < reports/deploy/pods.json | tee reports/deploy/pod-security.txt
+2026-11-26T15:36:12.2922850Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:36:12.2923334Z ##[endgroup]
+2026-11-26T15:36:12.3582503Z PASS  backend-965c4789-6pdcw: no host network, PID or IPC
+2026-11-26T15:36:12.3583072Z PASS  backend-965c4789-6pdcw: no hostPath volume
+2026-11-26T15:36:12.3583485Z PASS  backend-965c4789-6pdcw: service account token not mounted
+2026-11-26T15:36:12.3583906Z PASS  backend-965c4789-6pdcw/backend (container): not privileged
+2026-11-26T15:36:12.3584382Z PASS  backend-965c4789-6pdcw/backend (container): no privilege escalation
+2026-11-26T15:36:12.3585037Z PASS  backend-965c4789-6pdcw/backend (container): read-only root file system
+2026-11-26T15:36:12.3585597Z PASS  backend-965c4789-6pdcw/backend (container): runs as non-root
+2026-11-26T15:36:12.3586058Z PASS  backend-965c4789-6pdcw/backend (container): capabilities dropped (ALL)
+2026-11-26T15:36:12.3586514Z PASS  backend-965c4789-6pdcw/backend (container): seccomp RuntimeDefault
+2026-11-26T15:36:12.3587223Z INFO  backend-965c4789-6pdcw/backend runs ghcr.io/jankrus/doctorholiday-backend@sha256:2b727eb3bd33a3ef9399a678673acd9409151e0d6166267351f22ab129a7d94e
+2026-11-26T15:36:12.3587836Z PASS  db-migrate-2vxr2: no host network, PID or IPC
+2026-11-26T15:36:12.3588157Z PASS  db-migrate-2vxr2: no hostPath volume
+2026-11-26T15:36:12.3588474Z PASS  db-migrate-2vxr2: service account token not mounted
+2026-11-26T15:36:12.3588879Z PASS  db-migrate-2vxr2/migrate (container): not privileged
+2026-11-26T15:36:12.3589236Z PASS  db-migrate-2vxr2/migrate (container): no privilege escalation
+2026-11-26T15:36:12.3589677Z PASS  db-migrate-2vxr2/migrate (container): read-only root file system
+2026-11-26T15:36:12.3590057Z PASS  db-migrate-2vxr2/migrate (container): runs as non-root
+2026-11-26T15:36:12.3590445Z PASS  db-migrate-2vxr2/migrate (container): capabilities dropped (ALL)
+2026-11-26T15:36:12.3590883Z PASS  db-migrate-2vxr2/migrate (container): seccomp RuntimeDefault
+2026-11-26T15:36:12.3591434Z INFO  db-migrate-2vxr2/migrate runs docker.io/library/postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+2026-11-26T15:36:12.3592014Z PASS  frontend-6dbc799999-9d5qb: no host network, PID or IPC
+2026-11-26T15:36:12.3592348Z PASS  frontend-6dbc799999-9d5qb: no hostPath volume
+2026-11-26T15:36:12.3592782Z PASS  frontend-6dbc799999-9d5qb: service account token not mounted
+2026-11-26T15:36:12.3593195Z PASS  frontend-6dbc799999-9d5qb/frontend (container): not privileged
+2026-11-26T15:36:12.3593618Z PASS  frontend-6dbc799999-9d5qb/frontend (container): no privilege escalation
+2026-11-26T15:36:12.3594101Z PASS  frontend-6dbc799999-9d5qb/frontend (container): read-only root file system
+2026-11-26T15:36:12.3594532Z PASS  frontend-6dbc799999-9d5qb/frontend (container): runs as non-root
+2026-11-26T15:36:12.3595016Z PASS  frontend-6dbc799999-9d5qb/frontend (container): capabilities dropped (ALL)
+2026-11-26T15:36:12.3595588Z PASS  frontend-6dbc799999-9d5qb/frontend (container): seccomp RuntimeDefault
+2026-11-26T15:36:12.3596314Z INFO  frontend-6dbc799999-9d5qb/frontend runs ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b
+2026-11-26T15:36:12.3596926Z PASS  netpol-probe: no host network, PID or IPC
+2026-11-26T15:36:12.3597425Z PASS  netpol-probe: no hostPath volume
+2026-11-26T15:36:12.3597770Z PASS  netpol-probe: service account token not mounted
+2026-11-26T15:36:12.3598106Z PASS  netpol-probe/probe (container): not privileged
+2026-11-26T15:36:12.3598460Z PASS  netpol-probe/probe (container): no privilege escalation
+2026-11-26T15:36:12.3598937Z PASS  netpol-probe/probe (container): read-only root file system
+2026-11-26T15:36:12.3599314Z PASS  netpol-probe/probe (container): runs as non-root
+2026-11-26T15:36:12.3599697Z PASS  netpol-probe/probe (container): capabilities dropped (ALL)
+2026-11-26T15:36:12.3600075Z PASS  netpol-probe/probe (container): seccomp RuntimeDefault
+2026-11-26T15:36:12.3600618Z INFO  netpol-probe/probe runs ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b
+2026-11-26T15:36:12.3601177Z PASS  postgres-0: no host network, PID or IPC
+2026-11-26T15:36:12.3601480Z PASS  postgres-0: no hostPath volume
+2026-11-26T15:36:12.3601797Z PASS  postgres-0: service account token not mounted
+2026-11-26T15:36:12.3602139Z PASS  postgres-0/postgres (container): not privileged
+2026-11-26T15:36:12.3602535Z PASS  postgres-0/postgres (container): no privilege escalation
+2026-11-26T15:36:12.3602913Z PASS  postgres-0/postgres (container): read-only root file system
+2026-11-26T15:36:12.3603275Z PASS  postgres-0/postgres (container): runs as non-root
+2026-11-26T15:36:12.3603661Z PASS  postgres-0/postgres (container): capabilities dropped (ALL)
+2026-11-26T15:36:12.3604038Z PASS  postgres-0/postgres (container): seccomp RuntimeDefault
+2026-11-26T15:36:12.3604580Z INFO  postgres-0/postgres runs docker.io/library/postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+2026-11-26T15:36:12.3604941Z 
+2026-11-26T15:36:12.3605078Z Pod security checks passed.
+2026-11-26T15:36:12.3638369Z ##[group]Run {
+2026-11-26T15:36:12.3638633Z {
+2026-11-26T15:36:12.3639265Z   echo "### Deployed digests"
+2026-11-26T15:36:12.3752767Z   echo '```'
+2026-11-26T15:36:12.3753148Z   cat reports/images/backend/image-ref.txt reports/images/frontend/image-ref.txt
+2026-11-26T15:36:12.3753538Z   echo '```'
+2026-11-26T15:36:12.3753753Z } >> "$GITHUB_STEP_SUMMARY"
+2026-11-26T15:36:12.3785715Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:36:12.3785996Z ##[endgroup]
+2026-11-26T15:36:12.3876415Z ##[group]Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+2026-11-26T15:36:12.3876720Z with:
+2026-11-26T15:36:12.3876877Z   name: deploy
+2026-11-26T15:36:12.3877080Z   path: reports/smoke/
+reports/netpol/
+reports/deploy/
+
+2026-11-26T15:36:12.3877326Z   if-no-files-found: warn
+2026-11-26T15:36:12.3877507Z   retention-days: 90
+2026-11-26T15:36:12.3877679Z   compression-level: 6
+2026-11-26T15:36:12.3877849Z   overwrite: false
+2026-11-26T15:36:12.3878017Z   include-hidden-files: false
+2026-11-26T15:36:12.3878203Z   archive: true
+2026-11-26T15:36:12.3878375Z ##[endgroup]
+2026-11-26T15:36:12.4934168Z Multiple search paths detected. Calculating the least common ancestor of all paths
+2026-11-26T15:36:12.4936491Z The least common ancestor is /home/runner/work/doctorholiday/doctorholiday/reports. This will be the root directory of the artifact
+2026-11-26T15:36:12.4937234Z With the provided path, there will be 4 files uploaded
+2026-11-26T15:36:12.4938821Z Artifact name is valid!
+2026-11-26T15:36:12.4939588Z Root directory input is valid!
+2026-11-26T15:36:13.0811765Z Uploading artifact: deploy.zip
+2026-11-26T15:36:13.0838554Z Beginning upload of artifact content to blob storage
+2026-11-26T15:36:13.7155796Z Uploaded bytes 7497
+2026-11-26T15:36:13.8038966Z Finished uploading artifact content to blob storage!
+2026-11-26T15:36:13.8039550Z SHA256 digest of uploaded artifact is c77571f22266b230717bac3f9ac40bdd3b2d9b66737c3107bdf7c68f50c29f31
+2026-11-26T15:36:13.8040181Z Finalizing artifact upload
+2026-11-26T15:36:14.3792750Z Artifact deploy successfully finalized. Artifact ID 15133906595
+2026-11-26T15:36:14.3793916Z Artifact deploy has been successfully uploaded! Final size is 7497 bytes. Artifact ID is 15133906595
+2026-11-26T15:36:14.3796385Z Artifact download URL: https://github.com/jankrus/doctorholiday/actions/runs/45848434608/artifacts/15133906595
+2026-11-26T15:36:14.3947640Z Post job cleanup.
+2026-11-26T15:36:14.4590647Z [command]/usr/bin/git version
+2026-11-26T15:36:14.4632493Z git version 2.56.1
+2026-11-26T15:36:14.4663264Z Temporarily overriding HOME='/home/runner/work/_temp/8717f053-a0e7-42e8-a89e-e68ff12ddd80' before making global git config changes
+2026-11-26T15:36:14.4663979Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T15:36:14.4667945Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T15:36:14.4694368Z Removing SSH command configuration
+2026-11-26T15:36:14.4699875Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T15:36:14.4725605Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T15:36:14.4898479Z Removing HTTP extra header
+2026-11-26T15:36:14.4901840Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T15:36:14.4924874Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T15:36:14.5083179Z Removing includeIf entries pointing to credentials config files
+2026-11-26T15:36:14.5087980Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T15:36:14.5127976Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T15:36:14.5419411Z Cleaning up orphan processes

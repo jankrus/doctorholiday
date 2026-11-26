@@ -1,0 +1,1371 @@
+{
+    "apiVersion": "v1",
+    "items": [
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "40b7ce65c4cf0bc2e016d0657a4dbec1330ba3d926852bc27cd01622f6697546",
+                    "cni.projectcalico.org/podIP": "192.168.146.70/32",
+                    "cni.projectcalico.org/podIPs": "192.168.146.70/32"
+                },
+                "creationTimestamp": "2026-11-26T15:35:36Z",
+                "generateName": "backend-965c4789-",
+                "generation": 1,
+                "labels": {
+                    "app.kubernetes.io/name": "backend",
+                    "app.kubernetes.io/part-of": "doctorholiday",
+                    "pod-template-hash": "965c4789"
+                },
+                "name": "backend-965c4789-6pdcw",
+                "namespace": "doctorholiday",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "apps/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "ReplicaSet",
+                        "name": "backend-965c4789",
+                        "uid": "b2d4edc8-514f-4b2e-8575-11643b91ba95"
+                    }
+                ],
+                "resourceVersion": "979",
+                "uid": "a25cb8e9-e625-4a40-9adf-11486af78e90"
+            },
+            "spec": {
+                "automountServiceAccountToken": false,
+                "containers": [
+                    {
+                        "env": [
+                            {
+                                "name": "DATABASE_URL",
+                                "valueFrom": {
+                                    "secretKeyRef": {
+                                        "key": "DATABASE_URL",
+                                        "name": "backend-secrets"
+                                    }
+                                }
+                            },
+                            {
+                                "name": "MFA_ENCRYPTION_KEY",
+                                "valueFrom": {
+                                    "secretKeyRef": {
+                                        "key": "MFA_ENCRYPTION_KEY",
+                                        "name": "backend-secrets"
+                                    }
+                                }
+                            }
+                        ],
+                        "envFrom": [
+                            {
+                                "configMapRef": {
+                                    "name": "backend-config"
+                                }
+                            }
+                        ],
+                        "image": "ghcr.io/jankrus/doctorholiday-backend@sha256:2b727eb3bd33a3ef9399a678673acd9409151e0d6166267351f22ab129a7d94e",
+                        "imagePullPolicy": "IfNotPresent",
+                        "livenessProbe": {
+                            "failureThreshold": 3,
+                            "httpGet": {
+                                "path": "/healthz",
+                                "port": "http",
+                                "scheme": "HTTP"
+                            },
+                            "periodSeconds": 10,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 3
+                        },
+                        "name": "backend",
+                        "ports": [
+                            {
+                                "containerPort": 8080,
+                                "name": "http",
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "readinessProbe": {
+                            "failureThreshold": 3,
+                            "httpGet": {
+                                "path": "/readyz",
+                                "port": "http",
+                                "scheme": "HTTP"
+                            },
+                            "periodSeconds": 5,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 3
+                        },
+                        "resources": {
+                            "limits": {
+                                "cpu": "500m",
+                                "memory": "256Mi"
+                            },
+                            "requests": {
+                                "cpu": "100m",
+                                "memory": "128Mi"
+                            }
+                        },
+                        "securityContext": {
+                            "allowPrivilegeEscalation": false,
+                            "capabilities": {
+                                "drop": [
+                                    "ALL"
+                                ]
+                            },
+                            "privileged": false,
+                            "readOnlyRootFilesystem": true
+                        },
+                        "startupProbe": {
+                            "failureThreshold": 30,
+                            "httpGet": {
+                                "path": "/healthz",
+                                "port": "http",
+                                "scheme": "HTTP"
+                            },
+                            "periodSeconds": 2,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 1
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/tmp",
+                                "name": "tmp"
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "imagePullSecrets": [
+                    {
+                        "name": "ghcr-pull"
+                    }
+                ],
+                "nodeName": "doctorholiday-control-plane",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "default-scheduler",
+                "securityContext": {
+                    "fsGroup": 10001,
+                    "runAsGroup": 10001,
+                    "runAsNonRoot": true,
+                    "runAsUser": 10001,
+                    "seccompProfile": {
+                        "type": "RuntimeDefault"
+                    }
+                },
+                "serviceAccount": "backend",
+                "serviceAccountName": "backend",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "emptyDir": {
+                            "sizeLimit": "64Mi"
+                        },
+                        "name": "tmp"
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:40Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:36Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:51Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:51Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:36Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "cpu": "100m",
+                            "memory": "128Mi"
+                        },
+                        "containerID": "containerd://3aa9070615c1193f9f1566bc99467493fb1c3e3e9a58a6d37a0053f14e9ac730",
+                        "image": "sha256:d4e677f3b1712f5a17bc852775d1aacc570073b1e543bb0d2e680e5a4b342bd7",
+                        "imageID": "ghcr.io/jankrus/doctorholiday-backend@sha256:2b727eb3bd33a3ef9399a678673acd9409151e0d6166267351f22ab129a7d94e",
+                        "lastState": {},
+                        "name": "backend",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "cpu": "500m",
+                                "memory": "256Mi"
+                            },
+                            "requests": {
+                                "cpu": "100m",
+                                "memory": "128Mi"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-26T15:35:40Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 10001,
+                                "supplementalGroups": [
+                                    10001
+                                ],
+                                "uid": 10001
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/tmp",
+                                "name": "tmp"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "172.18.0.2",
+                "hostIPs": [
+                    {
+                        "ip": "172.18.0.2"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "192.168.146.70",
+                "podIPs": [
+                    {
+                        "ip": "192.168.146.70"
+                    }
+                ],
+                "qosClass": "Burstable",
+                "startTime": "2026-11-26T15:35:36Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "c51dc3f16b2f8c155eeab8f6b2831efecc8a39e8b9eb3d7163d509432b1406e0",
+                    "cni.projectcalico.org/podIP": "",
+                    "cni.projectcalico.org/podIPs": ""
+                },
+                "creationTimestamp": "2026-11-26T15:35:36Z",
+                "generateName": "db-migrate-",
+                "generation": 1,
+                "labels": {
+                    "app.kubernetes.io/name": "db-migrate",
+                    "app.kubernetes.io/part-of": "doctorholiday",
+                    "batch.kubernetes.io/controller-uid": "cba709e1-9276-4709-9d7b-d33bd4b28c18",
+                    "batch.kubernetes.io/job-name": "db-migrate",
+                    "controller-uid": "cba709e1-9276-4709-9d7b-d33bd4b28c18",
+                    "job-name": "db-migrate"
+                },
+                "name": "db-migrate-2vxr2",
+                "namespace": "doctorholiday",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "batch/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "Job",
+                        "name": "db-migrate",
+                        "uid": "cba709e1-9276-4709-9d7b-d33bd4b28c18"
+                    }
+                ],
+                "resourceVersion": "999",
+                "uid": "38d19637-6c87-4e47-90c9-d7c2251f050c"
+            },
+            "spec": {
+                "automountServiceAccountToken": false,
+                "containers": [
+                    {
+                        "args": [
+                            "until pg_isready --host=postgres --port=5432 --dbname=doctorholiday --username=doctorholiday_owner; do\n  echo \"waiting for the database\"\n  sleep 2\ndone\nexec /bin/sh /opt/migrate/migrate.sh\n"
+                        ],
+                        "command": [
+                            "/bin/sh",
+                            "-c"
+                        ],
+                        "env": [
+                            {
+                                "name": "PGHOST",
+                                "value": "postgres"
+                            },
+                            {
+                                "name": "PGDATABASE",
+                                "value": "doctorholiday"
+                            },
+                            {
+                                "name": "PGUSER",
+                                "value": "doctorholiday_owner"
+                            },
+                            {
+                                "name": "PGPASSWORD_FILE",
+                                "value": "/run/secrets/db_owner_password"
+                            },
+                            {
+                                "name": "MIGRATIONS_DIR",
+                                "value": "/migrations"
+                            }
+                        ],
+                        "image": "postgres:16.15-alpine3.24@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "migrate",
+                        "resources": {
+                            "limits": {
+                                "cpu": "250m",
+                                "memory": "128Mi"
+                            },
+                            "requests": {
+                                "cpu": "50m",
+                                "memory": "32Mi"
+                            }
+                        },
+                        "securityContext": {
+                            "allowPrivilegeEscalation": false,
+                            "capabilities": {
+                                "drop": [
+                                    "ALL"
+                                ]
+                            },
+                            "privileged": false,
+                            "readOnlyRootFilesystem": true
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/tmp",
+                                "name": "tmp"
+                            },
+                            {
+                                "mountPath": "/opt/migrate",
+                                "name": "script",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/migrations",
+                                "name": "migrations",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/run/secrets",
+                                "name": "secrets",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "doctorholiday-control-plane",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "OnFailure",
+                "schedulerName": "default-scheduler",
+                "securityContext": {
+                    "fsGroup": 70,
+                    "runAsGroup": 70,
+                    "runAsNonRoot": true,
+                    "runAsUser": 70,
+                    "seccompProfile": {
+                        "type": "RuntimeDefault"
+                    }
+                },
+                "serviceAccount": "db-migrate",
+                "serviceAccountName": "db-migrate",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "emptyDir": {
+                            "sizeLimit": "16Mi"
+                        },
+                        "name": "tmp"
+                    },
+                    {
+                        "configMap": {
+                            "defaultMode": 365,
+                            "name": "db-migrate-script"
+                        },
+                        "name": "script"
+                    },
+                    {
+                        "configMap": {
+                            "defaultMode": 420,
+                            "name": "db-migrations"
+                        },
+                        "name": "migrations"
+                    },
+                    {
+                        "name": "secrets",
+                        "secret": {
+                            "defaultMode": 288,
+                            "items": [
+                                {
+                                    "key": "db_owner_password",
+                                    "path": "db_owner_password"
+                                }
+                            ],
+                            "secretName": "db-credentials"
+                        }
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:54Z",
+                        "observedGeneration": 1,
+                        "status": "False",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:36Z",
+                        "observedGeneration": 1,
+                        "reason": "PodCompleted",
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:53Z",
+                        "observedGeneration": 1,
+                        "reason": "PodCompleted",
+                        "status": "False",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:53Z",
+                        "observedGeneration": 1,
+                        "reason": "PodCompleted",
+                        "status": "False",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:36Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "cpu": "50m",
+                            "memory": "32Mi"
+                        },
+                        "containerID": "containerd://412bbd0fd2775bc8ba3550956ca1725074a774ab131a89cec8f3a77233015f6e",
+                        "image": "sha256:6a2e324ebe59af6031c4c1cd96c1d5072c2ebc36563d2196365e43b8297c062d",
+                        "imageID": "docker.io/library/postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+                        "lastState": {},
+                        "name": "migrate",
+                        "ready": false,
+                        "resources": {
+                            "limits": {
+                                "cpu": "250m",
+                                "memory": "128Mi"
+                            },
+                            "requests": {
+                                "cpu": "50m",
+                                "memory": "32Mi"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": false,
+                        "state": {
+                            "terminated": {
+                                "containerID": "containerd://412bbd0fd2775bc8ba3550956ca1725074a774ab131a89cec8f3a77233015f6e",
+                                "exitCode": 0,
+                                "finishedAt": "2026-11-26T15:35:51Z",
+                                "reason": "Completed",
+                                "startedAt": "2026-11-26T15:35:46Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 70,
+                                "supplementalGroups": [
+                                    70
+                                ],
+                                "uid": 70
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/tmp",
+                                "name": "tmp"
+                            },
+                            {
+                                "mountPath": "/opt/migrate",
+                                "name": "script",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            },
+                            {
+                                "mountPath": "/migrations",
+                                "name": "migrations",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            },
+                            {
+                                "mountPath": "/run/secrets",
+                                "name": "secrets",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "172.18.0.2",
+                "hostIPs": [
+                    {
+                        "ip": "172.18.0.2"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Succeeded",
+                "podIP": "192.168.146.72",
+                "podIPs": [
+                    {
+                        "ip": "192.168.146.72"
+                    }
+                ],
+                "qosClass": "Burstable",
+                "startTime": "2026-11-26T15:35:36Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "92a68e89c27a2802186771f2cba5667cc1d25e998153740420f8c2e2ff4e4434",
+                    "cni.projectcalico.org/podIP": "192.168.146.71/32",
+                    "cni.projectcalico.org/podIPs": "192.168.146.71/32"
+                },
+                "creationTimestamp": "2026-11-26T15:35:36Z",
+                "generateName": "frontend-6dbc799999-",
+                "generation": 1,
+                "labels": {
+                    "app.kubernetes.io/name": "frontend",
+                    "app.kubernetes.io/part-of": "doctorholiday",
+                    "pod-template-hash": "6dbc799999"
+                },
+                "name": "frontend-6dbc799999-9d5qb",
+                "namespace": "doctorholiday",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "apps/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "ReplicaSet",
+                        "name": "frontend-6dbc799999",
+                        "uid": "dc3507bb-7e18-4a6c-9f4c-ffb146362fa2"
+                    }
+                ],
+                "resourceVersion": "951",
+                "uid": "31772dc1-08e0-42e9-8d36-a624a3c56a16"
+            },
+            "spec": {
+                "automountServiceAccountToken": false,
+                "containers": [
+                    {
+                        "image": "ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b",
+                        "imagePullPolicy": "IfNotPresent",
+                        "livenessProbe": {
+                            "failureThreshold": 3,
+                            "httpGet": {
+                                "path": "/healthz",
+                                "port": "http",
+                                "scheme": "HTTP"
+                            },
+                            "periodSeconds": 10,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 3
+                        },
+                        "name": "frontend",
+                        "ports": [
+                            {
+                                "containerPort": 8080,
+                                "name": "http",
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "readinessProbe": {
+                            "failureThreshold": 3,
+                            "httpGet": {
+                                "path": "/healthz",
+                                "port": "http",
+                                "scheme": "HTTP"
+                            },
+                            "periodSeconds": 5,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 3
+                        },
+                        "resources": {
+                            "limits": {
+                                "cpu": "250m",
+                                "memory": "128Mi"
+                            },
+                            "requests": {
+                                "cpu": "50m",
+                                "memory": "32Mi"
+                            }
+                        },
+                        "securityContext": {
+                            "allowPrivilegeEscalation": false,
+                            "capabilities": {
+                                "drop": [
+                                    "ALL"
+                                ]
+                            },
+                            "privileged": false,
+                            "readOnlyRootFilesystem": true
+                        },
+                        "startupProbe": {
+                            "failureThreshold": 30,
+                            "httpGet": {
+                                "path": "/healthz",
+                                "port": "http",
+                                "scheme": "HTTP"
+                            },
+                            "periodSeconds": 2,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 1
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/tmp",
+                                "name": "tmp"
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "imagePullSecrets": [
+                    {
+                        "name": "ghcr-pull"
+                    }
+                ],
+                "nodeName": "doctorholiday-control-plane",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "default-scheduler",
+                "securityContext": {
+                    "fsGroup": 10001,
+                    "runAsGroup": 10001,
+                    "runAsNonRoot": true,
+                    "runAsUser": 10001,
+                    "seccompProfile": {
+                        "type": "RuntimeDefault"
+                    }
+                },
+                "serviceAccount": "frontend",
+                "serviceAccountName": "frontend",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "emptyDir": {
+                            "sizeLimit": "32Mi"
+                        },
+                        "name": "tmp"
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:43Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:36Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:45Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:45Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:36Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "cpu": "50m",
+                            "memory": "32Mi"
+                        },
+                        "containerID": "containerd://d3feb94ea8dc71b068e572ffb82ad9c130ed4102590cd1ab58b4a2d970392ed8",
+                        "image": "sha256:aa45d559c317fb2c6a54a5219bc99a2beb1d613036b241fcb1c42c1ee6051877",
+                        "imageID": "ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b",
+                        "lastState": {},
+                        "name": "frontend",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "cpu": "250m",
+                                "memory": "128Mi"
+                            },
+                            "requests": {
+                                "cpu": "50m",
+                                "memory": "32Mi"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-26T15:35:43Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 10001,
+                                "supplementalGroups": [
+                                    10001
+                                ],
+                                "uid": 10001
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/tmp",
+                                "name": "tmp"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "172.18.0.2",
+                "hostIPs": [
+                    {
+                        "ip": "172.18.0.2"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "192.168.146.71",
+                "podIPs": [
+                    {
+                        "ip": "192.168.146.71"
+                    }
+                ],
+                "qosClass": "Burstable",
+                "startTime": "2026-11-26T15:35:36Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "7cc0d3ab76cec7d9d88c4eba75d6301f0e7481c9b7ff796dd424831f5dbce5e1",
+                    "cni.projectcalico.org/podIP": "192.168.146.75/32",
+                    "cni.projectcalico.org/podIPs": "192.168.146.75/32",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"v1\",\"kind\":\"Pod\",\"metadata\":{\"annotations\":{},\"labels\":{\"app.kubernetes.io/name\":\"netpol-probe\"},\"name\":\"netpol-probe\",\"namespace\":\"doctorholiday\"},\"spec\":{\"automountServiceAccountToken\":false,\"containers\":[{\"command\":[\"sleep\",\"300\"],\"image\":\"ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b\",\"imagePullPolicy\":\"IfNotPresent\",\"name\":\"probe\",\"securityContext\":{\"allowPrivilegeEscalation\":false,\"capabilities\":{\"drop\":[\"ALL\"]},\"readOnlyRootFilesystem\":true}}],\"restartPolicy\":\"Never\",\"securityContext\":{\"runAsGroup\":10001,\"runAsNonRoot\":true,\"runAsUser\":10001,\"seccompProfile\":{\"type\":\"RuntimeDefault\"}}}}\n"
+                },
+                "creationTimestamp": "2026-11-26T15:35:58Z",
+                "deletionGracePeriodSeconds": 30,
+                "deletionTimestamp": "2026-11-26T15:36:42Z",
+                "generation": 2,
+                "labels": {
+                    "app.kubernetes.io/name": "netpol-probe"
+                },
+                "name": "netpol-probe",
+                "namespace": "doctorholiday",
+                "resourceVersion": "1037",
+                "uid": "a3fdba82-6d02-4117-8f6e-9eae87954289"
+            },
+            "spec": {
+                "automountServiceAccountToken": false,
+                "containers": [
+                    {
+                        "command": [
+                            "sleep",
+                            "300"
+                        ],
+                        "image": "ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b",
+                        "imagePullPolicy": "IfNotPresent",
+                        "name": "probe",
+                        "resources": {},
+                        "securityContext": {
+                            "allowPrivilegeEscalation": false,
+                            "capabilities": {
+                                "drop": [
+                                    "ALL"
+                                ]
+                            },
+                            "readOnlyRootFilesystem": true
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File"
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "nodeName": "doctorholiday-control-plane",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Never",
+                "schedulerName": "default-scheduler",
+                "securityContext": {
+                    "runAsGroup": 10001,
+                    "runAsNonRoot": true,
+                    "runAsUser": 10001,
+                    "seccompProfile": {
+                        "type": "RuntimeDefault"
+                    }
+                },
+                "serviceAccount": "default",
+                "serviceAccountName": "default",
+                "terminationGracePeriodSeconds": 30,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:59Z",
+                        "observedGeneration": 2,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:58Z",
+                        "observedGeneration": 2,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:59Z",
+                        "observedGeneration": 2,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:59Z",
+                        "observedGeneration": 2,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:58Z",
+                        "observedGeneration": 2,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "containerID": "containerd://ae0301e4b48c2098babe7bba32cddcc7e0ed5048174c4d81adf061dfb3b1fd66",
+                        "image": "sha256:aa45d559c317fb2c6a54a5219bc99a2beb1d613036b241fcb1c42c1ee6051877",
+                        "imageID": "ghcr.io/jankrus/doctorholiday-frontend@sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b",
+                        "lastState": {},
+                        "name": "probe",
+                        "ready": true,
+                        "resources": {},
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-26T15:35:58Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 10001,
+                                "supplementalGroups": [
+                                    10001
+                                ],
+                                "uid": 10001
+                            }
+                        }
+                    }
+                ],
+                "hostIP": "172.18.0.2",
+                "hostIPs": [
+                    {
+                        "ip": "172.18.0.2"
+                    }
+                ],
+                "observedGeneration": 2,
+                "phase": "Running",
+                "podIP": "192.168.146.75",
+                "podIPs": [
+                    {
+                        "ip": "192.168.146.75"
+                    }
+                ],
+                "qosClass": "BestEffort",
+                "startTime": "2026-11-26T15:35:58Z"
+            }
+        },
+        {
+            "apiVersion": "v1",
+            "kind": "Pod",
+            "metadata": {
+                "annotations": {
+                    "cni.projectcalico.org/containerID": "4e95f21397f228dc152bd88159ac2e604cacb9494ed473b5e2d201a1bc143717",
+                    "cni.projectcalico.org/podIP": "192.168.146.74/32",
+                    "cni.projectcalico.org/podIPs": "192.168.146.74/32"
+                },
+                "creationTimestamp": "2026-11-26T15:35:36Z",
+                "generateName": "postgres-",
+                "generation": 1,
+                "labels": {
+                    "app.kubernetes.io/name": "postgres",
+                    "app.kubernetes.io/part-of": "doctorholiday",
+                    "apps.kubernetes.io/pod-index": "0",
+                    "controller-revision-hash": "postgres-6bcfc546f9",
+                    "statefulset.kubernetes.io/pod-name": "postgres-0"
+                },
+                "name": "postgres-0",
+                "namespace": "doctorholiday",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "apps/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "StatefulSet",
+                        "name": "postgres",
+                        "uid": "004e7c84-cb98-4295-a42b-af75b6c543fe"
+                    }
+                ],
+                "resourceVersion": "974",
+                "uid": "66005488-96ba-4813-9406-dffbe5557bcb"
+            },
+            "spec": {
+                "automountServiceAccountToken": false,
+                "containers": [
+                    {
+                        "env": [
+                            {
+                                "name": "POSTGRES_USER",
+                                "value": "postgres"
+                            },
+                            {
+                                "name": "POSTGRES_PASSWORD_FILE",
+                                "value": "/run/secrets/db_superuser_password"
+                            },
+                            {
+                                "name": "POSTGRES_INITDB_ARGS",
+                                "value": "--auth-local=scram-sha-256 --auth-host=scram-sha-256"
+                            },
+                            {
+                                "name": "PGDATA",
+                                "value": "/var/lib/postgresql/data/pgdata"
+                            }
+                        ],
+                        "image": "postgres:16.15-alpine3.24@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+                        "imagePullPolicy": "IfNotPresent",
+                        "livenessProbe": {
+                            "failureThreshold": 3,
+                            "periodSeconds": 10,
+                            "successThreshold": 1,
+                            "tcpSocket": {
+                                "port": "postgres"
+                            },
+                            "timeoutSeconds": 3
+                        },
+                        "name": "postgres",
+                        "ports": [
+                            {
+                                "containerPort": 5432,
+                                "name": "postgres",
+                                "protocol": "TCP"
+                            }
+                        ],
+                        "readinessProbe": {
+                            "exec": {
+                                "command": [
+                                    "pg_isready",
+                                    "--host=127.0.0.1",
+                                    "--dbname=doctorholiday",
+                                    "--username=postgres"
+                                ]
+                            },
+                            "failureThreshold": 3,
+                            "periodSeconds": 5,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 3
+                        },
+                        "resources": {
+                            "limits": {
+                                "cpu": "1",
+                                "memory": "512Mi"
+                            },
+                            "requests": {
+                                "cpu": "100m",
+                                "memory": "256Mi"
+                            }
+                        },
+                        "securityContext": {
+                            "allowPrivilegeEscalation": false,
+                            "capabilities": {
+                                "drop": [
+                                    "ALL"
+                                ]
+                            },
+                            "privileged": false,
+                            "readOnlyRootFilesystem": true
+                        },
+                        "startupProbe": {
+                            "exec": {
+                                "command": [
+                                    "pg_isready",
+                                    "--host=127.0.0.1",
+                                    "--dbname=doctorholiday",
+                                    "--username=postgres"
+                                ]
+                            },
+                            "failureThreshold": 60,
+                            "periodSeconds": 3,
+                            "successThreshold": 1,
+                            "timeoutSeconds": 1
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/lib/postgresql/data",
+                                "name": "data"
+                            },
+                            {
+                                "mountPath": "/var/run/postgresql",
+                                "name": "run"
+                            },
+                            {
+                                "mountPath": "/tmp",
+                                "name": "tmp"
+                            },
+                            {
+                                "mountPath": "/run/secrets",
+                                "name": "secrets",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/docker-entrypoint-initdb.d",
+                                "name": "init",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "enableServiceLinks": true,
+                "hostname": "postgres-0",
+                "nodeName": "doctorholiday-control-plane",
+                "preemptionPolicy": "PreemptLowerPriority",
+                "priority": 0,
+                "restartPolicy": "Always",
+                "schedulerName": "default-scheduler",
+                "securityContext": {
+                    "fsGroup": 70,
+                    "fsGroupChangePolicy": "OnRootMismatch",
+                    "runAsGroup": 70,
+                    "runAsNonRoot": true,
+                    "runAsUser": 70,
+                    "seccompProfile": {
+                        "type": "RuntimeDefault"
+                    }
+                },
+                "serviceAccount": "postgres",
+                "serviceAccountName": "postgres",
+                "subdomain": "postgres",
+                "terminationGracePeriodSeconds": 60,
+                "tolerations": [
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/not-ready",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    },
+                    {
+                        "effect": "NoExecute",
+                        "key": "node.kubernetes.io/unreachable",
+                        "operator": "Exists",
+                        "tolerationSeconds": 300
+                    }
+                ],
+                "volumes": [
+                    {
+                        "name": "data",
+                        "persistentVolumeClaim": {
+                            "claimName": "data-postgres-0"
+                        }
+                    },
+                    {
+                        "emptyDir": {
+                            "sizeLimit": "16Mi"
+                        },
+                        "name": "run"
+                    },
+                    {
+                        "emptyDir": {
+                            "sizeLimit": "64Mi"
+                        },
+                        "name": "tmp"
+                    },
+                    {
+                        "name": "secrets",
+                        "secret": {
+                            "defaultMode": 288,
+                            "secretName": "db-credentials"
+                        }
+                    },
+                    {
+                        "configMap": {
+                            "defaultMode": 365,
+                            "name": "postgres-init"
+                        },
+                        "name": "init"
+                    }
+                ]
+            },
+            "status": {
+                "conditions": [
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:47Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodReadyToStartContainers"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:40Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Initialized"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:50Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "Ready"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:50Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "ContainersReady"
+                    },
+                    {
+                        "lastProbeTime": null,
+                        "lastTransitionTime": "2026-11-26T15:35:40Z",
+                        "observedGeneration": 1,
+                        "status": "True",
+                        "type": "PodScheduled"
+                    }
+                ],
+                "containerStatuses": [
+                    {
+                        "allocatedResources": {
+                            "cpu": "100m",
+                            "memory": "256Mi"
+                        },
+                        "containerID": "containerd://2df6720add6b809229647f9b85d49a6be3966e345a8bbcec0634afa0d364a3c6",
+                        "image": "sha256:6a2e324ebe59af6031c4c1cd96c1d5072c2ebc36563d2196365e43b8297c062d",
+                        "imageID": "docker.io/library/postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36",
+                        "lastState": {},
+                        "name": "postgres",
+                        "ready": true,
+                        "resources": {
+                            "limits": {
+                                "cpu": "1",
+                                "memory": "512Mi"
+                            },
+                            "requests": {
+                                "cpu": "100m",
+                                "memory": "256Mi"
+                            }
+                        },
+                        "restartCount": 0,
+                        "started": true,
+                        "state": {
+                            "running": {
+                                "startedAt": "2026-11-26T15:35:46Z"
+                            }
+                        },
+                        "user": {
+                            "linux": {
+                                "gid": 70,
+                                "supplementalGroups": [
+                                    70
+                                ],
+                                "uid": 70
+                            }
+                        },
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/var/lib/postgresql/data",
+                                "name": "data"
+                            },
+                            {
+                                "mountPath": "/var/run/postgresql",
+                                "name": "run"
+                            },
+                            {
+                                "mountPath": "/tmp",
+                                "name": "tmp"
+                            },
+                            {
+                                "mountPath": "/run/secrets",
+                                "name": "secrets",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            },
+                            {
+                                "mountPath": "/docker-entrypoint-initdb.d",
+                                "name": "init",
+                                "readOnly": true,
+                                "recursiveReadOnly": "Disabled"
+                            }
+                        ]
+                    }
+                ],
+                "hostIP": "172.18.0.2",
+                "hostIPs": [
+                    {
+                        "ip": "172.18.0.2"
+                    }
+                ],
+                "observedGeneration": 1,
+                "phase": "Running",
+                "podIP": "192.168.146.74",
+                "podIPs": [
+                    {
+                        "ip": "192.168.146.74"
+                    }
+                ],
+                "qosClass": "Burstable",
+                "startTime": "2026-11-26T15:35:40Z"
+            }
+        }
+    ],
+    "kind": "List",
+    "metadata": {
+        "resourceVersion": ""
+    }
+}

@@ -1,0 +1,44 @@
+﻿2026-11-26T15:22:29.0998756Z Current runner version: '2.338.2'
+2026-11-26T15:22:29.1022206Z ##[group]Runner Image Provisioner
+2026-11-26T15:22:29.1023164Z Hosted Compute Agent
+2026-11-26T15:22:29.1023721Z Version: 20261111.635
+2026-11-26T15:22:29.1024376Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-26T15:22:29.1025087Z Build Date: 2026-11-11T01:49:01Z
+2026-11-26T15:22:29.1025742Z Worker ID: {b5ac338b-fe13-49e0-b7b4-1e722129a5b9}
+2026-11-26T15:22:29.1026827Z Region: us-east-1
+2026-11-26T15:22:29.1027363Z Cloud: AWS
+2026-11-26T15:22:29.1027887Z ##[endgroup]
+2026-11-26T15:22:29.1029477Z ##[group]Operating System
+2026-11-26T15:22:29.1030127Z Ubuntu
+2026-11-26T15:22:29.1030663Z 24.04.5
+2026-11-26T15:22:29.1031180Z LTS
+2026-11-26T15:22:29.1031690Z ##[endgroup]
+2026-11-26T15:22:29.1032219Z ##[group]Runner Image
+2026-11-26T15:22:29.1032791Z Image: ubuntu-24.04
+2026-11-26T15:22:29.1033377Z Version: 20261116.133.1
+2026-11-26T15:22:29.1034669Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.133/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-26T15:22:29.1036206Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.133
+2026-11-26T15:22:29.1037766Z ##[endgroup]
+2026-11-26T15:22:29.1038823Z ##[group]GITHUB_TOKEN Permissions
+2026-11-26T15:22:29.1041171Z Metadata: read
+2026-11-26T15:22:29.1041702Z ##[endgroup]
+2026-11-26T15:22:29.1044060Z Secret source: Actions
+2026-11-26T15:22:29.1045111Z Cache mode: write
+2026-11-26T15:22:29.1045972Z Prepare workflow directory
+2026-11-26T15:22:29.1438079Z Prepare all required actions
+2026-11-26T15:22:29.1503223Z Complete job name: context
+2026-11-26T15:22:29.2409759Z ##[group]Run release=false
+2026-11-26T15:22:29.2410350Z release=false
+2026-11-26T15:22:29.2410905Z if [[ "$EVENT" != "pull_request" && "$REF" == "refs/heads/main" ]]; then
+2026-11-26T15:22:29.2411495Z   release=true
+2026-11-26T15:22:29.2412069Z fi
+2026-11-26T15:22:29.2412494Z echo "release=$release" >> "$GITHUB_OUTPUT"
+2026-11-26T15:22:29.2413211Z echo "Release run: $release (event $EVENT, ref $REF)" >> "$GITHUB_STEP_SUMMARY"
+2026-11-26T15:22:30.6551354Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:22:30.6552114Z env:
+2026-11-26T15:22:30.6552427Z   EVENT: push
+2026-11-26T15:22:30.6552711Z   REF: refs/heads/main
+2026-11-26T15:22:30.6552997Z ##[endgroup]
+2026-11-26T15:22:30.6831288Z Evaluate and set job outputs
+2026-11-26T15:22:30.6838338Z Set output 'release'
+2026-11-26T15:22:30.6839980Z Cleaning up orphan processes

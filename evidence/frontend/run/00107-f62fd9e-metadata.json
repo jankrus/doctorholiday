@@ -1,0 +1,302 @@
+{
+  "buildx.build.provenance": {
+    "builder": {
+      "id": ""
+    },
+    "buildType": "https://mobyproject.org/buildkit@v1",
+    "materials": [
+      {
+        "uri": "pkg:docker/docker/dockerfile@1",
+        "digest": {
+          "sha256": "572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183"
+        }
+      },
+      {
+        "uri": "pkg:docker/node@22.23-alpine?digest=sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a\u0026platform=linux%2Famd64",
+        "digest": {
+          "sha256": "1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a"
+        }
+      },
+      {
+        "uri": "pkg:docker/nginxinc/nginx-unprivileged@alpine?digest=sha256:b5047b9b76845eac124358373c6852377c52e4b05834a47647e955dd91cb8f1e\u0026platform=linux%2Famd64",
+        "digest": {
+          "sha256": "b5047b9b76845eac124358373c6852377c52e4b05834a47647e955dd91cb8f1e"
+        }
+      }
+    ],
+    "invocation": {
+      "configSource": {
+        "entryPoint": "Dockerfile"
+      },
+      "parameters": {
+        "frontend": "gateway.v0",
+        "args": {
+          "build-arg:REVISION": "f62fd9eb7f491870f102d401fa4fd3a835be5d48",
+          "build-arg:SOURCE_DATE_EPOCH": "1795706542",
+          "build-arg:VERSION": "0.1.0",
+          "cmdline": "docker/dockerfile:1",
+          "source": "docker/dockerfile:1"
+        },
+        "locals": [
+          {
+            "name": "context"
+          },
+          {
+            "name": "dockerfile"
+          }
+        ],
+        "root": {
+          "configSource": {
+            "path": "Dockerfile"
+          },
+          "request": {
+            "args": {
+              "build-arg:REVISION": "f62fd9eb7f491870f102d401fa4fd3a835be5d48",
+              "build-arg:SOURCE_DATE_EPOCH": "1795706542",
+              "build-arg:VERSION": "0.1.0",
+              "vcs:localdir:context": "frontend",
+              "vcs:localdir:dockerfile": "frontend",
+              "vcs:revision": "f62fd9eb7f491870f102d401fa4fd3a835be5d48",
+              "vcs:source": "https://github.com/jankrus/doctorholiday"
+            }
+          }
+        },
+        "compatibilityVersion": 30
+      },
+      "environment": {
+        "github_actor": "jankrus",
+        "github_actor_id": "194785705",
+        "github_event_name": "push",
+        "github_event_payload": {
+          "after": "f62fd9eb7f491870f102d401fa4fd3a835be5d48",
+          "base_ref": null,
+          "before": "174a82e21f8c1291f311975e5e5a2f4e64c14c65",
+          "commits": [
+            {
+              "author": {
+                "email": "test@example.invalid",
+                "name": "test"
+              },
+              "committer": {
+                "email": "test@example.invalid",
+                "name": "test"
+              },
+              "distinct": false,
+              "id": "7f726283174b968abfa1400e507372d27acb990d",
+              "message": "chore(deps): ignore the major versions that need a coordinated upgrade",
+              "timestamp": "2026-11-26T15:03:23+01:00",
+              "tree_id": "d47dcf98adc1789a97d1716f8019a5ce22ef6aec",
+              "url": "https://github.com/jankrus/doctorholiday/commit/7f726283174b968abfa1400e507372d27acb990d"
+            },
+            {
+              "author": {
+                "email": "jan.kruske.19.11@gmail.com",
+                "name": "jankrus",
+                "username": "jankrus"
+              },
+              "committer": {
+                "email": "noreply@github.com",
+                "name": "GitHub",
+                "username": "web-flow"
+              },
+              "distinct": true,
+              "id": "f62fd9eb7f491870f102d401fa4fd3a835be5d48",
+              "message": "Merge pull request #143 from jankrus/fix/dependabot-ignore-majors\n\nchore(deps): ignore the major versions that need a coordinated upgrade",
+              "timestamp": "2026-11-26T16:22:22+01:00",
+              "tree_id": "38a901c6c8d5e2ee2905e15cff701f26a9138e41",
+              "url": "https://github.com/jankrus/doctorholiday/commit/f62fd9eb7f491870f102d401fa4fd3a835be5d48"
+            }
+          ],
+          "compare": "https://github.com/jankrus/doctorholiday/compare/174a82e21f8c...f62fd9eb7f49",
+          "created": false,
+          "deleted": false,
+          "forced": false,
+          "head_commit": {
+            "author": {
+              "email": "jan.kruske.19.11@gmail.com",
+              "name": "jankrus",
+              "username": "jankrus"
+            },
+            "committer": {
+              "email": "noreply@github.com",
+              "name": "GitHub",
+              "username": "web-flow"
+            },
+            "distinct": true,
+            "id": "f62fd9eb7f491870f102d401fa4fd3a835be5d48",
+            "message": "Merge pull request #143 from jankrus/fix/dependabot-ignore-majors\n\nchore(deps): ignore the major versions that need a coordinated upgrade",
+            "timestamp": "2026-11-26T16:22:22+01:00",
+            "tree_id": "38a901c6c8d5e2ee2905e15cff701f26a9138e41",
+            "url": "https://github.com/jankrus/doctorholiday/commit/f62fd9eb7f491870f102d401fa4fd3a835be5d48"
+          },
+          "pusher": {
+            "email": "jan.kruske.19.11@gmail.com",
+            "name": "jankrus"
+          },
+          "ref": "refs/heads/main",
+          "repository": {
+            "allow_forking": true,
+            "archive_url": "https://api.github.com/repos/jankrus/doctorholiday/{archive_format}{/ref}",
+            "archived": false,
+            "assignees_url": "https://api.github.com/repos/jankrus/doctorholiday/assignees{/user}",
+            "blobs_url": "https://api.github.com/repos/jankrus/doctorholiday/git/blobs{/sha}",
+            "branches_url": "https://api.github.com/repos/jankrus/doctorholiday/branches{/branch}",
+            "clone_url": "https://github.com/jankrus/doctorholiday.git",
+            "collaborators_url": "https://api.github.com/repos/jankrus/doctorholiday/collaborators{/collaborator}",
+            "comments_url": "https://api.github.com/repos/jankrus/doctorholiday/comments{/number}",
+            "commits_url": "https://api.github.com/repos/jankrus/doctorholiday/commits{/sha}",
+            "compare_url": "https://api.github.com/repos/jankrus/doctorholiday/compare/{base}...{head}",
+            "contents_url": "https://api.github.com/repos/jankrus/doctorholiday/contents/{+path}",
+            "contributors_url": "https://api.github.com/repos/jankrus/doctorholiday/contributors",
+            "created_at": 1790947833,
+            "default_branch": "main",
+            "deployments_url": "https://api.github.com/repos/jankrus/doctorholiday/deployments",
+            "description": "Doctor Holiday: Ein sicheres Terminbuchungssystem für eine Arztpraxis. Entwickelt mit Fokus auf Security by Design, DevSecOps (SBOM, SAST, Code Signing) und einem sicheren Deployment auf einem lokalen Kubernetes-Cluster.",
+            "disabled": false,
+            "downloads_url": "https://api.github.com/repos/jankrus/doctorholiday/downloads",
+            "events_url": "https://api.github.com/repos/jankrus/doctorholiday/events",
+            "fork": false,
+            "forks": 0,
+            "forks_count": 0,
+            "forks_url": "https://api.github.com/repos/jankrus/doctorholiday/forks",
+            "full_name": "jankrus/doctorholiday",
+            "git_commits_url": "https://api.github.com/repos/jankrus/doctorholiday/git/commits{/sha}",
+            "git_refs_url": "https://api.github.com/repos/jankrus/doctorholiday/git/refs{/sha}",
+            "git_tags_url": "https://api.github.com/repos/jankrus/doctorholiday/git/tags{/sha}",
+            "git_url": "git://github.com/jankrus/doctorholiday.git",
+            "has_discussions": false,
+            "has_downloads": true,
+            "has_issues": true,
+            "has_pages": false,
+            "has_projects": true,
+            "has_pull_requests": true,
+            "has_wiki": true,
+            "homepage": null,
+            "hooks_url": "https://api.github.com/repos/jankrus/doctorholiday/hooks",
+            "html_url": "https://github.com/jankrus/doctorholiday",
+            "id": 1401785715,
+            "is_template": false,
+            "issue_comment_url": "https://api.github.com/repos/jankrus/doctorholiday/issues/comments{/number}",
+            "issue_events_url": "https://api.github.com/repos/jankrus/doctorholiday/issues/events{/number}",
+            "issues_url": "https://api.github.com/repos/jankrus/doctorholiday/issues{/number}",
+            "keys_url": "https://api.github.com/repos/jankrus/doctorholiday/keys{/key_id}",
+            "labels_url": "https://api.github.com/repos/jankrus/doctorholiday/labels{/name}",
+            "language": "Python",
+            "languages_url": "https://api.github.com/repos/jankrus/doctorholiday/languages",
+            "license": null,
+            "master_branch": "main",
+            "merges_url": "https://api.github.com/repos/jankrus/doctorholiday/merges",
+            "milestones_url": "https://api.github.com/repos/jankrus/doctorholiday/milestones{/number}",
+            "mirror_url": null,
+            "name": "doctorholiday",
+            "node_id": "R_kgDOU42Ncw",
+            "notifications_url": "https://api.github.com/repos/jankrus/doctorholiday/notifications{?since,all,participating}",
+            "open_issues": 38,
+            "open_issues_count": 38,
+            "owner": {
+              "avatar_url": "https://avatars.githubusercontent.com/u/194785705?v=4",
+              "email": "jan.kruske.19.11@gmail.com",
+              "events_url": "https://api.github.com/users/jankrus/events{/privacy}",
+              "followers_url": "https://api.github.com/users/jankrus/followers",
+              "following_url": "https://api.github.com/users/jankrus/following{/other_user}",
+              "gists_url": "https://api.github.com/users/jankrus/gists{/gist_id}",
+              "gravatar_id": "",
+              "html_url": "https://github.com/jankrus",
+              "id": 194785705,
+              "login": "jankrus",
+              "name": "jankrus",
+              "node_id": "U_kgDOC5wxqQ",
+              "organizations_url": "https://api.github.com/users/jankrus/orgs",
+              "received_events_url": "https://api.github.com/users/jankrus/received_events",
+              "repos_url": "https://api.github.com/users/jankrus/repos",
+              "site_admin": false,
+              "starred_url": "https://api.github.com/users/jankrus/starred{/owner}{/repo}",
+              "subscriptions_url": "https://api.github.com/users/jankrus/subscriptions",
+              "type": "User",
+              "url": "https://api.github.com/users/jankrus",
+              "user_view_type": "public"
+            },
+            "private": false,
+            "pull_request_creation_policy": "all",
+            "pulls_url": "https://api.github.com/repos/jankrus/doctorholiday/pulls{/number}",
+            "pushed_at": 1795706543,
+            "releases_url": "https://api.github.com/repos/jankrus/doctorholiday/releases{/id}",
+            "size": 4199,
+            "ssh_url": "git@github.com:jankrus/doctorholiday.git",
+            "stargazers": 1,
+            "stargazers_count": 1,
+            "stargazers_url": "https://api.github.com/repos/jankrus/doctorholiday/stargazers",
+            "statuses_url": "https://api.github.com/repos/jankrus/doctorholiday/statuses/{sha}",
+            "subscribers_url": "https://api.github.com/repos/jankrus/doctorholiday/subscribers",
+            "subscription_url": "https://api.github.com/repos/jankrus/doctorholiday/subscription",
+            "svn_url": "https://github.com/jankrus/doctorholiday",
+            "tags_url": "https://api.github.com/repos/jankrus/doctorholiday/tags",
+            "teams_url": "https://api.github.com/repos/jankrus/doctorholiday/teams",
+            "topics": [],
+            "trees_url": "https://api.github.com/repos/jankrus/doctorholiday/git/trees{/sha}",
+            "updated_at": "2026-11-11T16:05:52Z",
+            "url": "https://api.github.com/repos/jankrus/doctorholiday",
+            "visibility": "public",
+            "watchers": 1,
+            "watchers_count": 1,
+            "web_commit_signoff_required": false
+          },
+          "sender": {
+            "avatar_url": "https://avatars.githubusercontent.com/u/194785705?v=4",
+            "events_url": "https://api.github.com/users/jankrus/events{/privacy}",
+            "followers_url": "https://api.github.com/users/jankrus/followers",
+            "following_url": "https://api.github.com/users/jankrus/following{/other_user}",
+            "gists_url": "https://api.github.com/users/jankrus/gists{/gist_id}",
+            "gravatar_id": "",
+            "html_url": "https://github.com/jankrus",
+            "id": 194785705,
+            "login": "jankrus",
+            "node_id": "U_kgDOC5wxqQ",
+            "organizations_url": "https://api.github.com/users/jankrus/orgs",
+            "received_events_url": "https://api.github.com/users/jankrus/received_events",
+            "repos_url": "https://api.github.com/users/jankrus/repos",
+            "site_admin": false,
+            "starred_url": "https://api.github.com/users/jankrus/starred{/owner}{/repo}",
+            "subscriptions_url": "https://api.github.com/users/jankrus/subscriptions",
+            "type": "User",
+            "url": "https://api.github.com/users/jankrus",
+            "user_view_type": "public"
+          }
+        },
+        "github_job": "build",
+        "github_ref": "refs/heads/main",
+        "github_ref_name": "main",
+        "github_ref_protected": "true",
+        "github_ref_type": "branch",
+        "github_repository": "jankrus/doctorholiday",
+        "github_repository_id": "1401785715",
+        "github_repository_owner": "jankrus",
+        "github_repository_owner_id": "194785705",
+        "github_run_attempt": "1",
+        "github_run_id": "45848434608",
+        "github_run_number": "107",
+        "github_runner_arch": "X64",
+        "github_runner_environment": "github-hosted",
+        "github_runner_image_os": "ubuntu24",
+        "github_runner_image_version": "20261116.133.1",
+        "github_runner_name": "GitHub Actions 1000001175",
+        "github_runner_os": "Linux",
+        "github_runner_tracking_id": "github_739bd267-462d-479a-91a4-e4f195bf4a9a",
+        "github_server_url": "https://github.com",
+        "github_triggering_actor": "jankrus",
+        "github_workflow": "ci-cd",
+        "github_workflow_ref": "jankrus/doctorholiday/.github/workflows/ci-cd.yml@refs/heads/main",
+        "github_workflow_sha": "f62fd9eb7f491870f102d401fa4fd3a835be5d48",
+        "platform": "linux/amd64"
+      }
+    }
+  },
+  "buildx.build.ref": "doctorholiday-builder/doctorholiday-builder0/0nll119vfi3m87i8dwiczolve",
+  "containerimage.descriptor": {
+    "mediaType": "application/vnd.oci.image.index.v1+json",
+    "digest": "sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b",
+    "size": 856
+  },
+  "containerimage.digest": "sha256:107e144a2b544e4d31b3228d39dd26a79df0487b57c75ca079614fb548dcac8b",
+  "image.name": "ghcr.io/jankrus/doctorholiday-frontend:0.1.0,ghcr.io/jankrus/doctorholiday-frontend:0.1.0-f62fd9e"
+}
