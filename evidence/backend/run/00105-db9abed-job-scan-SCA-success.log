@@ -1,0 +1,233 @@
+﻿2026-11-26T14:06:34.5494213Z Current runner version: '2.338.2'
+2026-11-26T14:06:34.5514797Z ##[group]Runner Image Provisioner
+2026-11-26T14:06:34.5515537Z Hosted Compute Agent
+2026-11-26T14:06:34.5516094Z Version: 20261111.635
+2026-11-26T14:06:34.5516648Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-26T14:06:34.5517255Z Build Date: 2026-11-11T01:49:01Z
+2026-11-26T14:06:34.5517856Z Worker ID: {41949429-2246-47d8-ae1c-4661d843dcf6}
+2026-11-26T14:06:34.5518460Z Region: westus2
+2026-11-26T14:06:34.5518905Z Cloud: Azure
+2026-11-26T14:06:34.5519415Z ##[endgroup]
+2026-11-26T14:06:34.5520760Z ##[group]Operating System
+2026-11-26T14:06:34.5521351Z Ubuntu
+2026-11-26T14:06:34.5521831Z 24.04.5
+2026-11-26T14:06:34.5522245Z LTS
+2026-11-26T14:06:34.5522742Z ##[endgroup]
+2026-11-26T14:06:34.5523205Z ##[group]Runner Image
+2026-11-26T14:06:34.5524010Z Image: ubuntu-24.04
+2026-11-26T14:06:34.5524680Z Version: 20261116.376.1
+2026-11-26T14:06:34.5525779Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.376/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-26T14:06:34.5527025Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.376
+2026-11-26T14:06:34.5527825Z ##[endgroup]
+2026-11-26T14:06:34.5528795Z ##[group]GITHUB_TOKEN Permissions
+2026-11-26T14:06:34.5530555Z Contents: read
+2026-11-26T14:06:34.5531082Z Metadata: read
+2026-11-26T14:06:34.5531555Z ##[endgroup]
+2026-11-26T14:06:34.5533348Z Secret source: Actions
+2026-11-26T14:06:34.5534100Z Cache mode: write
+2026-11-26T14:06:34.5535061Z Prepare workflow directory
+2026-11-26T14:06:34.6844033Z Prepare all required actions
+2026-11-26T14:06:34.6889081Z Getting action download info
+2026-11-26T14:06:35.0124842Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-26T14:06:35.1790633Z Download action repository 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9' (SHA:cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+2026-11-26T14:06:35.3607559Z Complete job name: scan (SCA)
+2026-11-26T14:06:35.4293684Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-26T14:06:35.4294725Z with:
+2026-11-26T14:06:35.4295121Z   persist-credentials: false
+2026-11-26T14:06:35.4295590Z   repository: jankrus/doctorholiday
+2026-11-26T14:06:35.4298783Z   token: ***
+2026-11-26T14:06:35.4299173Z   ssh-strict: true
+2026-11-26T14:06:35.4299566Z   ssh-user: git
+2026-11-26T14:06:35.4299937Z   clean: true
+2026-11-26T14:06:35.4300343Z   sparse-checkout-cone-mode: true
+2026-11-26T14:06:35.4300811Z   fetch-depth: 1
+2026-11-26T14:06:35.4301199Z   fetch-tags: false
+2026-11-26T14:06:35.4301597Z   show-progress: true
+2026-11-26T14:06:35.4302005Z   lfs: false
+2026-11-26T14:06:35.4302372Z   submodules: false
+2026-11-26T14:06:35.4302766Z   set-safe-directory: true
+2026-11-26T14:06:35.4303211Z   allow-unsafe-pr-checkout: false
+2026-11-26T14:06:35.4303819Z ##[endgroup]
+2026-11-26T14:06:35.6445260Z Syncing repository: jankrus/doctorholiday
+2026-11-26T14:06:35.6447690Z ##[group]Getting Git version info
+2026-11-26T14:06:35.6448883Z Working directory is '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T14:06:35.6450537Z [command]/usr/bin/git version
+2026-11-26T14:06:35.6586017Z git version 2.56.1
+2026-11-26T14:06:35.6605319Z ##[endgroup]
+2026-11-26T14:06:35.6616867Z Temporarily overriding HOME='/home/runner/work/_temp/97410669-51d4-443a-893d-65d83b80c42d' before making global git config changes
+2026-11-26T14:06:35.6618898Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T14:06:35.6622847Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T14:06:35.6668525Z Deleting the contents of '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T14:06:35.6671523Z ##[group]Determining repository object format
+2026-11-26T14:06:35.6673021Z ##[endgroup]
+2026-11-26T14:06:35.6673835Z ##[group]Initializing the repository
+2026-11-26T14:06:35.6678078Z [command]/usr/bin/git init /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T14:06:35.6766940Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-26T14:06:35.6768062Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-26T14:06:35.6768842Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-26T14:06:35.6769494Z hint: call:
+2026-11-26T14:06:35.6769855Z hint:
+2026-11-26T14:06:35.6770302Z hint: 	git config --global init.defaultBranch <name>
+2026-11-26T14:06:35.6770844Z hint:
+2026-11-26T14:06:35.6771344Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-26T14:06:35.6772135Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-26T14:06:35.6773173Z hint:
+2026-11-26T14:06:35.6773791Z hint: 	git branch -m <name>
+2026-11-26T14:06:35.6774647Z hint:
+2026-11-26T14:06:35.6775530Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-26T14:06:35.6777157Z Initialized empty Git repository in /home/runner/work/doctorholiday/doctorholiday/.git/
+2026-11-26T14:06:35.6784869Z [command]/usr/bin/git remote add origin https://github.com/jankrus/doctorholiday
+2026-11-26T14:06:35.6832197Z ##[endgroup]
+2026-11-26T14:06:35.6833515Z ##[group]Disabling automatic garbage collection
+2026-11-26T14:06:35.6845777Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-26T14:06:35.6883104Z ##[endgroup]
+2026-11-26T14:06:35.6884615Z ##[group]Setting up auth
+2026-11-26T14:06:35.6885360Z Removing SSH command configuration
+2026-11-26T14:06:35.6886411Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T14:06:35.6909538Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T14:06:35.7427441Z Removing HTTP extra header
+2026-11-26T14:06:35.7433310Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T14:06:35.7471238Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T14:06:35.7670625Z Removing includeIf entries pointing to credentials config files
+2026-11-26T14:06:35.7682711Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T14:06:35.7721390Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T14:06:35.7929312Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-9669b779-5660-408c-8610-13d83f38c8c7.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-26T14:06:35.7972099Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path /home/runner/work/_temp/git-credentials-9669b779-5660-408c-8610-13d83f38c8c7.config
+2026-11-26T14:06:35.8010620Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-9669b779-5660-408c-8610-13d83f38c8c7.config
+2026-11-26T14:06:35.8048527Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-9669b779-5660-408c-8610-13d83f38c8c7.config
+2026-11-26T14:06:35.8086799Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-9669b779-5660-408c-8610-13d83f38c8c7.config
+2026-11-26T14:06:35.8123058Z ##[endgroup]
+2026-11-26T14:06:35.8123738Z ##[group]Fetching the repository
+2026-11-26T14:06:35.8128941Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +db9abeda3ca00e476795716fbe029bfb6235d7f5:refs/remotes/origin/main
+2026-11-26T14:06:36.3218226Z From https://github.com/jankrus/doctorholiday
+2026-11-26T14:06:36.3219425Z  * [new ref]         db9abeda3ca00e476795716fbe029bfb6235d7f5 -> origin/main
+2026-11-26T14:06:36.3229544Z [command]/usr/bin/git branch --list --remote origin/main
+2026-11-26T14:06:36.3268256Z   origin/main
+2026-11-26T14:06:36.3275083Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-11-26T14:06:36.3306507Z db9abeda3ca00e476795716fbe029bfb6235d7f5
+2026-11-26T14:06:36.3310745Z ##[endgroup]
+2026-11-26T14:06:36.3312103Z ##[group]Determining the checkout info
+2026-11-26T14:06:36.3313687Z ##[endgroup]
+2026-11-26T14:06:36.3314818Z [command]/usr/bin/git sparse-checkout disable
+2026-11-26T14:06:36.3375556Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-26T14:06:36.3413463Z ##[group]Checking out the ref
+2026-11-26T14:06:36.3416665Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-11-26T14:06:36.3663312Z Switched to a new branch 'main'
+2026-11-26T14:06:36.3666360Z branch 'main' set up to track 'origin/main'.
+2026-11-26T14:06:36.3673248Z ##[endgroup]
+2026-11-26T14:06:36.3722686Z [command]/usr/bin/git log -1 --format=%H
+2026-11-26T14:06:36.3758267Z db9abeda3ca00e476795716fbe029bfb6235d7f5
+2026-11-26T14:06:36.3768778Z ##[group]Removing auth
+2026-11-26T14:06:36.3770224Z Removing SSH command configuration
+2026-11-26T14:06:36.3772761Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T14:06:36.3815187Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T14:06:36.4031168Z Removing HTTP extra header
+2026-11-26T14:06:36.4033915Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T14:06:36.4077368Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T14:06:36.4291584Z Removing includeIf entries pointing to credentials config files
+2026-11-26T14:06:36.4294109Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T14:06:36.4338049Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T14:06:36.4340761Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T14:06:36.4342732Z includeif.gitdir:/github/workspace/.git.path
+2026-11-26T14:06:36.4344248Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T14:06:36.4348804Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T14:06:36.4380937Z /home/runner/work/_temp/git-credentials-9669b779-5660-408c-8610-13d83f38c8c7.config
+2026-11-26T14:06:36.4398110Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-9669b779\-5660\-408c\-8610\-13d83f38c8c7\.config
+2026-11-26T14:06:36.4441326Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T14:06:36.4473358Z /home/runner/work/_temp/git-credentials-9669b779-5660-408c-8610-13d83f38c8c7.config
+2026-11-26T14:06:36.4482725Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-9669b779\-5660\-408c\-8610\-13d83f38c8c7\.config
+2026-11-26T14:06:36.4526237Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-11-26T14:06:36.4558946Z /github/runner_temp/git-credentials-9669b779-5660-408c-8610-13d83f38c8c7.config
+2026-11-26T14:06:36.4566664Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-9669b779\-5660\-408c\-8610\-13d83f38c8c7\.config
+2026-11-26T14:06:36.4607651Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T14:06:36.4637900Z /github/runner_temp/git-credentials-9669b779-5660-408c-8610-13d83f38c8c7.config
+2026-11-26T14:06:36.4645766Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-9669b779\-5660\-408c\-8610\-13d83f38c8c7\.config
+2026-11-26T14:06:36.4686937Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T14:06:36.4895473Z Removing credentials config '/home/runner/work/_temp/git-credentials-9669b779-5660-408c-8610-13d83f38c8c7.config'
+2026-11-26T14:06:36.4903356Z ##[endgroup]
+2026-11-26T14:06:36.5134073Z ##[group]Run scripts/scan.sh sca
+2026-11-26T14:06:36.5135282Z scripts/scan.sh sca
+2026-11-26T14:06:36.5159129Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T14:06:36.5160324Z ##[endgroup]
+2026-11-26T14:06:36.6098954Z Unable to find image 'aquasec/trivy:0.76.2@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb' locally
+2026-11-26T14:06:37.2239049Z docker.io/aquasec/trivy@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb: Pulling from aquasec/trivy
+2026-11-26T14:06:37.4962364Z 7b229517ed22: Pulling fs layer
+2026-11-26T14:06:37.4963558Z 9f087194f4fe: Pulling fs layer
+2026-11-26T14:06:37.4964846Z d7953b8bb0ca: Pulling fs layer
+2026-11-26T14:06:37.4965997Z ac09fd37397a: Pulling fs layer
+2026-11-26T14:06:37.8134093Z ac09fd37397a: Waiting
+2026-11-26T14:06:37.8134890Z 7b229517ed22: Verifying Checksum
+2026-11-26T14:06:37.8135644Z 7b229517ed22: Download complete
+2026-11-26T14:06:37.8322376Z 9f087194f4fe: Verifying Checksum
+2026-11-26T14:06:37.8322961Z 9f087194f4fe: Download complete
+2026-11-26T14:06:37.9306063Z 7b229517ed22: Pull complete
+2026-11-26T14:06:37.9572217Z d7953b8bb0ca: Verifying Checksum
+2026-11-26T14:06:37.9572654Z d7953b8bb0ca: Download complete
+2026-11-26T14:06:38.0478228Z ac09fd37397a: Verifying Checksum
+2026-11-26T14:06:38.0478836Z ac09fd37397a: Download complete
+2026-11-26T14:06:39.6099439Z 9f087194f4fe: Pull complete
+2026-11-26T14:06:41.1215546Z d7953b8bb0ca: Pull complete
+2026-11-26T14:06:41.1343559Z ac09fd37397a: Pull complete
+2026-11-26T14:06:41.1377456Z Digest: sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+2026-11-26T14:06:41.1385844Z Status: Downloaded newer image for aquasec/trivy@sha256:8f6bb947dbc528902e11f2f5be52f7b519f6a39d5d148f41166f2040499768fb
+2026-11-26T14:06:41.3891818Z 2026-11-26T14:06:41Z	INFO	[vulndb] Need to update DB
+2026-11-26T14:06:41.3892319Z 2026-11-26T14:06:41Z	INFO	[vulndb] Downloading vulnerability DB...
+2026-11-26T14:06:41.3893127Z 2026-11-26T14:06:41Z	INFO	[vulndb] Downloading artifact...	repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-11-26T14:06:46.4524131Z 2026-11-26T14:06:46Z	INFO	[vulndb] Artifact successfully downloaded	repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-11-26T14:06:46.4525288Z 2026-11-26T14:06:46Z	INFO	[vuln] Vulnerability scanning is enabled
+2026-11-26T14:06:46.4525838Z 2026-11-26T14:06:46Z	INFO	[npm] Run "npm install" to collect the license information of packages	dir="node_modules"
+2026-11-26T14:06:46.4601641Z 2026-11-26T14:06:46Z	INFO	Suppressing dependencies for development and testing. To display them, try the '--include-dev-deps' flag.
+2026-11-26T14:06:46.4602272Z 2026-11-26T14:06:46Z	INFO	Number of language-specific files	num=1
+2026-11-26T14:06:46.4602785Z 2026-11-26T14:06:46Z	INFO	[npm] Detecting vulnerabilities...
+2026-11-26T14:06:47.1180375Z trivy fs frontend: 0 vulnerabilities, 0 HIGH or CRITICAL
+2026-11-26T14:06:47.2803020Z 2026-11-26T14:06:47Z	INFO	[vulndb] Need to update DB
+2026-11-26T14:06:47.2803792Z 2026-11-26T14:06:47Z	INFO	[vulndb] Downloading vulnerability DB...
+2026-11-26T14:06:47.2804636Z 2026-11-26T14:06:47Z	INFO	[vulndb] Downloading artifact...	repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-11-26T14:06:52.0762989Z 2026-11-26T14:06:52Z	INFO	[vulndb] Artifact successfully downloaded	repo="mirror.gcr.io/aquasec/trivy-db:2"
+2026-11-26T14:06:52.0765020Z 2026-11-26T14:06:52Z	INFO	[vuln] Vulnerability scanning is enabled
+2026-11-26T14:06:52.0835708Z 2026-11-26T14:06:52Z	INFO	Suppressing dependencies for development and testing. To display them, try the '--include-dev-deps' flag.
+2026-11-26T14:06:52.0843651Z 2026-11-26T14:06:52Z	INFO	Number of language-specific files	num=1
+2026-11-26T14:06:52.0847144Z 2026-11-26T14:06:52Z	INFO	[uv] Detecting vulnerabilities...
+2026-11-26T14:06:52.7326045Z trivy fs backend: 0 vulnerabilities, 0 HIGH or CRITICAL
+2026-11-26T14:06:52.7326867Z findings=0
+2026-11-26T14:06:52.7504494Z ##[group]Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+2026-11-26T14:06:52.7504892Z with:
+2026-11-26T14:06:52.7505054Z   name: sca
+2026-11-26T14:06:52.7505222Z   path: reports/sca/
+2026-11-26T14:06:52.7505426Z   if-no-files-found: error
+2026-11-26T14:06:52.7505618Z   retention-days: 90
+2026-11-26T14:06:52.7505809Z   compression-level: 6
+2026-11-26T14:06:52.7505989Z   overwrite: false
+2026-11-26T14:06:52.7506168Z   include-hidden-files: false
+2026-11-26T14:06:52.7506367Z   archive: true
+2026-11-26T14:06:52.7506542Z ##[endgroup]
+2026-11-26T14:06:52.8750401Z With the provided path, there will be 4 files uploaded
+2026-11-26T14:06:52.8751017Z Artifact name is valid!
+2026-11-26T14:06:52.8751392Z Root directory input is valid!
+2026-11-26T14:06:53.4064999Z Uploading artifact: sca.zip
+2026-11-26T14:06:53.4117880Z Beginning upload of artifact content to blob storage
+2026-11-26T14:06:53.7209293Z Uploaded bytes 8641
+2026-11-26T14:06:53.7945446Z Finished uploading artifact content to blob storage!
+2026-11-26T14:06:53.7946458Z SHA256 digest of uploaded artifact is 51ed2694d852a5c7b23ba724241f5485853f4a5faa527e6fc4303babb2b6ac24
+2026-11-26T14:06:53.7947249Z Finalizing artifact upload
+2026-11-26T14:06:54.4394127Z Artifact sca successfully finalized. Artifact ID 15123738666
+2026-11-26T14:06:54.4395230Z Artifact sca has been successfully uploaded! Final size is 8641 bytes. Artifact ID is 15123738666
+2026-11-26T14:06:54.4405848Z Artifact download URL: https://github.com/jankrus/doctorholiday/actions/runs/45835586767/artifacts/15123738666
+2026-11-26T14:06:54.4654958Z Post job cleanup.
+2026-11-26T14:06:54.5371803Z [command]/usr/bin/git version
+2026-11-26T14:06:54.5409552Z git version 2.56.1
+2026-11-26T14:06:54.5436973Z Temporarily overriding HOME='/home/runner/work/_temp/9dd789c1-f5cf-4617-b50c-517d9518d2f1' before making global git config changes
+2026-11-26T14:06:54.5438029Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T14:06:54.5440946Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T14:06:54.5469755Z Removing SSH command configuration
+2026-11-26T14:06:54.5474958Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T14:06:54.5505179Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T14:06:54.5720788Z Removing HTTP extra header
+2026-11-26T14:06:54.5725486Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T14:06:54.5779883Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T14:06:54.5994009Z Removing includeIf entries pointing to credentials config files
+2026-11-26T14:06:54.6003729Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T14:06:54.6042668Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T14:06:54.6374892Z Evaluate and set job outputs
+2026-11-26T14:06:54.6380734Z Set output 'findings'
+2026-11-26T14:06:54.6382144Z Cleaning up orphan processes
