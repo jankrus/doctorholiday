@@ -17,6 +17,8 @@ implementation, its verification and its evidence. This script keeps it honest:
      docs/threat-model/stride.md) has a row in the threat table, and every control a threat row
      names exists.
   6. Statuses are one of Implemented, Partial, Planned, Accepted.
+  7. For every selected threat the status in the threat table agrees with the Status column of
+     docs/threat-model/stride.md (Implemented, Part., Not impl., Accepted).
 
 Exit code 1 and one line per problem if anything fails. Standard library only.
 """
@@ -131,6 +133,17 @@ def check(root: Path, evidence_ref: str | None) -> list[str]:
             problems.append(f"{th}: selected threat (Sel. = yes) has no row in the threat table")
     for th in sorted(have - {r[0] for r in table_rows(stride, re.compile(r"^TH-\d+$"))}):
         problems.append(f"{th}: not a threat of stride.md")
+
+    # 7. the two documents agree on the status of the selected threats
+    prefix = {"Implemented": "Implemented", "Partial": "Part.", "Planned": "Not impl.", "Accepted": "Accepted"}
+    stride_rows = {r[0]: r for r in table_rows(stride, re.compile(r"^TH-\d+$"))}
+    for row in threats:
+        th = row[0]
+        if len(row) == 7 and th in stride_rows and len(stride_rows[th]) > 10 and row[5] in prefix:
+            if not stride_rows[th][10].startswith(prefix[row[5]]):
+                problems.append(
+                    f"{th}: status {row[5]} in the matrix but '{stride_rows[th][10][:40]}' in stride.md"
+                )
 
     # 3. links
     for target in re.findall(r"\]\(([^)]+)\)", matrix):

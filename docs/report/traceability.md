@@ -2,7 +2,7 @@
 
 Issue [#47](https://github.com/jankrus/doctorholiday/issues/47). Where is each security requirement and each selected threat mitigation implemented, and how is it proven? One table links every requirement (SR) to its control, the code or configuration, the test or scan, and the evidence. A second table does the same for the threats of the three implemented STRIDE categories, and a third for the Kubernetes items of brief §4.
 
-- **State:** 2026-11-26, `main` after the CI/CD block (runs 95 to 107). The status of each row is what the code does today; the status column of [stride.md](../threat-model/stride.md) is the state at the time of the analysis and is older.
+- **State:** 2026-11-26, `main` after the CI/CD block (runs 95 to 107). The status of each row is what the code does today. The *Status* column of [stride.md](../threat-model/stride.md) was brought up to date with this matrix, and the check script verifies that both agree for the selected threats.
 - **Sources:** requirements [security-requirements.md](../architecture/security-requirements.md) (SR-01 to SR-11), threats [stride.md](../threat-model/stride.md) and the selection in [stride-selection.md](../threat-model/stride-selection.md), deviations [deviations.md](deviations.md).
 - **Status:** *Implemented* (control in place, verified), *Partial* (in place with the named gap), *Planned* (open issue), *Accepted* (risk accepted with a reason in the threat model).
 - **Implementation and verification** name files as `path::symbol`: the file exists and contains the symbol (function, class or test name). Line numbers are avoided on purpose, they rot.
