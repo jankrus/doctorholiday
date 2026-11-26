@@ -45,5 +45,5 @@ See deviation D-11 in [deviations.md](deviations.md): the smoke test does not se
 
 | Criterion | Run |
 | :--- | :--- |
-| green run on `main` with deploy, smoke test and digest | not run yet |
-| a run whose gate fails never reaches deploy | not run yet (the gate demonstration of #36) |
+| green run on `main` with deploy, smoke test and digest | [run 95](https://github.com/jankrus/doctorholiday/actions/runs/45288791506) |
+| a run whose gate fails never reaches deploy | [run 87](https://github.com/jankrus/doctorholiday/actions/runs/45212878779): the gate blocked, `deploy` was skipped |
