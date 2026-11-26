@@ -41,11 +41,13 @@ The gate is shown to block, for each rule, with the workflow [`gate-demo.yml`](.
 
 | Scenario | Fault | Rule that must block | Run |
 | :--- | :--- | :--- | :--- |
-| `clean` (control) | none | none, the gate passes | not run yet |
-| `secret` | a random token in the shape of a GitHub token, in a local commit | `secrets` | not run yet |
-| `vulnerability` | `backend/requirements.txt` pins PyYAML 5.3 (CVE-2020-14343, CRITICAL) | `vulnerabilities` | not run yet |
-| `unsigned` | the backend reference points to a public image that our key never signed | `signatures` | not run yet |
+| `clean` (control) | none | none, the gate passes | [passed](https://github.com/jankrus/doctorholiday/actions/runs/45626597215) |
+| `secret` | a random token in the shape of a GitHub token, in a local commit | `secrets` | [blocked by `secrets`](https://github.com/jankrus/doctorholiday/actions/runs/45626604342) |
+| `vulnerability` | `backend/requirements.txt` pins PyYAML 5.3 (CVE-2020-14343, CRITICAL) | `vulnerabilities` | [blocked by `vulnerabilities`](https://github.com/jankrus/doctorholiday/actions/runs/45626611223) |
+| `unsigned` | the backend reference points to a public image that our key never signed | `signatures` | [blocked by `signatures`](https://github.com/jankrus/doctorholiday/actions/runs/45626616466) |
 
 The image digests are those of the latest release run (read from the `evidence` branch). The `deploy` job is not part of the demo; that it is skipped when the gate fails follows from `needs: quality-gate` in `ci-cd.yml` and is shown by any red gate run of the release pipeline.
+
+All four runs ended as expected on 2026-11-25 (the three fault runs are red on purpose; the step "Check that the gate decided as expected" is green in each). Their reports and job logs are on the `evidence` branch as `evidence/<image>/run/demo-<scenario>-<number>-*`. The gate also blocked a real run of the release pipeline: [run 87](https://github.com/jankrus/doctorholiday/actions/runs/45212878779) (Gitleaks false positives on the evidence branch, `deploy` skipped).
 
 Found by the demonstration: the evidence branch is part of the history that Gitleaks scans, and the Trivy image reports contain the public Python signing key id of the base image; see the scanner exceptions in [deviations.md](../report/deviations.md).
