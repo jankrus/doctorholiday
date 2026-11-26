@@ -1,0 +1,446 @@
+﻿2026-11-26T15:47:17.4917043Z Current runner version: '2.338.2'
+2026-11-26T15:47:17.4941177Z ##[group]Runner Image Provisioner
+2026-11-26T15:47:17.4941801Z Hosted Compute Agent
+2026-11-26T15:47:17.4942179Z Version: 20261111.635
+2026-11-26T15:47:17.4942575Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-26T15:47:17.4943010Z Build Date: 2026-11-11T01:49:01Z
+2026-11-26T15:47:17.4943445Z Worker ID: {af62f75b-2389-4dd6-bc21-d0f3464f404b}
+2026-11-26T15:47:17.4943888Z Region: westus3
+2026-11-26T15:47:17.4944218Z Cloud: Azure
+2026-11-26T15:47:17.4944529Z ##[endgroup]
+2026-11-26T15:47:17.4945502Z ##[group]Operating System
+2026-11-26T15:47:17.4945898Z Ubuntu
+2026-11-26T15:47:17.4946248Z 24.04.5
+2026-11-26T15:47:17.4946600Z LTS
+2026-11-26T15:47:17.4946898Z ##[endgroup]
+2026-11-26T15:47:17.4947269Z ##[group]Runner Image
+2026-11-26T15:47:17.4947663Z Image: ubuntu-24.04
+2026-11-26T15:47:17.4948360Z Version: 20261116.376.1
+2026-11-26T15:47:17.4949122Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261116.376/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-26T15:47:17.4950022Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261116.376
+2026-11-26T15:47:17.4950566Z ##[endgroup]
+2026-11-26T15:47:17.4951244Z ##[group]GITHUB_TOKEN Permissions
+2026-11-26T15:47:17.4952404Z Contents: read
+2026-11-26T15:47:17.4952783Z Metadata: read
+2026-11-26T15:47:17.4953159Z ##[endgroup]
+2026-11-26T15:47:17.4954440Z Secret source: Actions
+2026-11-26T15:47:17.4955171Z Cache mode: write
+2026-11-26T15:47:17.4956008Z Prepare workflow directory
+2026-11-26T15:47:17.5220586Z Prepare all required actions
+2026-11-26T15:47:17.5268545Z Getting action download info
+2026-11-26T15:47:17.8317274Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-26T15:47:17.9734327Z Download action repository 'actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0' (SHA:6d4fd22b20465ccc0f7354476588e8df7c9ca0e0)
+2026-11-26T15:47:18.0632429Z Download action repository 'astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d' (SHA:1db35dd8eee11c5894872e0b383ae6c406cf738d)
+2026-11-26T15:47:18.8497651Z Complete job name: test (backend)
+2026-11-26T15:47:18.9619190Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-26T15:47:18.9619808Z with:
+2026-11-26T15:47:18.9620071Z   persist-credentials: false
+2026-11-26T15:47:18.9620370Z   repository: jankrus/doctorholiday
+2026-11-26T15:47:18.9622509Z   token: ***
+2026-11-26T15:47:18.9622749Z   ssh-strict: true
+2026-11-26T15:47:18.9622995Z   ssh-user: git
+2026-11-26T15:47:18.9623234Z   clean: true
+2026-11-26T15:47:18.9623488Z   sparse-checkout-cone-mode: true
+2026-11-26T15:47:18.9623786Z   fetch-depth: 1
+2026-11-26T15:47:18.9624087Z   fetch-tags: false
+2026-11-26T15:47:18.9624336Z   show-progress: true
+2026-11-26T15:47:18.9624589Z   lfs: false
+2026-11-26T15:47:18.9624977Z   submodules: false
+2026-11-26T15:47:18.9625246Z   set-safe-directory: true
+2026-11-26T15:47:18.9625533Z   allow-unsafe-pr-checkout: false
+2026-11-26T15:47:18.9626167Z ##[endgroup]
+2026-11-26T15:47:19.2139876Z Syncing repository: jankrus/doctorholiday
+2026-11-26T15:47:19.2141286Z ##[group]Getting Git version info
+2026-11-26T15:47:19.2141716Z Working directory is '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T15:47:19.2188843Z [command]/usr/bin/git version
+2026-11-26T15:47:19.2319816Z git version 2.56.1
+2026-11-26T15:47:19.2348994Z ##[endgroup]
+2026-11-26T15:47:19.2356095Z Temporarily overriding HOME='/home/runner/work/_temp/e3930e34-eeb1-4469-a46e-59191eba3575' before making global git config changes
+2026-11-26T15:47:19.2357367Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T15:47:19.2358656Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T15:47:19.2423528Z Deleting the contents of '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T15:47:19.2438279Z ##[group]Determining repository object format
+2026-11-26T15:47:19.2440058Z ##[endgroup]
+2026-11-26T15:47:19.2441818Z ##[group]Initializing the repository
+2026-11-26T15:47:19.2449032Z [command]/usr/bin/git init /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T15:47:19.2672589Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-26T15:47:19.2674009Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-26T15:47:19.2675388Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-26T15:47:19.2676220Z hint: call:
+2026-11-26T15:47:19.2676750Z hint:
+2026-11-26T15:47:19.2677204Z hint: 	git config --global init.defaultBranch <name>
+2026-11-26T15:47:19.2677759Z hint:
+2026-11-26T15:47:19.2678265Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-26T15:47:19.2679101Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-26T15:47:19.2679742Z hint:
+2026-11-26T15:47:19.2679983Z hint: 	git branch -m <name>
+2026-11-26T15:47:19.2680309Z hint:
+2026-11-26T15:47:19.2680694Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-26T15:47:19.2683952Z Initialized empty Git repository in /home/runner/work/doctorholiday/doctorholiday/.git/
+2026-11-26T15:47:19.2695099Z [command]/usr/bin/git remote add origin https://github.com/jankrus/doctorholiday
+2026-11-26T15:47:19.2772409Z ##[endgroup]
+2026-11-26T15:47:19.2773160Z ##[group]Disabling automatic garbage collection
+2026-11-26T15:47:19.2773805Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-26T15:47:19.2817005Z ##[endgroup]
+2026-11-26T15:47:19.2817871Z ##[group]Setting up auth
+2026-11-26T15:47:19.2818554Z Removing SSH command configuration
+2026-11-26T15:47:19.2823062Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T15:47:19.2890918Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T15:47:19.3238178Z Removing HTTP extra header
+2026-11-26T15:47:19.3243170Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T15:47:19.3280784Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T15:47:19.3517499Z Removing includeIf entries pointing to credentials config files
+2026-11-26T15:47:19.3518886Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T15:47:19.3569270Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T15:47:19.3808549Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-a6e59cd4-bde4-43d3-a63a-ac7375727a6b.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-26T15:47:19.3869940Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path /home/runner/work/_temp/git-credentials-a6e59cd4-bde4-43d3-a63a-ac7375727a6b.config
+2026-11-26T15:47:19.3953752Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-a6e59cd4-bde4-43d3-a63a-ac7375727a6b.config
+2026-11-26T15:47:19.4018561Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-a6e59cd4-bde4-43d3-a63a-ac7375727a6b.config
+2026-11-26T15:47:19.4066864Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-a6e59cd4-bde4-43d3-a63a-ac7375727a6b.config
+2026-11-26T15:47:19.4125336Z ##[endgroup]
+2026-11-26T15:47:19.4125801Z ##[group]Fetching the repository
+2026-11-26T15:47:19.4130109Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +e880032d1cdfc9bc30f3b5439616759cb74b90e5:refs/remotes/origin/main
+2026-11-26T15:47:20.2234572Z From https://github.com/jankrus/doctorholiday
+2026-11-26T15:47:20.2236282Z  * [new ref]         e880032d1cdfc9bc30f3b5439616759cb74b90e5 -> origin/main
+2026-11-26T15:47:20.2248696Z [command]/usr/bin/git branch --list --remote origin/main
+2026-11-26T15:47:20.2291140Z   origin/main
+2026-11-26T15:47:20.2310854Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-11-26T15:47:20.2333066Z e880032d1cdfc9bc30f3b5439616759cb74b90e5
+2026-11-26T15:47:20.2340933Z ##[endgroup]
+2026-11-26T15:47:20.2343522Z ##[group]Determining the checkout info
+2026-11-26T15:47:20.2347080Z ##[endgroup]
+2026-11-26T15:47:20.2357947Z [command]/usr/bin/git sparse-checkout disable
+2026-11-26T15:47:20.2433617Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-26T15:47:20.2474289Z ##[group]Checking out the ref
+2026-11-26T15:47:20.2476736Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-11-26T15:47:20.2755915Z Switched to a new branch 'main'
+2026-11-26T15:47:20.2760784Z branch 'main' set up to track 'origin/main'.
+2026-11-26T15:47:20.2816864Z ##[endgroup]
+2026-11-26T15:47:20.2818981Z [command]/usr/bin/git log -1 --format=%H
+2026-11-26T15:47:20.2852536Z e880032d1cdfc9bc30f3b5439616759cb74b90e5
+2026-11-26T15:47:20.2881478Z ##[group]Removing auth
+2026-11-26T15:47:20.2882341Z Removing SSH command configuration
+2026-11-26T15:47:20.2883465Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T15:47:20.2923353Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T15:47:20.3147159Z Removing HTTP extra header
+2026-11-26T15:47:20.3152423Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T15:47:20.3194502Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T15:47:20.3411763Z Removing includeIf entries pointing to credentials config files
+2026-11-26T15:47:20.3413495Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T15:47:20.3474179Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T15:47:20.3476001Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T15:47:20.3477732Z includeif.gitdir:/github/workspace/.git.path
+2026-11-26T15:47:20.3478790Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T15:47:20.3481632Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T15:47:20.3515215Z /home/runner/work/_temp/git-credentials-a6e59cd4-bde4-43d3-a63a-ac7375727a6b.config
+2026-11-26T15:47:20.3523770Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-a6e59cd4\-bde4\-43d3\-a63a\-ac7375727a6b\.config
+2026-11-26T15:47:20.3571457Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T15:47:20.3612016Z /home/runner/work/_temp/git-credentials-a6e59cd4-bde4-43d3-a63a-ac7375727a6b.config
+2026-11-26T15:47:20.3630370Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-a6e59cd4\-bde4\-43d3\-a63a\-ac7375727a6b\.config
+2026-11-26T15:47:20.3688717Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-11-26T15:47:20.3720474Z /github/runner_temp/git-credentials-a6e59cd4-bde4-43d3-a63a-ac7375727a6b.config
+2026-11-26T15:47:20.3730711Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-a6e59cd4\-bde4\-43d3\-a63a\-ac7375727a6b\.config
+2026-11-26T15:47:20.3780281Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T15:47:20.3813102Z /github/runner_temp/git-credentials-a6e59cd4-bde4-43d3-a63a-ac7375727a6b.config
+2026-11-26T15:47:20.3826174Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-a6e59cd4\-bde4\-43d3\-a63a\-ac7375727a6b\.config
+2026-11-26T15:47:20.3874036Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T15:47:20.4186968Z Removing credentials config '/home/runner/work/_temp/git-credentials-a6e59cd4-bde4-43d3-a63a-ac7375727a6b.config'
+2026-11-26T15:47:20.4195821Z ##[endgroup]
+2026-11-26T15:47:20.4590973Z ##[group]Run actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0
+2026-11-26T15:47:20.4591943Z with:
+2026-11-26T15:47:20.4592526Z   python-version-file: backend/.python-version
+2026-11-26T15:47:20.4593294Z   check-latest: false
+2026-11-26T15:47:20.4598206Z   token: ***
+2026-11-26T15:47:20.4598984Z   mirror: https://raw.githubusercontent.com/actions/python-versions/main
+2026-11-26T15:47:20.4599960Z   update-environment: true
+2026-11-26T15:47:20.4600595Z   allow-prereleases: false
+2026-11-26T15:47:20.4601216Z   freethreaded: false
+2026-11-26T15:47:20.4601781Z ##[endgroup]
+2026-11-26T15:47:20.5659073Z Resolved backend/.python-version as 3.12
+2026-11-26T15:47:20.5660356Z ##[group]Installed versions
+2026-11-26T15:47:20.5718768Z Successfully set up CPython (3.12.16)
+2026-11-26T15:47:20.5719846Z ##[endgroup]
+2026-11-26T15:47:20.5978242Z ##[group]Run astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d
+2026-11-26T15:47:20.5979107Z with:
+2026-11-26T15:47:20.5979575Z   version: 0.12.24
+2026-11-26T15:47:20.5980079Z   enable-cache: false
+2026-11-26T15:47:20.5980619Z   activate-environment: false
+2026-11-26T15:47:20.5981195Z   no-project: false
+2026-11-26T15:47:20.5981891Z   working-directory: /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T15:47:20.5982692Z   require-checksums: false
+2026-11-26T15:47:20.5987063Z   github-token: ***
+2026-11-26T15:47:20.5988225Z   cache-dependency-glob: **/*requirements*.txt
+**/*requirements*.in
+**/*constraints*.txt
+**/*constraints*.in
+**/pyproject.toml
+**/uv.lock
+**/*.py.lock
+
+2026-11-26T15:47:20.5989495Z   restore-cache: true
+2026-11-26T15:47:20.5990005Z   save-cache: auto
+2026-11-26T15:47:20.5990503Z   prune-cache: false
+2026-11-26T15:47:20.5991014Z   cache-python: false
+2026-11-26T15:47:20.5991561Z   ignore-nothing-to-cache: false
+2026-11-26T15:47:20.5992207Z   ignore-empty-workdir: false
+2026-11-26T15:47:20.5992811Z   download-from-astral-mirror: true
+2026-11-26T15:47:20.5993435Z   add-problem-matchers: true
+2026-11-26T15:47:20.5993987Z   quiet: false
+2026-11-26T15:47:20.5994486Z   resolution-strategy: highest
+2026-11-26T15:47:20.5995171Z env:
+2026-11-26T15:47:20.5995936Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:20.5997431Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+2026-11-26T15:47:20.5998376Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:20.5999220Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:20.6000069Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:20.6000919Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+2026-11-26T15:47:20.6001878Z ##[endgroup]
+2026-11-26T15:47:20.7381786Z Fetching manifest data from https://releases.astral.sh/github/versions/main/v1/uv.ndjson ...
+2026-11-26T15:47:20.8191888Z Downloading uv from "https://releases.astral.sh/github/uv/releases/download/0.12.24/uv-x86_64-unknown-linux-gnu.tar.gz" ...
+2026-11-26T15:47:21.0637899Z [command]/usr/bin/tar xz --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/b0a99a21-5522-4e54-a7d3-7f5b74eb4698 -f /home/runner/work/_temp/a77f86ac-ba6a-4d63-b2fa-c0e023a0a80b
+2026-11-26T15:47:21.4363239Z Added /home/runner/.local/bin to the path
+2026-11-26T15:47:21.4364504Z Added /opt/hostedtoolcache/uv/0.12.24/x86_64 to the path
+2026-11-26T15:47:21.4366073Z Set UV_PYTHON_INSTALL_DIR to /home/runner/work/_temp/uv-python-dir
+2026-11-26T15:47:21.4367450Z Added /home/runner/work/_temp/uv-python-dir to the path
+2026-11-26T15:47:21.4378744Z Successfully installed uv version 0.12.24
+2026-11-26T15:47:21.7116104Z ##[group]Run make -C backend lint
+2026-11-26T15:47:21.7116795Z make -C backend lint
+2026-11-26T15:47:21.7142299Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:47:21.7143349Z env:
+2026-11-26T15:47:21.7143916Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:21.7144948Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+2026-11-26T15:47:21.7145868Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:21.7146695Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:21.7147513Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:21.7148338Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+2026-11-26T15:47:21.7149179Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+2026-11-26T15:47:21.7149882Z ##[endgroup]
+2026-11-26T15:47:21.7391595Z make: Entering directory '/home/runner/work/doctorholiday/doctorholiday/backend'
+2026-11-26T15:47:21.7392560Z uv run --locked ruff check .
+2026-11-26T15:47:21.7810180Z Using CPython 3.12.16 interpreter at: /opt/hostedtoolcache/Python/3.12.16/x64/bin/python3.12
+2026-11-26T15:47:21.7811669Z Creating virtual environment at: .venv
+2026-11-26T15:47:21.7975707Z    Building doctorholiday-backend @ file:///home/runner/work/doctorholiday/doctorholiday/backend
+2026-11-26T15:47:21.8020376Z       Built doctorholiday-backend @ file:///home/runner/work/doctorholiday/doctorholiday/backend
+2026-11-26T15:47:21.8399096Z Downloading ruff (9.9MiB)
+2026-11-26T15:47:21.8400364Z Downloading psycopg-binary (5.0MiB)
+2026-11-26T15:47:21.8401454Z Downloading pydantic-core (2.0MiB)
+2026-11-26T15:47:21.8402792Z Downloading pygments (1.2MiB)
+2026-11-26T15:47:21.8529652Z Downloading sqlalchemy (4.5MiB)
+2026-11-26T15:47:21.9758619Z  Downloaded pydantic-core
+2026-11-26T15:47:21.9846353Z  Downloaded pygments
+2026-11-26T15:47:22.0016211Z  Downloaded psycopg-binary
+2026-11-26T15:47:22.0046469Z  Downloaded sqlalchemy
+2026-11-26T15:47:22.0248316Z  Downloaded ruff
+2026-11-26T15:47:22.0557574Z Installed 41 packages in 28ms
+2026-11-26T15:47:22.0816094Z All checks passed!
+2026-11-26T15:47:22.0897258Z uv run --locked ruff format --check .
+2026-11-26T15:47:22.1181175Z 75 files already formatted
+2026-11-26T15:47:22.1203439Z make: Leaving directory '/home/runner/work/doctorholiday/doctorholiday/backend'
+2026-11-26T15:47:22.1248817Z ##[group]Run make test-db
+2026-11-26T15:47:22.1249019Z make test-db
+2026-11-26T15:47:22.1283931Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:47:22.1284157Z env:
+2026-11-26T15:47:22.1284337Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:22.1284609Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+2026-11-26T15:47:22.1285074Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:22.1285302Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:22.1285535Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-26T15:47:22.1285769Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+2026-11-26T15:47:22.1286009Z   UV_PYTHON_INSTALL_DIR: /home/runner/work/_temp/uv-python-dir
+2026-11-26T15:47:22.1286213Z ##[endgroup]
+2026-11-26T15:47:22.4140698Z Created .secrets/db_superuser_password
+2026-11-26T15:47:22.4231778Z Created .secrets/db_owner_password
+2026-11-26T15:47:22.4309323Z Created .secrets/db_app_password
+2026-11-26T15:47:22.7709113Z docker compose --project-name doctorholiday-test up --detach --wait db
+2026-11-26T15:47:22.8799652Z  db Pulling 
+2026-11-26T15:47:23.7511497Z  7b229517ed22 Pulling fs layer 
+2026-11-26T15:47:23.7512171Z  768bbab50810 Pulling fs layer 
+2026-11-26T15:47:23.7512380Z  d982e6c592c4 Pulling fs layer 
+2026-11-26T15:47:23.7512595Z  a735dce41235 Pulling fs layer 
+2026-11-26T15:47:23.7512792Z  42065dcfea93 Pulling fs layer 
+2026-11-26T15:47:23.7513014Z  f121f7f3dec1 Pulling fs layer 
+2026-11-26T15:47:23.7513227Z  7ea8819886f9 Pulling fs layer 
+2026-11-26T15:47:23.7513492Z  d3f6cab92edc Pulling fs layer 
+2026-11-26T15:47:23.7513693Z  911527e7800c Pulling fs layer 
+2026-11-26T15:47:23.7513899Z  22df74fd5323 Pulling fs layer 
+2026-11-26T15:47:23.7514096Z  9f477227db48 Pulling fs layer 
+2026-11-26T15:47:23.7514291Z  7ea8819886f9 Waiting 
+2026-11-26T15:47:23.7514479Z  d3f6cab92edc Waiting 
+2026-11-26T15:47:23.7514828Z  911527e7800c Waiting 
+2026-11-26T15:47:23.7514992Z  22df74fd5323 Waiting 
+2026-11-26T15:47:23.7515167Z  9f477227db48 Waiting 
+2026-11-26T15:47:23.7515332Z  a735dce41235 Waiting 
+2026-11-26T15:47:23.7515503Z  42065dcfea93 Waiting 
+2026-11-26T15:47:23.7515672Z  f121f7f3dec1 Waiting 
+2026-11-26T15:47:23.9494983Z  768bbab50810 Download complete 
+2026-11-26T15:47:23.9584938Z  7b229517ed22 Downloading [>                                                  ]  48.51kB/3.853MB
+2026-11-26T15:47:23.9624316Z  d982e6c592c4 Downloading [>                                                  ]  15.75kB/900kB
+2026-11-26T15:47:23.9732640Z  d982e6c592c4 Download complete 
+2026-11-26T15:47:23.9733010Z  7b229517ed22 Verifying Checksum 
+2026-11-26T15:47:23.9745914Z  7b229517ed22 Download complete 
+2026-11-26T15:47:23.9748042Z  7b229517ed22 Extracting [>                                                  ]  65.54kB/3.853MB
+2026-11-26T15:47:24.0483141Z  7b229517ed22 Extracting [==================================================>]  3.853MB/3.853MB
+2026-11-26T15:47:24.0486789Z  7b229517ed22 Extracting [==================================================>]  3.853MB/3.853MB
+2026-11-26T15:47:24.0844296Z  7b229517ed22 Pull complete 
+2026-11-26T15:47:24.0865729Z  768bbab50810 Extracting [==================================================>]     968B/968B
+2026-11-26T15:47:24.0876017Z  768bbab50810 Extracting [==================================================>]     968B/968B
+2026-11-26T15:47:24.1493489Z  42065dcfea93 Downloading [==================================================>]     116B/116B
+2026-11-26T15:47:24.1494041Z  42065dcfea93 Verifying Checksum 
+2026-11-26T15:47:24.1494209Z  42065dcfea93 Download complete 
+2026-11-26T15:47:24.1610216Z  f121f7f3dec1 Downloading [>                                                  ]  529.9kB/111.3MB
+2026-11-26T15:47:24.1618568Z  a735dce41235 Downloading [==================================================>]     173B/173B
+2026-11-26T15:47:24.1623062Z  a735dce41235 Verifying Checksum 
+2026-11-26T15:47:24.1624210Z  a735dce41235 Download complete 
+2026-11-26T15:47:24.2614384Z  f121f7f3dec1 Downloading [============>                                      ]  27.68MB/111.3MB
+2026-11-26T15:47:24.3551999Z  7ea8819886f9 Downloading [==================>                                ]  3.502kB/9.671kB
+2026-11-26T15:47:24.3552617Z  7ea8819886f9 Downloading [==================================================>]  9.671kB/9.671kB
+2026-11-26T15:47:24.3552933Z  7ea8819886f9 Verifying Checksum 
+2026-11-26T15:47:24.3553185Z  7ea8819886f9 Download complete 
+2026-11-26T15:47:24.3610139Z  f121f7f3dec1 Downloading [============================>                      ]  63.29MB/111.3MB
+2026-11-26T15:47:24.3753291Z  d3f6cab92edc Downloading [==================================================>]     130B/130B
+2026-11-26T15:47:24.3753731Z  d3f6cab92edc Verifying Checksum 
+2026-11-26T15:47:24.3755874Z  d3f6cab92edc Download complete 
+2026-11-26T15:47:24.5537618Z  22df74fd5323 Downloading [============================>                      ]  3.502kB/6.108kB
+2026-11-26T15:47:24.5622446Z  911527e7800c Downloading [==================================================>]     169B/169B
+2026-11-26T15:47:24.5625123Z  911527e7800c Verifying Checksum 
+2026-11-26T15:47:24.5625391Z  911527e7800c Download complete 
+2026-11-26T15:47:24.5626158Z  22df74fd5323 Download complete 
+2026-11-26T15:47:24.5634629Z  f121f7f3dec1 Downloading [===============================================>   ]  105.7MB/111.3MB
+2026-11-26T15:47:24.5772004Z  f121f7f3dec1 Verifying Checksum 
+2026-11-26T15:47:24.5772261Z  f121f7f3dec1 Download complete 
+2026-11-26T15:47:24.7993605Z  9f477227db48 Downloading [==================================================>]     183B/183B
+2026-11-26T15:47:24.7993896Z  9f477227db48 Verifying Checksum 
+2026-11-26T15:47:24.7994046Z  9f477227db48 Download complete 
+2026-11-26T15:47:26.7555831Z  768bbab50810 Pull complete 
+2026-11-26T15:47:26.7565809Z  d982e6c592c4 Extracting [=>                                                 ]  32.77kB/900kB
+2026-11-26T15:47:26.7705083Z  d982e6c592c4 Extracting [==================================================>]    900kB/900kB
+2026-11-26T15:47:26.7706096Z  d982e6c592c4 Extracting [==================================================>]    900kB/900kB
+2026-11-26T15:47:26.7859119Z  d982e6c592c4 Pull complete 
+2026-11-26T15:47:26.7878505Z  a735dce41235 Extracting [==================================================>]     173B/173B
+2026-11-26T15:47:26.7879483Z  a735dce41235 Extracting [==================================================>]     173B/173B
+2026-11-26T15:47:26.7943310Z  a735dce41235 Pull complete 
+2026-11-26T15:47:26.7955498Z  42065dcfea93 Extracting [==================================================>]     116B/116B
+2026-11-26T15:47:26.7958179Z  42065dcfea93 Extracting [==================================================>]     116B/116B
+2026-11-26T15:47:26.8026757Z  42065dcfea93 Pull complete 
+2026-11-26T15:47:26.8126132Z  f121f7f3dec1 Extracting [>                                                  ]  557.1kB/111.3MB
+2026-11-26T15:47:26.9130996Z  f121f7f3dec1 Extracting [===>                                               ]  8.356MB/111.3MB
+2026-11-26T15:47:27.0130033Z  f121f7f3dec1 Extracting [========>                                          ]   19.5MB/111.3MB
+2026-11-26T15:47:27.1141937Z  f121f7f3dec1 Extracting [=============>                                     ]  30.64MB/111.3MB
+2026-11-26T15:47:27.2180080Z  f121f7f3dec1 Extracting [==================>                                ]  41.78MB/111.3MB
+2026-11-26T15:47:27.3197922Z  f121f7f3dec1 Extracting [=======================>                           ]  52.36MB/111.3MB
+2026-11-26T15:47:27.4261748Z  f121f7f3dec1 Extracting [===========================>                       ]  60.16MB/111.3MB
+2026-11-26T15:47:27.5308549Z  f121f7f3dec1 Extracting [================================>                  ]   71.3MB/111.3MB
+2026-11-26T15:47:27.6355975Z  f121f7f3dec1 Extracting [====================================>              ]  80.77MB/111.3MB
+2026-11-26T15:47:27.7412523Z  f121f7f3dec1 Extracting [====================================>              ]  81.33MB/111.3MB
+2026-11-26T15:47:27.8599118Z  f121f7f3dec1 Extracting [=====================================>             ]  83.56MB/111.3MB
+2026-11-26T15:47:27.9673804Z  f121f7f3dec1 Extracting [=======================================>           ]  88.01MB/111.3MB
+2026-11-26T15:47:28.0729858Z  f121f7f3dec1 Extracting [==========================================>        ]  93.59MB/111.3MB
+2026-11-26T15:47:28.1762139Z  f121f7f3dec1 Extracting [============================================>      ]  98.04MB/111.3MB
+2026-11-26T15:47:28.2778334Z  f121f7f3dec1 Extracting [=================================================> ]  110.9MB/111.3MB
+2026-11-26T15:47:28.2976628Z  f121f7f3dec1 Extracting [==================================================>]  111.3MB/111.3MB
+2026-11-26T15:47:29.9232674Z  f121f7f3dec1 Pull complete 
+2026-11-26T15:47:29.9301171Z  7ea8819886f9 Extracting [==================================================>]  9.671kB/9.671kB
+2026-11-26T15:47:29.9305949Z  7ea8819886f9 Extracting [==================================================>]  9.671kB/9.671kB
+2026-11-26T15:47:29.9401935Z  7ea8819886f9 Pull complete 
+2026-11-26T15:47:29.9413504Z  d3f6cab92edc Extracting [==================================================>]     130B/130B
+2026-11-26T15:47:29.9417176Z  d3f6cab92edc Extracting [==================================================>]     130B/130B
+2026-11-26T15:47:29.9632035Z  d3f6cab92edc Pull complete 
+2026-11-26T15:47:29.9647712Z  911527e7800c Extracting [==================================================>]     169B/169B
+2026-11-26T15:47:29.9654316Z  911527e7800c Extracting [==================================================>]     169B/169B
+2026-11-26T15:47:29.9738163Z  911527e7800c Pull complete 
+2026-11-26T15:47:29.9749035Z  22df74fd5323 Extracting [==================================================>]  6.108kB/6.108kB
+2026-11-26T15:47:29.9753388Z  22df74fd5323 Extracting [==================================================>]  6.108kB/6.108kB
+2026-11-26T15:47:29.9817755Z  22df74fd5323 Pull complete 
+2026-11-26T15:47:29.9828252Z  9f477227db48 Extracting [==================================================>]     183B/183B
+2026-11-26T15:47:29.9830118Z  9f477227db48 Extracting [==================================================>]     183B/183B
+2026-11-26T15:47:29.9888562Z  9f477227db48 Pull complete 
+2026-11-26T15:47:29.9934391Z  db Pulled 
+2026-11-26T15:47:29.9991494Z  Network doctorholiday-test_default  Creating
+2026-11-26T15:47:30.0320468Z  Network doctorholiday-test_default  Created
+2026-11-26T15:47:30.0360824Z  Volume "doctorholiday-test_db-data"  Creating
+2026-11-26T15:47:30.0370779Z  Volume "doctorholiday-test_db-data"  Created
+2026-11-26T15:47:30.0374018Z  Container doctorholiday-test-db-1  Creating
+2026-11-26T15:47:30.0548919Z  Container doctorholiday-test-db-1  Created
+2026-11-26T15:47:30.0554587Z  Container doctorholiday-test-db-1  Starting
+2026-11-26T15:47:30.2274462Z  Container doctorholiday-test-db-1  Started
+2026-11-26T15:47:30.2274947Z  Container doctorholiday-test-db-1  Waiting
+2026-11-26T15:47:32.7295138Z  Container doctorholiday-test-db-1  Healthy
+2026-11-26T15:47:32.7353933Z docker compose --project-name doctorholiday-test run --rm migrate
+2026-11-26T15:47:32.8087592Z  Container doctorholiday-test-db-1  Running
+2026-11-26T15:47:33.5238319Z migrate: applying V001__extensions_and_types
+2026-11-26T15:47:33.6178334Z migrate: applying V002__schema
+2026-11-26T15:47:33.7388838Z migrate: applying V003__singleton_rows
+2026-11-26T15:47:33.7696353Z migrate: applying V004__app_grants
+2026-11-26T15:47:33.7939149Z migrate: applying V005__login_throttles
+2026-11-26T15:47:33.8325902Z migrate: applying V006__rate_limits
+2026-11-26T15:47:33.8505464Z migrate: database is up to date (6 applied)
+2026-11-26T15:47:33.9380980Z make[1]: Entering directory '/home/runner/work/doctorholiday/doctorholiday/backend'
+2026-11-26T15:47:33.9381446Z uv run --locked pytest
+2026-11-26T15:47:36.6271797Z ============================= test session starts ==============================
+2026-11-26T15:47:36.6272249Z platform linux -- Python 3.12.16, pytest-9.1.1, pluggy-1.6.0
+2026-11-26T15:47:36.6272591Z rootdir: /home/runner/work/doctorholiday/doctorholiday/backend
+2026-11-26T15:47:36.6272865Z configfile: pyproject.toml
+2026-11-26T15:47:36.6273044Z testpaths: tests
+2026-11-26T15:47:36.6273203Z plugins: anyio-4.15.1
+2026-11-26T15:47:36.6273373Z collected 537 items
+2026-11-26T15:47:36.6273473Z 
+2026-11-26T15:47:37.8838190Z tests/db/test_appointment_lists.py ...............                       [  2%]
+2026-11-26T15:47:56.6389626Z tests/db/test_auth.py .................................................. [ 12%]
+2026-11-26T15:48:10.5066990Z ..........................................                               [ 19%]
+2026-11-26T15:48:11.8569514Z tests/db/test_availability.py ....................                       [ 23%]
+2026-11-26T15:48:14.6676004Z tests/db/test_booking.py ..............................                  [ 29%]
+2026-11-26T15:48:16.4114090Z tests/db/test_cancel_reschedule.py ...................                   [ 32%]
+2026-11-26T15:48:17.1840525Z tests/db/test_concurrent_booking.py .....                                [ 33%]
+2026-11-26T15:48:18.2002041Z tests/db/test_directory.py ................                              [ 36%]
+2026-11-26T15:48:18.4038545Z tests/db/test_guest_cleanup.py ......                                    [ 37%]
+2026-11-26T15:48:18.5401700Z tests/db/test_idor.py .                                                  [ 37%]
+2026-11-26T15:48:21.2016422Z tests/db/test_permissions.py ........................................... [ 45%]
+2026-11-26T15:48:22.6065901Z .......................                                                  [ 50%]
+2026-11-26T15:48:22.6777786Z tests/db/test_repositories.py ..........                                 [ 52%]
+2026-11-26T15:48:22.8002918Z tests/db/test_request_transaction.py ...                                 [ 52%]
+2026-11-26T15:48:26.4720521Z tests/db/test_schedule.py .........................................      [ 60%]
+2026-11-26T15:48:26.6774304Z tests/db/test_schema.py ......................................           [ 67%]
+2026-11-26T15:48:28.7373267Z tests/db/test_seed.py ....                                               [ 68%]
+2026-11-26T15:48:29.1029602Z tests/test_auth_units.py .....................                           [ 72%]
+2026-11-26T15:48:29.1479721Z tests/test_authorization.py .........                                    [ 73%]
+2026-11-26T15:48:29.1807889Z tests/test_config.py .......................                             [ 78%]
+2026-11-26T15:48:29.2529430Z tests/test_contract.py ............                                      [ 80%]
+2026-11-26T15:48:30.1041779Z tests/test_errors.py ................................                    [ 86%]
+2026-11-26T15:48:30.2277761Z tests/test_health.py .....                                               [ 87%]
+2026-11-26T15:48:30.9880982Z tests/test_http_hardening.py ......................                      [ 91%]
+2026-11-26T15:48:30.9909925Z tests/test_logs.py ....                                                  [ 91%]
+2026-11-26T15:48:32.3895285Z tests/test_process.py ..                                                 [ 92%]
+2026-11-26T15:48:32.4891550Z tests/test_request_context.py .....                                      [ 93%]
+2026-11-26T15:48:32.4972599Z tests/test_scheduling.py ...........                                     [ 95%]
+2026-11-26T15:48:32.5131415Z tests/test_seed.py ..............                                        [ 97%]
+2026-11-26T15:48:32.8855800Z tests/test_validation.py ...........                                     [100%]
+2026-11-26T15:48:32.8856126Z 
+2026-11-26T15:48:32.8856226Z ============================= 537 passed in 56.65s =============================
+2026-11-26T15:48:33.3522666Z make[1]: Leaving directory '/home/runner/work/doctorholiday/doctorholiday/backend'
+2026-11-26T15:48:33.4251338Z  Container doctorholiday-test-db-1  Stopping
+2026-11-26T15:48:33.6635949Z  Container doctorholiday-test-db-1  Stopped
+2026-11-26T15:48:33.6636815Z  Container doctorholiday-test-db-1  Removing
+2026-11-26T15:48:33.6719387Z  Container doctorholiday-test-db-1  Removed
+2026-11-26T15:48:33.6723820Z  Volume doctorholiday-test_db-data  Removing
+2026-11-26T15:48:33.6726655Z  Network doctorholiday-test_default  Removing
+2026-11-26T15:48:33.7490944Z  Network doctorholiday-test_default  Removed
+2026-11-26T15:48:33.9382230Z  Volume doctorholiday-test_db-data  Removed
+2026-11-26T15:48:33.9566947Z Post job cleanup.
+2026-11-26T15:48:34.0506129Z UV_PYTHON_INSTALL_DIR is already set to /home/runner/work/_temp/uv-python-dir
+2026-11-26T15:48:34.0725542Z Post job cleanup.
+2026-11-26T15:48:34.1887071Z Post job cleanup.
+2026-11-26T15:48:34.2643018Z [command]/usr/bin/git version
+2026-11-26T15:48:34.2707700Z git version 2.56.1
+2026-11-26T15:48:34.2753620Z Temporarily overriding HOME='/home/runner/work/_temp/15af4090-2722-4a0a-a5e0-6417ebf21b73' before making global git config changes
+2026-11-26T15:48:34.2754486Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T15:48:34.2788642Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T15:48:34.2829628Z Removing SSH command configuration
+2026-11-26T15:48:34.2833187Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T15:48:34.2869789Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T15:48:34.3139897Z Removing HTTP extra header
+2026-11-26T15:48:34.3166590Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T15:48:34.3205922Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T15:48:34.3451221Z Removing includeIf entries pointing to credentials config files
+2026-11-26T15:48:34.3469069Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T15:48:34.3523049Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T15:48:34.3921174Z Cleaning up orphan processes

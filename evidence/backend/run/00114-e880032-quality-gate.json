@@ -1,0 +1,59 @@
+{
+  "passed": false,
+  "run": "45852494472",
+  "sha": "e880032d1cdfc9bc30f3b5439616759cb74b90e5",
+  "rules": [
+    {
+      "rule": "jobs",
+      "description": "every job the gate depends on succeeded",
+      "passed": false,
+      "violations": [
+        {
+          "message": "job 'secrets' did not succeed (result: cancelled)"
+        },
+        {
+          "message": "job 'build' did not succeed (result: skipped)"
+        },
+        {
+          "message": "job 'sign' did not succeed (result: skipped)"
+        }
+      ]
+    },
+    {
+      "rule": "secrets",
+      "description": "Gitleaks found no secret in the history",
+      "passed": false,
+      "violations": [
+        {
+          "message": "reports/secrets/gitleaks.json is missing or empty"
+        }
+      ]
+    },
+    {
+      "rule": "vulnerabilities",
+      "description": "no HIGH/CRITICAL or CVSS >= 7.0 finding",
+      "passed": false,
+      "violations": [
+        {
+          "message": "reports/gate/trivy-image-frontend.json is missing or empty"
+        },
+        {
+          "message": "reports/gate/trivy-image-backend.json is missing or empty"
+        }
+      ]
+    },
+    {
+      "rule": "signatures",
+      "description": "every image has a valid signature and SBOM attestation",
+      "passed": false,
+      "violations": [
+        {
+          "message": "frontend: no image reference (reports/images/frontend/image-ref.txt)"
+        },
+        {
+          "message": "backend: no image reference (reports/images/backend/image-ref.txt)"
+        }
+      ]
+    }
+  ]
+}
