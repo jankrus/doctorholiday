@@ -1,4 +1,4 @@
-.PHONY: registry-images smoke test-gate evidence evidence-sync help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
+.PHONY: slides registry-images smoke test-gate evidence evidence-sync help up down check-tools cluster cni ingress namespace secrets db-config images deploy wait status logs verify test lint package db-up db-down db-reset test-db sast-sql check-pinning lint-actions
 .DEFAULT_GOAL := help
 
 # bash with strict flags, so a failing step stops the target with a clear error (#42).
@@ -38,6 +38,9 @@ check-pinning: ## Fail if an action is not pinned by commit SHA or an image not 
 lint-actions: check-pinning ## Lint the workflows with actionlint and zizmor (#31)
 	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo $(ACTIONLINT_IMAGE) -color=false
 	docker run --rm -v "$(CURDIR):/repo:ro" -w /repo $(ZIZMOR_IMAGE) --offline --no-progress --persona auditor .github/workflows/
+
+slides: ## Build docs/presentation/slides.pptx and slides.pdf from slides.md (pinned pandoc image, #53)
+	scripts/build-slides.sh
 
 test-gate: ## Test the quality gate (each failure mode on fixture reports) (#36)
 	python3 scripts/test_quality_gate.py
