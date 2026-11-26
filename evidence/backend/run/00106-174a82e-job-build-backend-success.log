@@ -1,0 +1,403 @@
+﻿2026-11-26T15:32:00.2529530Z Current runner version: '2.338.2'
+2026-11-26T15:32:00.2555931Z ##[group]Runner Image Provisioner
+2026-11-26T15:32:00.2556942Z Hosted Compute Agent
+2026-11-26T15:32:00.2557555Z Version: 20261111.635
+2026-11-26T15:32:00.2558285Z Commit: b8a594ea514ff44cadb5342986c68b1eac6e22ed
+2026-11-26T15:32:00.2559046Z Build Date: 2026-11-11T01:49:01Z
+2026-11-26T15:32:00.2559749Z Worker ID: {5b3576a5-f5f0-485c-a85a-659132834197}
+2026-11-26T15:32:00.2560524Z Region: westus
+2026-11-26T15:32:00.2561079Z Cloud: Azure
+2026-11-26T15:32:00.2562146Z ##[endgroup]
+2026-11-26T15:32:00.2563716Z ##[group]Operating System
+2026-11-26T15:32:00.2564361Z Ubuntu
+2026-11-26T15:32:00.2564972Z 24.04.5
+2026-11-26T15:32:00.2565706Z LTS
+2026-11-26T15:32:00.2566205Z ##[endgroup]
+2026-11-26T15:32:00.2566828Z ##[group]Runner Image
+2026-11-26T15:32:00.2567442Z Image: ubuntu-24.04
+2026-11-26T15:32:00.2568049Z Version: 20261122.23.1
+2026-11-26T15:32:00.2569380Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20261122.23/images/ubuntu/Ubuntu2404-Readme.md
+2026-11-26T15:32:00.2570999Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20261122.23
+2026-11-26T15:32:00.2571975Z ##[endgroup]
+2026-11-26T15:32:00.2573242Z ##[group]GITHUB_TOKEN Permissions
+2026-11-26T15:32:00.2575554Z Contents: read
+2026-11-26T15:32:00.2576345Z Metadata: read
+2026-11-26T15:32:00.2576923Z Packages: write
+2026-11-26T15:32:00.2577478Z ##[endgroup]
+2026-11-26T15:32:00.2580049Z Secret source: Actions
+2026-11-26T15:32:00.2580995Z Cache mode: write
+2026-11-26T15:32:00.2581819Z Prepare workflow directory
+2026-11-26T15:32:00.3038607Z Prepare all required actions
+2026-11-26T15:32:00.3087201Z Getting action download info
+2026-11-26T15:32:00.6393284Z Download action repository 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1' (SHA:3d3c42e5aac5ba805825da76410c181273ba90b1)
+2026-11-26T15:32:01.1884812Z Download action repository 'actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9' (SHA:cf430e030ddbb5b0abf93d22962f4752f3646cd9)
+2026-11-26T15:32:01.5242501Z Complete job name: build (backend)
+2026-11-26T15:32:01.6135871Z ##[group]Run actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+2026-11-26T15:32:01.6137029Z with:
+2026-11-26T15:32:01.6137486Z   persist-credentials: false
+2026-11-26T15:32:01.6138038Z   repository: jankrus/doctorholiday
+2026-11-26T15:32:01.6142041Z   token: ***
+2026-11-26T15:32:01.6142495Z   ssh-strict: true
+2026-11-26T15:32:01.6142941Z   ssh-user: git
+2026-11-26T15:32:01.6143372Z   clean: true
+2026-11-26T15:32:01.6143821Z   sparse-checkout-cone-mode: true
+2026-11-26T15:32:01.6144354Z   fetch-depth: 1
+2026-11-26T15:32:01.6144792Z   fetch-tags: false
+2026-11-26T15:32:01.6145402Z   show-progress: true
+2026-11-26T15:32:01.6145862Z   lfs: false
+2026-11-26T15:32:01.6146292Z   submodules: false
+2026-11-26T15:32:01.6146747Z   set-safe-directory: true
+2026-11-26T15:32:01.6147264Z   allow-unsafe-pr-checkout: false
+2026-11-26T15:32:01.6148069Z ##[endgroup]
+2026-11-26T15:32:04.0405580Z Syncing repository: jankrus/doctorholiday
+2026-11-26T15:32:04.0407366Z ##[group]Getting Git version info
+2026-11-26T15:32:04.0407949Z Working directory is '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T15:32:04.0413653Z [command]/usr/bin/git version
+2026-11-26T15:32:04.1760677Z git version 2.56.1
+2026-11-26T15:32:04.1783972Z ##[endgroup]
+2026-11-26T15:32:04.1796582Z Temporarily overriding HOME='/home/runner/work/_temp/4d15627e-43db-4ac4-8fff-09099497a5a3' before making global git config changes
+2026-11-26T15:32:04.1798209Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T15:32:04.1803433Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T15:32:04.2053649Z Deleting the contents of '/home/runner/work/doctorholiday/doctorholiday'
+2026-11-26T15:32:04.2057439Z ##[group]Determining repository object format
+2026-11-26T15:32:04.2058828Z ##[endgroup]
+2026-11-26T15:32:04.2059681Z ##[group]Initializing the repository
+2026-11-26T15:32:04.2063370Z [command]/usr/bin/git init /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T15:32:04.2762970Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-26T15:32:04.2764164Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-26T15:32:04.2764912Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-26T15:32:04.2765817Z hint: call:
+2026-11-26T15:32:04.2766147Z hint:
+2026-11-26T15:32:04.2766585Z hint: 	git config --global init.defaultBranch <name>
+2026-11-26T15:32:04.2767069Z hint:
+2026-11-26T15:32:04.2767553Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-26T15:32:04.2768289Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-26T15:32:04.2768861Z hint:
+2026-11-26T15:32:04.2769205Z hint: 	git branch -m <name>
+2026-11-26T15:32:04.2769575Z hint:
+2026-11-26T15:32:04.2770068Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-26T15:32:04.2863307Z Initialized empty Git repository in /home/runner/work/doctorholiday/doctorholiday/.git/
+2026-11-26T15:32:04.2874665Z [command]/usr/bin/git remote add origin https://github.com/jankrus/doctorholiday
+2026-11-26T15:32:04.3119014Z ##[endgroup]
+2026-11-26T15:32:04.3119662Z ##[group]Disabling automatic garbage collection
+2026-11-26T15:32:04.3124154Z [command]/usr/bin/git config --local gc.auto 0
+2026-11-26T15:32:04.3168689Z ##[endgroup]
+2026-11-26T15:32:04.3169600Z ##[group]Setting up auth
+2026-11-26T15:32:04.3170176Z Removing SSH command configuration
+2026-11-26T15:32:04.3175456Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T15:32:04.3224138Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T15:32:04.5492744Z Removing HTTP extra header
+2026-11-26T15:32:04.5497853Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T15:32:04.5542791Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T15:32:04.5781995Z Removing includeIf entries pointing to credentials config files
+2026-11-26T15:32:04.5787632Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T15:32:04.5839517Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T15:32:04.6082759Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-920d96e5-c02a-40a8-a5b9-a30ca6322607.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-26T15:32:04.6133094Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path /home/runner/work/_temp/git-credentials-920d96e5-c02a-40a8-a5b9-a30ca6322607.config
+2026-11-26T15:32:04.6178375Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-920d96e5-c02a-40a8-a5b9-a30ca6322607.config
+2026-11-26T15:32:04.6224018Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-920d96e5-c02a-40a8-a5b9-a30ca6322607.config
+2026-11-26T15:32:04.6269191Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-920d96e5-c02a-40a8-a5b9-a30ca6322607.config
+2026-11-26T15:32:04.6310241Z ##[endgroup]
+2026-11-26T15:32:04.6317029Z ##[group]Fetching the repository
+2026-11-26T15:32:04.6318049Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +174a82e21f8c1291f311975e5e5a2f4e64c14c65:refs/remotes/origin/main
+2026-11-26T15:32:05.2284551Z From https://github.com/jankrus/doctorholiday
+2026-11-26T15:32:05.2285519Z  * [new ref]         174a82e21f8c1291f311975e5e5a2f4e64c14c65 -> origin/main
+2026-11-26T15:32:05.2295753Z [command]/usr/bin/git branch --list --remote origin/main
+2026-11-26T15:32:05.2342650Z   origin/main
+2026-11-26T15:32:05.2353877Z [command]/usr/bin/git rev-parse refs/remotes/origin/main
+2026-11-26T15:32:05.2389278Z 174a82e21f8c1291f311975e5e5a2f4e64c14c65
+2026-11-26T15:32:05.2393965Z ##[endgroup]
+2026-11-26T15:32:05.2394361Z ##[group]Determining the checkout info
+2026-11-26T15:32:05.2395426Z ##[endgroup]
+2026-11-26T15:32:05.2400247Z [command]/usr/bin/git sparse-checkout disable
+2026-11-26T15:32:05.2567789Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-26T15:32:05.2614892Z ##[group]Checking out the ref
+2026-11-26T15:32:05.2615794Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-11-26T15:32:05.2964234Z Switched to a new branch 'main'
+2026-11-26T15:32:05.3020862Z branch 'main' set up to track 'origin/main'.
+2026-11-26T15:32:05.3026755Z ##[endgroup]
+2026-11-26T15:32:05.3078894Z [command]/usr/bin/git log -1 --format=%H
+2026-11-26T15:32:05.3115868Z 174a82e21f8c1291f311975e5e5a2f4e64c14c65
+2026-11-26T15:32:05.3125683Z ##[group]Removing auth
+2026-11-26T15:32:05.3126142Z Removing SSH command configuration
+2026-11-26T15:32:05.3129246Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T15:32:05.3172106Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T15:32:05.3421065Z Removing HTTP extra header
+2026-11-26T15:32:05.3427424Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T15:32:05.3478083Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T15:32:05.3755221Z Removing includeIf entries pointing to credentials config files
+2026-11-26T15:32:05.3756230Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T15:32:05.3799003Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T15:32:05.3800045Z includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T15:32:05.3800981Z includeif.gitdir:/github/workspace/.git.path
+2026-11-26T15:32:05.3801682Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T15:32:05.3811021Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path
+2026-11-26T15:32:05.3847917Z /home/runner/work/_temp/git-credentials-920d96e5-c02a-40a8-a5b9-a30ca6322607.config
+2026-11-26T15:32:05.3863781Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-920d96e5\-c02a\-40a8\-a5b9\-a30ca6322607\.config
+2026-11-26T15:32:05.3910661Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path
+2026-11-26T15:32:05.3946236Z /home/runner/work/_temp/git-credentials-920d96e5-c02a-40a8-a5b9-a30ca6322607.config
+2026-11-26T15:32:05.3958687Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/doctorholiday/doctorholiday/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-920d96e5\-c02a\-40a8\-a5b9\-a30ca6322607\.config
+2026-11-26T15:32:05.4012149Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+2026-11-26T15:32:05.4048319Z /github/runner_temp/git-credentials-920d96e5-c02a-40a8-a5b9-a30ca6322607.config
+2026-11-26T15:32:05.4057209Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-920d96e5\-c02a\-40a8\-a5b9\-a30ca6322607\.config
+2026-11-26T15:32:05.4102709Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+2026-11-26T15:32:05.4137534Z /github/runner_temp/git-credentials-920d96e5-c02a-40a8-a5b9-a30ca6322607.config
+2026-11-26T15:32:05.4146427Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-920d96e5\-c02a\-40a8\-a5b9\-a30ca6322607\.config
+2026-11-26T15:32:05.4191506Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T15:32:05.4428527Z Removing credentials config '/home/runner/work/_temp/git-credentials-920d96e5-c02a-40a8-a5b9-a30ca6322607.config'
+2026-11-26T15:32:05.4436669Z ##[endgroup]
+2026-11-26T15:32:05.4654114Z ##[group]Run scripts/build-image.sh "$IMAGE"
+2026-11-26T15:32:05.4654517Z scripts/build-image.sh "$IMAGE"
+2026-11-26T15:32:05.4701324Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-26T15:32:05.4701673Z env:
+2026-11-26T15:32:05.4701854Z   IMAGE: backend
+2026-11-26T15:32:05.4704644Z   GITHUB_TOKEN: ***
+2026-11-26T15:32:05.4704864Z ##[endgroup]
+2026-11-26T15:32:07.1596011Z 
+2026-11-26T15:32:07.1597161Z WARNING! Your credentials are stored unencrypted in '/home/runner/.docker/config.json'.
+2026-11-26T15:32:07.1597843Z Configure a credential helper to remove this warning. See
+2026-11-26T15:32:07.1598313Z https://docs.docker.com/go/credential-store/
+2026-11-26T15:32:07.1598577Z 
+2026-11-26T15:32:10.1211387Z building ghcr.io/jankrus/doctorholiday-backend:0.1.0 (174a82e), SOURCE_DATE_EPOCH=1795706524
+2026-11-26T15:32:10.2099246Z #0 building with "doctorholiday-builder" instance using docker-container driver
+2026-11-26T15:32:10.2099960Z 
+2026-11-26T15:32:10.2100236Z #1 [internal] booting buildkit
+2026-11-26T15:32:10.3608449Z #1 pulling image moby/buildkit:v0.34.1@sha256:99368f3e46177c6405b9740e4461d91cee004128daeecca78d4ceac50ec1da5c
+2026-11-26T15:32:13.0211754Z #1 pulling image moby/buildkit:v0.34.1@sha256:99368f3e46177c6405b9740e4461d91cee004128daeecca78d4ceac50ec1da5c 2.8s done
+2026-11-26T15:32:13.1732375Z #1 creating container buildx_buildkit_doctorholiday-builder0
+2026-11-26T15:32:13.8217722Z #1 creating container buildx_buildkit_doctorholiday-builder0 0.8s done
+2026-11-26T15:32:13.9270439Z #1 DONE 3.6s
+2026-11-26T15:32:14.0986177Z 
+2026-11-26T15:32:14.0986523Z #2 [internal] load build definition from Dockerfile
+2026-11-26T15:32:14.0986924Z #2 transferring dockerfile: 3.43kB 0.0s done
+2026-11-26T15:32:14.0987214Z #2 DONE 0.0s
+2026-11-26T15:32:14.0987328Z 
+2026-11-26T15:32:14.0987556Z #3 resolve image config for docker-image://docker.io/docker/dockerfile:1
+2026-11-26T15:32:14.3294534Z #3 ...
+2026-11-26T15:32:14.3294764Z 
+2026-11-26T15:32:14.3295409Z #4 [auth] docker/dockerfile:pull token for registry-1.docker.io
+2026-11-26T15:32:14.3296148Z #4 DONE 0.0s
+2026-11-26T15:32:14.4793481Z 
+2026-11-26T15:32:14.4793935Z #3 resolve image config for docker-image://docker.io/docker/dockerfile:1
+2026-11-26T15:32:14.8152485Z #3 DONE 0.9s
+2026-11-26T15:32:14.9768721Z 
+2026-11-26T15:32:14.9769793Z #5 docker-image://docker.io/docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183
+2026-11-26T15:32:14.9770869Z #5 resolve docker.io/docker/dockerfile:1@sha256:572cebbc2b15e6f84c077742952674889cb63cd5e9b80abdffcbe587b6f19183 done
+2026-11-26T15:32:14.9794773Z #5 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 13.63MB / 15.19MB 0.2s
+2026-11-26T15:32:15.1146310Z #5 sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 15.19MB / 15.19MB 0.2s done
+2026-11-26T15:32:15.1147853Z #5 extracting sha256:03f648a05b5780c2a0e4b43c93eb1838c6b9b32131b25f4199f42a788d106315 0.1s done
+2026-11-26T15:32:15.1148497Z #5 DONE 0.3s
+2026-11-26T15:32:15.2518808Z 
+2026-11-26T15:32:15.2519793Z #6 [auth] library/python:pull token for registry-1.docker.io
+2026-11-26T15:32:15.4461449Z #6 DONE 0.0s
+2026-11-26T15:32:15.4461676Z 
+2026-11-26T15:32:15.4461861Z #7 [auth] astral-sh/uv:pull token for ghcr.io
+2026-11-26T15:32:15.4462271Z #7 DONE 0.0s
+2026-11-26T15:32:15.4462422Z 
+2026-11-26T15:32:15.4463003Z #8 [internal] load metadata for ghcr.io/astral-sh/uv:0.12.24@sha256:3af4716e991d6956a41e573eab705d0ee08500cd829ed30293eb8472f372c65a
+2026-11-26T15:32:15.8666861Z #8 ...
+2026-11-26T15:32:15.8667280Z 
+2026-11-26T15:32:15.8668625Z #9 [internal] load metadata for docker.io/library/python:3.12-alpine@sha256:c5ba3deef00c7758561a0f03c26f44f10589263d40e732b8748e0d1f38f6dd89
+2026-11-26T15:32:15.8670131Z #9 DONE 0.7s
+2026-11-26T15:32:16.0071958Z 
+2026-11-26T15:32:16.0073291Z #8 [internal] load metadata for ghcr.io/astral-sh/uv:0.12.24@sha256:3af4716e991d6956a41e573eab705d0ee08500cd829ed30293eb8472f372c65a
+2026-11-26T15:32:16.0074377Z #8 DONE 0.8s
+2026-11-26T15:32:16.1626201Z 
+2026-11-26T15:32:16.1626819Z #10 [internal] load .dockerignore
+2026-11-26T15:32:16.1627365Z #10 transferring context: 365B done
+2026-11-26T15:32:16.1627753Z #10 DONE 0.0s
+2026-11-26T15:32:16.1627970Z 
+2026-11-26T15:32:16.1628108Z #11 [internal] load build context
+2026-11-26T15:32:16.1628552Z #11 transferring context: 608.39kB 0.0s done
+2026-11-26T15:32:16.1629068Z #11 DONE 0.0s
+2026-11-26T15:32:16.1629269Z 
+2026-11-26T15:32:16.1630064Z #12 [build 1/7] FROM docker.io/library/python:3.12-alpine@sha256:c5ba3deef00c7758561a0f03c26f44f10589263d40e732b8748e0d1f38f6dd89
+2026-11-26T15:32:16.1631736Z #12 resolve docker.io/library/python:3.12-alpine@sha256:c5ba3deef00c7758561a0f03c26f44f10589263d40e732b8748e0d1f38f6dd89 done
+2026-11-26T15:32:16.1633062Z #12 sha256:cc36311dc778ba4d60f5286dc5de96f657c8f9ac4a0bd62ce0f9606aae0d4418 248B / 248B 0.1s done
+2026-11-26T15:32:16.2754800Z #12 sha256:aa121b1b1cdb977b7ae6ba67331cfbf474c3d8060e5d90c833a9abdf86370a60 411.99kB / 411.99kB 0.2s done
+2026-11-26T15:32:16.2757042Z #12 sha256:881fc932939efef04ca120ad44bbd2c0917851eb247aa4995428afb1e80ede17 0B / 3.85MB 0.2s
+2026-11-26T15:32:16.2758934Z #12 sha256:113b91713f05dfc8999a7dd895088c7afb068e656eb1c802fab15c92d3e5c4e1 0B / 13.78MB 0.2s
+2026-11-26T15:32:16.4375884Z #12 sha256:881fc932939efef04ca120ad44bbd2c0917851eb247aa4995428afb1e80ede17 3.85MB / 3.85MB 0.2s done
+2026-11-26T15:32:16.4377834Z #12 sha256:113b91713f05dfc8999a7dd895088c7afb068e656eb1c802fab15c92d3e5c4e1 13.78MB / 13.78MB 0.3s done
+2026-11-26T15:32:16.4380854Z #12 extracting sha256:881fc932939efef04ca120ad44bbd2c0917851eb247aa4995428afb1e80ede17 0.1s done
+2026-11-26T15:32:16.4382137Z #12 DONE 0.4s
+2026-11-26T15:32:16.4382824Z 
+2026-11-26T15:32:16.4383503Z #13 [uv 1/1] FROM ghcr.io/astral-sh/uv:0.12.24@sha256:3af4716e991d6956a41e573eab705d0ee08500cd829ed30293eb8472f372c65a
+2026-11-26T15:32:16.4384954Z #13 resolve ghcr.io/astral-sh/uv:0.12.24@sha256:3af4716e991d6956a41e573eab705d0ee08500cd829ed30293eb8472f372c65a done
+2026-11-26T15:32:16.4386359Z #13 sha256:5d4c069d50eff8a133b6aa75d6952b5c8d96712a8b719503ad2d37f95e700768 98B / 98B 0.2s done
+2026-11-26T15:32:16.4387073Z #13 sha256:c53152fe4895cf386c6807ce09261763a3a3770d045729785134b9ac6542ebc3 20.08MB / 20.08MB 0.2s done
+2026-11-26T15:32:16.4387701Z #13 extracting sha256:c53152fe4895cf386c6807ce09261763a3a3770d045729785134b9ac6542ebc3
+2026-11-26T15:32:16.5423461Z #13 extracting sha256:c53152fe4895cf386c6807ce09261763a3a3770d045729785134b9ac6542ebc3 0.3s done
+2026-11-26T15:32:16.5425694Z #13 DONE 0.5s
+2026-11-26T15:32:16.5426378Z 
+2026-11-26T15:32:16.5426929Z #12 [build 1/7] FROM docker.io/library/python:3.12-alpine@sha256:c5ba3deef00c7758561a0f03c26f44f10589263d40e732b8748e0d1f38f6dd89
+2026-11-26T15:32:16.5428429Z #12 extracting sha256:aa121b1b1cdb977b7ae6ba67331cfbf474c3d8060e5d90c833a9abdf86370a60
+2026-11-26T15:32:16.7241588Z #12 ...
+2026-11-26T15:32:16.7241844Z 
+2026-11-26T15:32:16.7242448Z #13 [uv 1/1] FROM ghcr.io/astral-sh/uv:0.12.24@sha256:3af4716e991d6956a41e573eab705d0ee08500cd829ed30293eb8472f372c65a
+2026-11-26T15:32:16.7243310Z #13 extracting sha256:5d4c069d50eff8a133b6aa75d6952b5c8d96712a8b719503ad2d37f95e700768 done
+2026-11-26T15:32:16.7244274Z #13 DONE 0.5s
+2026-11-26T15:32:16.7244404Z 
+2026-11-26T15:32:16.7244931Z #12 [build 1/7] FROM docker.io/library/python:3.12-alpine@sha256:c5ba3deef00c7758561a0f03c26f44f10589263d40e732b8748e0d1f38f6dd89
+2026-11-26T15:32:16.7246520Z #12 extracting sha256:aa121b1b1cdb977b7ae6ba67331cfbf474c3d8060e5d90c833a9abdf86370a60 0.1s done
+2026-11-26T15:32:16.7247707Z #12 extracting sha256:113b91713f05dfc8999a7dd895088c7afb068e656eb1c802fab15c92d3e5c4e1
+2026-11-26T15:32:16.9367853Z #12 extracting sha256:113b91713f05dfc8999a7dd895088c7afb068e656eb1c802fab15c92d3e5c4e1 0.4s done
+2026-11-26T15:32:17.0491050Z #12 extracting sha256:cc36311dc778ba4d60f5286dc5de96f657c8f9ac4a0bd62ce0f9606aae0d4418 done
+2026-11-26T15:32:17.0492004Z #12 DONE 0.9s
+2026-11-26T15:32:17.0492217Z 
+2026-11-26T15:32:17.0492488Z #14 [build 2/7] COPY --from=uv /uv /usr/local/bin/uv
+2026-11-26T15:32:17.0493291Z #14 DONE 0.1s
+2026-11-26T15:32:17.0493493Z 
+2026-11-26T15:32:17.0494751Z #15 [runtime 2/4] RUN apk upgrade --no-cache     && addgroup -g 10001 app     && adduser -D -H -u 10001 -G app -s /sbin/nologin app     && python -m pip uninstall -y pip setuptools wheel     && rm -rf /root/.cache
+2026-11-26T15:32:17.2234657Z #15 ...
+2026-11-26T15:32:17.2235361Z 
+2026-11-26T15:32:17.2235626Z #16 [build 3/7] WORKDIR /app
+2026-11-26T15:32:17.2236196Z #16 DONE 0.0s
+2026-11-26T15:32:17.2236450Z 
+2026-11-26T15:32:17.2236784Z #17 [build 4/7] COPY pyproject.toml uv.lock .python-version README.md ./
+2026-11-26T15:32:17.2237398Z #17 DONE 0.0s
+2026-11-26T15:32:17.3187158Z 
+2026-11-26T15:32:17.3188830Z #15 [runtime 2/4] RUN apk upgrade --no-cache     && addgroup -g 10001 app     && adduser -D -H -u 10001 -G app -s /sbin/nologin app     && python -m pip uninstall -y pip setuptools wheel     && rm -rf /root/.cache
+2026-11-26T15:32:17.3190640Z #15 0.376 (1/5) Upgrading libcrypto3 (3.5.9-r0 -> 3.5.9-r1)
+2026-11-26T15:32:17.4259726Z #15 0.410 (2/5) Upgrading libffi (3.5.2-r1 -> 3.8.1-r0)
+2026-11-26T15:32:17.4260519Z #15 0.413 (3/5) Upgrading libssl3 (3.5.9-r0 -> 3.5.9-r1)
+2026-11-26T15:32:17.4261199Z #15 0.420 (4/5) Upgrading krb5-libs (1.22.2-r1 -> 1.22.3-r0)
+2026-11-26T15:32:17.4261888Z #15 0.436 (5/5) Upgrading zlib (1.3.2-r1 -> 1.4-r0)
+2026-11-26T15:32:17.4262555Z #15 0.439 Executing ca-certificates-20261020-r0.trigger
+2026-11-26T15:32:17.4263131Z #15 0.469 OK: 13.5 MiB in 38 packages
+2026-11-26T15:32:20.4402731Z #15 3.497 Found existing installation: pip 25.0.1
+2026-11-26T15:32:20.5402973Z #15 3.598 Uninstalling pip-25.0.1:
+2026-11-26T15:32:20.9155533Z #15 3.895   Successfully uninstalled pip-25.0.1
+2026-11-26T15:32:20.9158366Z #15 3.973 WARNING: Skipping setuptools as it is not installed.
+2026-11-26T15:32:21.0261872Z #15 3.976 WARNING: Skipping wheel as it is not installed.
+2026-11-26T15:32:21.0266499Z #15 3.976 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+2026-11-26T15:32:21.0269566Z #15 DONE 4.0s
+2026-11-26T15:32:21.0269993Z 
+2026-11-26T15:32:21.0270363Z #18 [build 5/7] RUN uv sync --locked --no-dev --no-install-project
+2026-11-26T15:32:21.0271283Z #18 0.353 Using CPython 3.12.16 interpreter at: /usr/local/bin/python3.12
+2026-11-26T15:32:21.0271845Z #18 0.353 Creating virtual environment at: .venv
+2026-11-26T15:32:21.0272359Z #18 0.358 Resolved 44 packages in 1ms
+2026-11-26T15:32:21.0272651Z #18 0.443 Downloading pydantic-core (2.2MiB)
+2026-11-26T15:32:21.0273138Z #18 0.445 Downloading psycopg-binary (4.1MiB)
+2026-11-26T15:32:21.0273481Z #18 0.519 Downloading sqlalchemy (4.4MiB)
+2026-11-26T15:32:21.0273865Z #18 0.555  Downloaded pydantic-core
+2026-11-26T15:32:21.0274235Z #18 0.570  Downloaded psycopg-binary
+2026-11-26T15:32:21.0274506Z #18 0.799  Downloaded sqlalchemy
+2026-11-26T15:32:21.0275493Z #18 0.799 Prepared 25 packages in 440ms
+2026-11-26T15:32:21.0275993Z #18 0.972 Installed 25 packages in 172ms
+2026-11-26T15:32:21.0276289Z #18 3.741 Bytecode compiled 943 files in 2.76s
+2026-11-26T15:32:21.0276694Z #18 3.741  + annotated-doc==0.0.5
+2026-11-26T15:32:21.0277054Z #18 3.741  + annotated-types==0.8.0
+2026-11-26T15:32:21.0277323Z #18 3.741  + anyio==4.15.1
+2026-11-26T15:32:21.0277721Z #18 3.741  + argon2-cffi==25.1.0
+2026-11-26T15:32:21.0277982Z #18 3.741  + argon2-cffi-bindings==26.1.0
+2026-11-26T15:32:21.0278290Z #18 3.741  + cffi==2.1.1
+2026-11-26T15:32:21.0278633Z #18 3.742  + click==8.5.0
+2026-11-26T15:32:21.0278855Z #18 3.742  + dnspython==2.9.2
+2026-11-26T15:32:21.0279093Z #18 3.742  + email-validator==2.3.0
+2026-11-26T15:32:21.0279515Z #18 3.742  + fastapi==0.142.2
+2026-11-26T15:32:21.0279739Z #18 3.742  + h11==0.16.0
+2026-11-26T15:32:21.0279946Z #18 3.742  + idna==3.20
+2026-11-26T15:32:21.0280587Z #18 3.742  + opentelemetry-api==1.45.2
+2026-11-26T15:32:21.0281107Z #18 3.742  + psycopg==3.3.6
+2026-11-26T15:32:21.0281385Z #18 3.742  + psycopg-binary==3.3.6
+2026-11-26T15:32:21.0282066Z #18 3.742  + pycparser==3.12
+2026-11-26T15:32:21.0282530Z #18 3.742  + pydantic==2.13.5
+2026-11-26T15:32:21.0283008Z #18 3.743  + pydantic-core==2.46.5
+2026-11-26T15:32:21.0283350Z #18 3.743  + pydantic-settings==2.15.0
+2026-11-26T15:32:21.0283849Z #18 3.743  + python-dotenv==1.2.4
+2026-11-26T15:32:21.0284271Z #18 3.743  + sqlalchemy==2.1.3
+2026-11-26T15:32:21.0284663Z #18 3.743  + starlette==1.7.0
+2026-11-26T15:32:21.0284998Z #18 3.744  + typing-extensions==4.16.0
+2026-11-26T15:32:21.0285574Z #18 3.744  + typing-inspection==0.4.4
+2026-11-26T15:32:21.0285832Z #18 3.744  + uvicorn==0.54.0
+2026-11-26T15:32:21.0286222Z #18 DONE 3.9s
+2026-11-26T15:32:21.0286427Z 
+2026-11-26T15:32:21.0286556Z #19 [build 6/7] COPY src ./src
+2026-11-26T15:32:21.0286784Z #19 DONE 0.0s
+2026-11-26T15:32:21.0286890Z 
+2026-11-26T15:32:21.0287106Z #20 [build 7/7] RUN uv sync --locked --no-dev --no-editable
+2026-11-26T15:32:21.0287724Z #20 0.058 Resolved 44 packages in 0.83ms
+2026-11-26T15:32:21.1991852Z #20 0.061    Building doctorholiday-backend @ file:///app
+2026-11-26T15:32:21.1993709Z #20 0.079       Built doctorholiday-backend @ file:///app
+2026-11-26T15:32:21.1994635Z #20 0.087 Prepared 1 package in 26ms
+2026-11-26T15:32:21.1995953Z #20 0.095 Installed 1 package in 8ms
+2026-11-26T15:32:21.1997141Z #20 0.230 Bytecode compiled 983 files in 135ms
+2026-11-26T15:32:21.3635313Z #20 0.230  + doctorholiday-backend==0.1.0 (from file:///app)
+2026-11-26T15:32:21.3635904Z #20 DONE 0.2s
+2026-11-26T15:32:21.3945562Z 
+2026-11-26T15:32:21.3946963Z #21 [runtime 3/4] COPY --from=build --chown=0:0 /app/.venv /app/.venv
+2026-11-26T15:32:21.7529058Z #21 DONE 0.4s
+2026-11-26T15:32:21.9306239Z 
+2026-11-26T15:32:21.9306920Z #22 [runtime 4/4] WORKDIR /tmp
+2026-11-26T15:32:21.9307374Z #22 DONE 0.0s
+2026-11-26T15:32:21.9307572Z 
+2026-11-26T15:32:21.9307710Z #23 exporting to image
+2026-11-26T15:32:21.9308096Z #23 exporting layers
+2026-11-26T15:32:23.9363779Z #23 exporting layers 2.2s done
+2026-11-26T15:32:24.0874333Z #23 rewriting layers with source-date-epoch 1795706524 (2026-11-26 15:22:04 +0000 UTC)
+2026-11-26T15:32:26.2694720Z #23 rewriting layers with source-date-epoch 1795706524 (2026-11-26 15:22:04 +0000 UTC) 2.3s done
+2026-11-26T15:32:26.5168862Z #23 ...
+2026-11-26T15:32:26.5169051Z 
+2026-11-26T15:32:26.5169299Z #24 [auth] jankrus/doctorholiday-backend:pull,push token for ghcr.io
+2026-11-26T15:32:26.5169726Z #24 DONE 0.0s
+2026-11-26T15:32:26.5169856Z 
+2026-11-26T15:32:26.5169950Z #23 exporting to image
+2026-11-26T15:32:26.5170431Z #23 exporting manifest sha256:67e4a7fe3ee760438ed4e2b31d0d680005054e7b09970b4a2f342c3985884a31 done
+2026-11-26T15:32:26.5171212Z #23 exporting config sha256:bd4a0db25b7be3f733b8e1544a59f269e5db4e723d3df44a6c1f3cf5dfeda631 done
+2026-11-26T15:32:26.5172064Z #23 exporting attestation manifest sha256:d673f3f49645e14f8972b4a7672c819f683698bb53d51e83a662ad834aa791fa done
+2026-11-26T15:32:26.5172905Z #23 exporting manifest list sha256:b60ee50088448b82ab2af69acf25402949e2a4abb63b673273c59ab6e4d90d6d done
+2026-11-26T15:32:26.5173872Z #23 pushing layers
+2026-11-26T15:32:28.8995494Z #23 pushing layers 2.6s done
+2026-11-26T15:32:28.8996783Z #23 pushing manifest for ghcr.io/jankrus/doctorholiday-backend:0.1.0@sha256:b60ee50088448b82ab2af69acf25402949e2a4abb63b673273c59ab6e4d90d6d
+2026-11-26T15:32:31.9244801Z #23 pushing manifest for ghcr.io/jankrus/doctorholiday-backend:0.1.0@sha256:b60ee50088448b82ab2af69acf25402949e2a4abb63b673273c59ab6e4d90d6d 3.0s done
+2026-11-26T15:32:32.1966045Z #23 pushing layers 0.3s done
+2026-11-26T15:32:32.1967311Z #23 pushing manifest for ghcr.io/jankrus/doctorholiday-backend:0.1.0-174a82e@sha256:b60ee50088448b82ab2af69acf25402949e2a4abb63b673273c59ab6e4d90d6d
+2026-11-26T15:32:33.3576559Z #23 pushing manifest for ghcr.io/jankrus/doctorholiday-backend:0.1.0-174a82e@sha256:b60ee50088448b82ab2af69acf25402949e2a4abb63b673273c59ab6e4d90d6d 1.2s done
+2026-11-26T15:32:33.3587506Z #23 DONE 11.6s
+2026-11-26T15:32:33.3865492Z 
+2026-11-26T15:32:33.3865975Z #25 resolving provenance for metadata file
+2026-11-26T15:32:33.3866525Z #25 DONE 0.0s
+2026-11-26T15:32:35.1440428Z pushed ghcr.io/jankrus/doctorholiday-backend@sha256:b60ee50088448b82ab2af69acf25402949e2a4abb63b673273c59ab6e4d90d6d
+2026-11-26T15:32:35.1441124Z tags: 0.1.0, 0.1.0-174a82e
+2026-11-26T15:32:35.1565474Z ##[group]Run actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+2026-11-26T15:32:35.1565906Z with:
+2026-11-26T15:32:35.1566102Z   name: image-backend
+2026-11-26T15:32:35.1566330Z   path: reports/images/backend/
+2026-11-26T15:32:35.1566586Z   if-no-files-found: error
+2026-11-26T15:32:35.1566812Z   retention-days: 90
+2026-11-26T15:32:35.1567029Z   compression-level: 6
+2026-11-26T15:32:35.1567235Z   overwrite: false
+2026-11-26T15:32:35.1567442Z   include-hidden-files: false
+2026-11-26T15:32:35.1567669Z   archive: true
+2026-11-26T15:32:35.1567859Z ##[endgroup]
+2026-11-26T15:32:35.3179149Z With the provided path, there will be 3 files uploaded
+2026-11-26T15:32:35.3180884Z Artifact name is valid!
+2026-11-26T15:32:35.3181685Z Root directory input is valid!
+2026-11-26T15:32:35.8480191Z Uploading artifact: image-backend.zip
+2026-11-26T15:32:35.8521349Z Beginning upload of artifact content to blob storage
+2026-11-26T15:32:36.2293953Z Uploaded bytes 3719
+2026-11-26T15:32:36.3060131Z Finished uploading artifact content to blob storage!
+2026-11-26T15:32:36.3061398Z SHA256 digest of uploaded artifact is d26c82e8b511bb34eb0b605b1bcffd85c9def68c7e0a998a0490cb81722c9d24
+2026-11-26T15:32:36.3062475Z Finalizing artifact upload
+2026-11-26T15:32:36.8546453Z Artifact image-backend successfully finalized. Artifact ID 15133261923
+2026-11-26T15:32:36.8547903Z Artifact image-backend has been successfully uploaded! Final size is 3719 bytes. Artifact ID is 15133261923
+2026-11-26T15:32:36.8551570Z Artifact download URL: https://github.com/jankrus/doctorholiday/actions/runs/45848387465/artifacts/15133261923
+2026-11-26T15:32:36.8767786Z Post job cleanup.
+2026-11-26T15:32:36.9678737Z [command]/usr/bin/git version
+2026-11-26T15:32:36.9728569Z git version 2.56.1
+2026-11-26T15:32:36.9772046Z Temporarily overriding HOME='/home/runner/work/_temp/da0c6c47-ed4f-4686-9d4c-9bf522dc90ff' before making global git config changes
+2026-11-26T15:32:36.9773517Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-26T15:32:36.9778078Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/doctorholiday/doctorholiday
+2026-11-26T15:32:36.9814045Z Removing SSH command configuration
+2026-11-26T15:32:36.9821033Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-26T15:32:36.9862388Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-26T15:32:37.0125356Z Removing HTTP extra header
+2026-11-26T15:32:37.0132281Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-26T15:32:37.0187707Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-26T15:32:37.0448803Z Removing includeIf entries pointing to credentials config files
+2026-11-26T15:32:37.0458588Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-26T15:32:37.0532746Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-26T15:32:37.0943633Z Evaluate and set job outputs
+2026-11-26T15:32:37.0950782Z Set output 'backend'
+2026-11-26T15:32:37.0952568Z Cleaning up orphan processes

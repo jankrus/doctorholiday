@@ -1,0 +1,52 @@
+PASS  backend-7c79b74dd9-cj54g: no host network, PID or IPC
+PASS  backend-7c79b74dd9-cj54g: no hostPath volume
+PASS  backend-7c79b74dd9-cj54g: service account token not mounted
+PASS  backend-7c79b74dd9-cj54g/backend (container): not privileged
+PASS  backend-7c79b74dd9-cj54g/backend (container): no privilege escalation
+PASS  backend-7c79b74dd9-cj54g/backend (container): read-only root file system
+PASS  backend-7c79b74dd9-cj54g/backend (container): runs as non-root
+PASS  backend-7c79b74dd9-cj54g/backend (container): capabilities dropped (ALL)
+PASS  backend-7c79b74dd9-cj54g/backend (container): seccomp RuntimeDefault
+INFO  backend-7c79b74dd9-cj54g/backend runs ghcr.io/jankrus/doctorholiday-backend@sha256:b60ee50088448b82ab2af69acf25402949e2a4abb63b673273c59ab6e4d90d6d
+PASS  db-migrate-lqlwg: no host network, PID or IPC
+PASS  db-migrate-lqlwg: no hostPath volume
+PASS  db-migrate-lqlwg: service account token not mounted
+PASS  db-migrate-lqlwg/migrate (container): not privileged
+PASS  db-migrate-lqlwg/migrate (container): no privilege escalation
+PASS  db-migrate-lqlwg/migrate (container): read-only root file system
+PASS  db-migrate-lqlwg/migrate (container): runs as non-root
+PASS  db-migrate-lqlwg/migrate (container): capabilities dropped (ALL)
+PASS  db-migrate-lqlwg/migrate (container): seccomp RuntimeDefault
+INFO  db-migrate-lqlwg/migrate runs docker.io/library/postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+PASS  frontend-6ff64df9cf-rz5vt: no host network, PID or IPC
+PASS  frontend-6ff64df9cf-rz5vt: no hostPath volume
+PASS  frontend-6ff64df9cf-rz5vt: service account token not mounted
+PASS  frontend-6ff64df9cf-rz5vt/frontend (container): not privileged
+PASS  frontend-6ff64df9cf-rz5vt/frontend (container): no privilege escalation
+PASS  frontend-6ff64df9cf-rz5vt/frontend (container): read-only root file system
+PASS  frontend-6ff64df9cf-rz5vt/frontend (container): runs as non-root
+PASS  frontend-6ff64df9cf-rz5vt/frontend (container): capabilities dropped (ALL)
+PASS  frontend-6ff64df9cf-rz5vt/frontend (container): seccomp RuntimeDefault
+INFO  frontend-6ff64df9cf-rz5vt/frontend runs ghcr.io/jankrus/doctorholiday-frontend@sha256:ee3adb27e3386b90b9dc921a645a56501562e12bcd498ed7c85cafa5ebbf794a
+PASS  netpol-probe: no host network, PID or IPC
+PASS  netpol-probe: no hostPath volume
+PASS  netpol-probe: service account token not mounted
+PASS  netpol-probe/probe (container): not privileged
+PASS  netpol-probe/probe (container): no privilege escalation
+PASS  netpol-probe/probe (container): read-only root file system
+PASS  netpol-probe/probe (container): runs as non-root
+PASS  netpol-probe/probe (container): capabilities dropped (ALL)
+PASS  netpol-probe/probe (container): seccomp RuntimeDefault
+INFO  netpol-probe/probe runs ghcr.io/jankrus/doctorholiday-frontend@sha256:ee3adb27e3386b90b9dc921a645a56501562e12bcd498ed7c85cafa5ebbf794a
+PASS  postgres-0: no host network, PID or IPC
+PASS  postgres-0: no hostPath volume
+PASS  postgres-0: service account token not mounted
+PASS  postgres-0/postgres (container): not privileged
+PASS  postgres-0/postgres (container): no privilege escalation
+PASS  postgres-0/postgres (container): read-only root file system
+PASS  postgres-0/postgres (container): runs as non-root
+PASS  postgres-0/postgres (container): capabilities dropped (ALL)
+PASS  postgres-0/postgres (container): seccomp RuntimeDefault
+INFO  postgres-0/postgres runs docker.io/library/postgres@sha256:f4610795587492cd4fb887c2dc3de301b813278bb6f616992061141b5f15ac36
+
+Pod security checks passed.

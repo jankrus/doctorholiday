@@ -1,0 +1,25 @@
+NetworkPolicy check, context kind-doctorholiday, namespace doctorholiday, 2026-11-26T15:38:00Z
+policy allow-dns-egress
+policy backend-allow-egress-postgres
+policy backend-allow-ingress-controller
+policy db-migrate-allow-egress-postgres
+policy default-deny-all
+policy frontend-allow-ingress-controller
+policy postgres-allow-backend-and-migrate
+
+--- controls (a blocked connection only proves something if the tool works)
+PASS  nc exists in the throwaway pod
+PASS  nc connects to a listening port (frontend -> 127.0.0.1:8080)
+
+--- must be blocked
+PASS  throwaway pod -> postgres:5432 is blocked
+PASS  frontend -> postgres:5432 is blocked
+PASS  backend -> example.com:443 is blocked
+
+--- must work
+PASS  backend -> postgres:5432 works
+PASS  backend resolves names through kube-dns
+PASS  https://doctorholiday.localhost/ answers 200 through the ingress
+PASS  https://doctorholiday.localhost/api/v1/auth/me reaches the backend (401 without a session)
+
+All checks passed. Report: reports/netpol/test-netpol-20261126T153800Z.txt
