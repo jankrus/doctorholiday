@@ -33,7 +33,7 @@ meta ─┬─ test-backend ──┐
 | Job | Brief step | State | Issue |
 | :--- | :--- | :--- | :--- |
 | `context` | – | **real:** decides once whether this is a release run (`release` output); no checkout, no permissions | #31 |
-| `meta` | – | **real:** pinning check, reads `VERSION.txt` (SemVer check) and exposes `version`, `short_sha`, `tag_version`, `tag_sha` | #31 |
+| `meta` | – | **real:** pinning check, traceability matrix check (`scripts/check_traceability.py`, #47), reads `VERSION.txt` (SemVer check) and exposes `version`, `short_sha`, `tag_version`, `tag_sha` | #31 |
 | `test-backend` | – | **real:** `make -C backend lint`, `make test-db` (throwaway PostgreSQL, real migrations) | #31 |
 | `test-frontend` | – | **real:** `npm ci --ignore-scripts`, lint, tests, build | #31 |
 | `sbom` | (a) | **real:** CycloneDX SBOM of `frontend/` and `backend/` (Syft), validated with the CycloneDX CLI, artifact `sbom`. SBOM per built image follows with #34/#35 | #32 |

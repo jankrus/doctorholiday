@@ -37,7 +37,7 @@ Der Schwerpunkt dieses Projekts liegt nicht prim√§r auf der reinen Funktionalit√
 | Cluster | lokaler [kind](https://kind.sigs.k8s.io/)-Cluster, Calico (erzwingt NetworkPolicies), Traefik als Ingress mit TLS |
 | Pipeline | GitHub Actions, GHCR, Syft, Semgrep, Trivy, Gitleaks, cosign |
 
-Die Entscheidungen dahinter stehen in den [ADRs](docs/architecture/adr/); Abweichungen von der Aufgabenstellung in [docs/report/deviations.md](docs/report/deviations.md).
+Die Entscheidungen dahinter stehen in den [ADRs](docs/architecture/adr/); Abweichungen von der Aufgabenstellung in [docs/report/deviations.md](docs/report/deviations.md). Welche Anforderung und welche Bedrohung wo umgesetzt und wie belegt ist, zeigt die [Traceability-Matrix](docs/report/traceability.md).
 
 ## Voraussetzungen
 
