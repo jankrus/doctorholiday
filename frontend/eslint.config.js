@@ -23,11 +23,17 @@ export default [
       'no-eval': 'error',
       'no-implied-eval': 'error',
       'no-new-func': 'error',
+      'no-script-url': 'error',
       'no-restricted-syntax': [
         'error',
         {
           selector: "JSXAttribute[name.name='dangerouslySetInnerHTML']",
           message: 'Render text through React instead; raw HTML opens XSS.',
+        },
+        {
+          selector:
+            'AssignmentExpression[left.property.name=/^(innerHTML|outerHTML)$/], CallExpression[callee.property.name=/^(insertAdjacentHTML|write|writeln)$/]',
+          message: 'DOM XSS sink: build elements through React, never from HTML strings.',
         },
       ],
     },
